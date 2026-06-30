@@ -1,0 +1,5 @@
+# Dogfooding session-handoff working notes — local only, not part of the package
+.claude/session-handoffs/
+
+# Throwaway behavioral-test sandboxes (each contains an embedded git repo + captured output)
+.sandbox/

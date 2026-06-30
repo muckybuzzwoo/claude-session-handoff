@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session Handoff — Lifecycle &amp; How It Works</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2b313d;
+    --ink:#e8eaed; --muted:#9aa3b2; --accent:#ff7a45; --accent2:#4aa3ff; --green:#3ecf8e;
+    --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 20px 64px}
+  h1{font-size:clamp(24px,4vw,34px);margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 32px;font-size:16px}
+  h2{font-size:20px;margin:40px 0 14px;border-left:3px solid var(--accent);padding-left:10px}
+  code,kbd{font-family:var(--mono);font-size:.92em}
+  .cmd{color:var(--accent);font-family:var(--mono);font-weight:600}
+  .muted{color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  /* lifecycle band */
+  .band{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap}
+  .stage{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-align:center}
+  .stage.mid{flex:1.6;border-color:var(--accent);background:var(--panel2)}
+  .stage .t{font-weight:700;font-family:var(--mono);color:var(--accent2)}
+  .stage.mid .t{color:var(--accent)}
+  .stage .d{color:var(--muted);font-size:13px;margin-top:4px}
+  .arrow{align-self:center;color:var(--muted);font-size:22px}
+  .pill{display:inline-block;font-family:var(--mono);font-size:12px;background:#222733;border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin:2px 2px 0 0;color:var(--ink)}
+  /* two columns */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.cols{grid-template-columns:1fr}}
+  .card h3{margin:0 0 10px;font-size:16px;font-family:var(--mono)}
+  .card.save h3{color:var(--accent)} .card.resume h3{color:var(--accent2)}
+  ol{margin:0;padding-left:20px} ol li{margin:6px 0;font-size:14px}
+  /* store */
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:var(--radius);padding:16px;overflow-x:auto;font-family:var(--mono);font-size:13px;color:#d6dae2}
+  .tag{color:var(--green)} .chain{color:var(--accent)} .arch{color:var(--muted)}
+  .note{background:#1a1d24;border:1px dashed var(--line);border-radius:var(--radius);padding:14px 16px;color:var(--muted);font-size:14px;margin-top:14px}
+  /* provenance table */
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:last-child td{border-bottom:none}
+  thead th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  td .src{font-family:var(--mono);color:var(--accent2);font-weight:600}
+  .adopted{color:var(--green);font-weight:700;margin-right:5px}
+  footer{margin-top:44px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+  /* hero flow — the save → gap → resume mechanic (signature element) */
+  .flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin:6px 0 10px}
+  .flow .step{flex:1 1 170px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;display:flex;flex-direction:column;gap:6px;justify-content:center}
+  .flow .step-k{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.02em;color:var(--accent2)}
+  .flow .step-d{color:var(--muted);font-size:13px;line-height:1.45}
+  .flow .conn{flex:0 0 96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
+  .flow .conn-cmd{font-family:var(--mono);font-size:12px;font-weight:600;line-height:1.2}
+  .flow .conn-arr{font-size:20px;line-height:1}
+  .flow .conn-d{color:var(--muted);font-size:11px}
+  .flow .conn-save .conn-cmd,.flow .conn-save .conn-arr{color:var(--accent)}
+  .flow .conn-resume .conn-cmd,.flow .conn-resume .conn-arr{color:var(--accent2)}
+  .flow .void{flex:1.25 1 190px;background:#0b0d11;border:1px dashed #3a4150;align-items:center;text-align:center;gap:8px}
+  .flow .void-k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .flow .file-card{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);background:#1b1410;border:1px solid var(--accent);border-radius:8px;padding:8px 12px;box-shadow:0 0 0 4px rgba(255,122,69,.08)}
+  .flow .void-d{color:var(--muted);font-size:12px;line-height:1.4}
+  .flow-cap{color:var(--muted);font-size:14px;margin:4px 0 0;line-height:1.55}
+  @media(max-width:760px){
+    .flow{flex-direction:column}
+    .flow .step,.flow .conn{flex:none;width:100%}
+    .flow .conn{flex-direction:row;gap:8px}
+    .flow .conn-arr{transform:rotate(90deg)}
+  }
+  /* three-stores diagram */
+  .stores{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .stores .center{flex:1 1 210px;background:var(--panel2);border:1px solid var(--accent);border-radius:var(--radius);padding:16px 18px}
+  .stores .sides{flex:1 1 260px;display:flex;flex-direction:column;gap:12px}
+  .stores .link{display:flex;align-items:center;gap:10px}
+  .stores .link-arr{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+  .stores .side{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .stores .s-k{font-family:var(--mono);font-weight:700;font-size:14px}
+  .stores .center .s-k{color:var(--accent)}
+  .stores .s-tag{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+  .stores .s-tag.green{color:var(--green)}
+  .stores .s-d{color:var(--muted);font-size:13px;margin-top:6px;line-height:1.45}
+  @media(max-width:760px){.stores .link{flex-direction:column;align-items:stretch;gap:6px}.stores .link-arr{text-align:center}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Session Handoff</h1>
+  <p class="sub">A fresh Claude Code session starts with an empty context window. These two
+    manual commands carry one task across that gap — <span class="cmd">/session-handoff</span>
+    saves where you are, <span class="cmd">/session-resume</span> picks it back up.</p>
+
+  <div class="flow">
+    <div class="step">
+      <div class="step-k">Session · today</div>
+      <div class="step-d">Deep in a task — decisions made, files half-touched, a dev server still running.</div>
+    </div>
+    <div class="conn conn-save">
+      <div class="conn-cmd">/session-handoff</div>
+      <div class="conn-arr">→</div>
+      <div class="conn-d">writes a snapshot</div>
+    </div>
+    <div class="step void">
+      <div class="void-k">the gap</div>
+      <div class="file-card">checkout-bug_01.md</div>
+      <div class="void-d">Survives <code>/clear</code>, the session ending, days passing. Gitignored — never committed.</div>
+    </div>
+    <div class="conn conn-resume">
+      <div class="conn-cmd">/session-resume</div>
+      <div class="conn-arr">→</div>
+      <div class="conn-d">reads it back</div>
+    </div>
+    <div class="step">
+      <div class="step-k">Session · days later</div>
+      <div class="step-d">A fresh, empty window — refilled from the file in seconds, same topic.</div>
+    </div>
+  </div>
+  <p class="flow-cap">The file is the only thing that crosses the gap. Pick the topic up again and it
+    <strong>chains</strong> — <code>_01 → _02 → _03</code>, each new file carrying the last one
+    forward so the newest is always the full picture.</p>
+
+  <h2>Where they sit in the workflow</h2>
+  <p class="muted" style="margin-top:0">They don't replace planning or finishing — they live in the
+     <strong>pause / resume</strong> middle of a single task.</p>
+  <div class="band">
+    <div class="stage"><div class="t">/new-cycle</div><div class="d">plan the task</div></div>
+    <div class="arrow">→</div>
+    <div class="stage mid">
+      <div class="t">/session-handoff · /session-resume</div>
+      <div class="d">work, pause &amp; save, pick it back up later — any number of times</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="stage"><div class="t">/end-cycle</div><div class="d">tests, commit / MR</div></div>
+  </div>
+
+  <h2>How each command works</h2>
+  <div class="cols">
+    <div class="panel card save">
+      <h3>/session-handoff [topic] [--done]</h3>
+      <ol>
+        <li>Gather <em>this</em> session: date, branch, git status, background process IDs, open TODOs, files you touched — plus any superpowers spec/plan paths.</li>
+        <li>Pick topic + sequence — propose existing topics + a branch suggestion, confirm (no accidental chain-fork).</li>
+        <li>Carry-forward from the previous handoff so the newest file is the complete current state.</li>
+        <li>Warn on any secret pattern (reference creds by path, never values).</li>
+        <li>Ensure <code>.claude/session-handoffs/</code> is in <code>.gitignore</code> (once).</li>
+        <li>Write <code>{topic}_{NN}.md</code>.</li>
+        <li><strong>Closing reflection</strong> (propose-only): surface durable facts as Claude-<em>memory</em> candidates, any <em>plan</em>-drift update, and a refresh of any project <em>doc</em> the session left stale — show, ask, write only on confirm.</li>
+        <li><code>--done</code> → archive the whole chain to <code>done/</code>.</li>
+        <li>Confirm + <strong>hard stop</strong>.</li>
+      </ol>
+    </div>
+    <div class="panel card resume">
+      <h3>/session-resume [topic] [--all]</h3>
+      <ol>
+        <li>Scan the store, group by topic, newest first (skip <code>done/</code> unless <code>--all</code>).</li>
+        <li>Pick a topic (or pass one to load it directly).</li>
+        <li>Staleness heads-up — &gt; 7 days old, branch changed, or working tree moved.</li>
+        <li>Load the latest file, <strong>follow its <code>[READ-AT-RESUME]</code> / plan / spec links</strong>, and summarize: where it left off + key files + running state + the full decisions and rejected options.</li>
+        <li>Propose the single next action — but <strong>do not auto-implement</strong>.</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>Step 7 — what it touches beyond the handoff</h2>
+  <p class="muted" style="margin-top:0">The handoff holds <em>what you were doing</em>. Three neighbouring
+     stores hold what <em>stays true</em> — and the closing reflection only ever <em>proposes</em> writes to them.</p>
+  <div class="panel" style="padding:18px 20px">
+    <div class="stores">
+      <div class="center">
+        <div class="s-k">Handoff file</div>
+        <div class="s-tag">transient · gitignored</div>
+        <div class="s-d">what you were <em>doing</em> — disposable once the topic closes</div>
+      </div>
+      <div class="sides">
+        <div class="link">
+          <span class="link-arr">proposes →</span>
+          <div class="side">
+            <div class="s-k">Claude memory</div>
+            <div class="s-tag green">durable</div>
+            <div class="s-d">facts that stay <em>true</em> across every session</div>
+          </div>
+        </div>
+        <div class="link">
+          <span class="link-arr">proposes →</span>
+          <div class="side">
+            <div class="s-k">superpowers spec / plan</div>
+            <div class="s-tag green">committed</div>
+            <div class="s-d">the design of <em>record</em>, in git</div>
+          </div>
+        </div>
+        <div class="link">
+          <span class="link-arr">proposes →</span>
+          <div class="side">
+            <div class="s-k">project docs</div>
+            <div class="s-tag green">in-repo</div>
+            <div class="s-d">a <code>README</code>, <code>docs/*.md</code> or explainer the session left <em>stale</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="flow-cap" style="margin-top:14px">Step 7 <strong>shows you the exact content and waits for your OK</strong>
+     — a memory fact, a plan update, a doc refresh. It links by path, never copies a spec, never auto-writes. Resume re-reads the
+     handoff <strong>and follows its <code>[READ-AT-RESUME]</code> links</strong> to recover the full decisions and roadmap; memory loads on its own each session.</p>
+
+  <h2>The store &amp; chain-linking</h2>
+  <p class="muted" style="margin-top:0">Per project, gitignored. The same topic chains by sequence number,
+     so multi-day work stays in one thread.</p>
+  <pre>&lt;your project&gt;/.claude/session-handoffs/        <span class="tag"># gitignored</span>
+├── checkout-bug_01.md
+├── checkout-bug_02.md      <span class="chain">← same topic, next session (carry-forward)</span>
+├── auth-refactor_01.md
+└── done/                   <span class="arch"># archived via --done, hidden from resume</span></pre>
+
+  <div class="note">
+    <strong>Why not just <span class="cmd" style="color:inherit">/park</span>?</strong>
+    buzzwoo's <code>/park</code> is a lighter note-dump, and <code>/resume-bw</code> is plan-centric — it
+    can't cleanly let you pick among several parallel topics. This pair adds a richer schema
+    (running state, verification commands), topic-aware selection, and sequence chain-linking for the
+    "continue the same thing days later" case. It is intentionally decoupled from buzzwoo so it can be
+    tested independently and proposed for adoption later.
+  </div>
+
+  <h2>Where the design comes from</h2>
+  <p class="muted" style="margin-top:0">No single existing tool did the whole job, so this pair borrows the
+     strongest idea from each — and deliberately drops the rest. What each contributed, and where it actually
+     shows up in the commands:</p>
+  <div class="panel" style="overflow-x:auto;padding:6px 14px">
+  <table>
+    <thead>
+      <tr><th>Source</th><th>Idea borrowed</th><th>How it shows up here</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="src">Nate Herk</span><br><span class="muted">session-handoff</span></td>
+        <td>Strict schema + hard rules: running state, verification commands, absolute paths, &ldquo;never invent state&rdquo;.</td>
+        <td><span class="adopted">✓</span>The fixed document template + &ldquo;Hard rules&rdquo; block: a Running-state and a Verification section, absolute paths everywhere, and &ldquo;if a section is empty, write <code>none</code> &mdash; never omit it&rdquo;.</td>
+      </tr>
+      <tr>
+        <td><span class="src">Matt Pocock</span><br><span class="muted">handoff</span></td>
+        <td>A &ldquo;suggested skills&rdquo; section, reference artifacts by path instead of duplicating them, and a secret convention.</td>
+        <td><span class="adopted">✓</span>&ldquo;Suggested skills for the next session&rdquo; + &ldquo;Reference (do NOT duplicate — link by path/URL)&rdquo; sections; secrets are referenced by location with a warn-before-write check, never auto-redacted.</td>
+      </tr>
+      <tr>
+        <td><span class="src">REMvisual</span><br><span class="muted">claude-handoff</span></td>
+        <td>Sequence chain-linking — continue one topic across many sessions.</td>
+        <td><span class="adopted">✓</span><code>{topic}_{NN}</code> numbering, a <code>Previous:</code> header, and carry-forward that keeps the newest file the complete current state.</td>
+      </tr>
+      <tr>
+        <td><span class="src">buzzwoo /park</span></td>
+        <td>File persistence — context survives <code>/clear</code> and the session ending.</td>
+        <td><span class="adopted">✓</span>Handoffs written to <code>.claude/session-handoffs/</code> per project, gitignored automatically on first run.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted" style="margin:18px 0 6px"><strong style="color:var(--ink)">Deliberately left out</strong> — kept lean and decoupled on purpose:</p>
+  <div>
+    <span class="pill">no auto-trigger / precompact hook — manual only</span>
+    <span class="pill">no commit / push — that's /end-cycle</span>
+    <span class="pill">no change to /park or /resume-bw</span>
+    <span class="pill">decoupled from buzzwoo — testable on its own</span>
+  </div>
+  <p class="note" style="display:block">The good/bad-per-tool verdicts from the original design session were not saved to any
+     file, so this table reflects only what is documented: each source's contribution and how it was adopted. The
+     &ldquo;left out&rdquo; items are this design's own scope decisions, not judgements about the source tools.</p>
+
+  <footer>
+    Design synthesizes Nate Herk (schema &amp; rules), Matt Pocock (suggested-skills, reference-don't-duplicate,
+    secret convention), REMvisual (sequence chain-linking) and buzzwoo <code>/park</code> (file persistence).
+    Full decision log: <code>plan/session-handoff-plan.md</code>.
+  </footer>
+
+</div>
+</body>
+</html>
