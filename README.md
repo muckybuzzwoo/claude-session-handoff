@@ -45,7 +45,8 @@ automatically). Run it again later on the same topic → `checkout-bug_02.md`, c
 still-open context forward so the newest file is always the complete picture.
 
 No topic given? The command shows existing topics + a branch-derived suggestion and asks
-you to confirm — so you never accidentally split one topic into two chains.
+you to confirm — so you never accidentally split one topic into two chains. Passing the
+topic directly (as above) skips that confirmation round-trip.
 
 Before it stops, the handoff runs a **closing reflection** (propose-only, never automatic):
 it surfaces any *durable* fact worth saving to Claude memory, proposes a concrete update to
@@ -127,5 +128,7 @@ to re-run.
 ## Design rationale
 
 Full decision log (12 grilled decisions) lives in `plan/session-handoff-plan.md`.
-Windows-safe throughout: no shell chaining, Write tool for files, Read+Edit for
-`.gitignore`, one `git`/`date` call at a time.
+Windows-safe throughout: Write tool for files, Read+Edit for `.gitignore`. On Windows,
+Step 1's read-only checks batch via the PowerShell tool (or fall back to one Bash call at
+a time if that's unavailable); on macOS/Linux a single chained Bash call is fine — see
+"Safety / Windows" in each command for why.

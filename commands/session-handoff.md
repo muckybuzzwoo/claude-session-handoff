@@ -3,6 +3,7 @@ description: Save the current session as a structured, resumable handoff (manual
 argument-hint: "[topic-slug] [--done]"
 allowed-tools:
   - Bash
+  - PowerShell
   - Read
   - Write
   - Edit
@@ -39,9 +40,12 @@ this stop.)
 Synthesize from THIS session only — no history audit (`git log`, `git diff HEAD~n`) and
 no broad filesystem sweep. The read-only status/branch calls below are fine:
 
-- Date: `date +%Y-%m-%d` (Bash).
-- Branch: `git rev-parse --abbrev-ref HEAD` (Bash; ignore errors if not a repo).
-- Working tree: `git status --porcelain` (Bash).
+- Date, branch, working tree: on `win32`, either three separate Bash calls —
+  `date +%Y-%m-%d`, `git rev-parse --abbrev-ref HEAD` (ignore errors if not a repo),
+  `git status --porcelain` — or one batched PowerShell call if that tool is available
+  (`Get-Date -Format yyyy-MM-dd`, `git rev-parse --abbrev-ref HEAD`, `git status
+  --porcelain`, chained with `;`). On any other platform, chain them in a single Bash
+  call: `date +%Y-%m-%d && git rev-parse --abbrev-ref HEAD && git status --porcelain`.
 - Background processes started via `run_in_background` — shell IDs + how to kill them.
 - Open TodoWrite items (in-progress / pending).
 - Files you created or modified this session (you know them — don't grep to rediscover);
@@ -224,9 +228,13 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 - No hype, no emojis. Terse and concrete: paths, commands, shell IDs, decisions.
 - Synthesize THIS session (+ carry-forward from the previous file only). No `git log`
   audit, no broad Glob sweeps.
-- Windows: write handoff files via Write (no `mkdir` needed); edit `.gitignore` via
-  Read+Edit; for the `--done` archive use single Bash `mv`/`git mv` calls; never chain
-  shell commands with `&&`, `||`, `;`; one call at a time.
+- Windows (`win32`): write handoff files via Write (no `mkdir` needed); edit `.gitignore`
+  via Read+Edit; for the `--done` archive use single Bash `mv`/`git mv` calls. Some
+  Windows setups block chained Bash calls (`&&`, `||`, `;`) even when every sub-command is
+  already approved — batch Step 1's read-only checks via the PowerShell tool instead, if
+  available, or fall back to one Bash call at a time.
+- Other platforms (macOS/Linux): no such restriction observed — a single chained Bash
+  call for Step 1's read-only checks is fine.
 
 ## Customizing
 

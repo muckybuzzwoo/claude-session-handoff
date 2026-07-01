@@ -85,7 +85,7 @@ Check 'session-resume:  source content == deployed' ($r -ne '' -and $r -eq $rL)
 Section 'C. Handoff — frontmatter'
 Check 'has description:'        ($h -match '(?m)^description:\s+\S')
 Check 'argument-hint = [topic-slug] [--done]' ($h.Contains('[topic-slug] [--done]'))
-foreach ($t in 'Bash','Read','Write','Edit','Glob','AskUserQuestion') {
+foreach ($t in 'Bash','PowerShell','Read','Write','Edit','Glob','AskUserQuestion') {
     Check "allowed-tools lists $t" ($h.Contains("- $t"))
 }
 
@@ -138,13 +138,14 @@ foreach ($s in @(
 Section 'H. Handoff — gitignore + Windows safety invariants'
 Check 'ignores .claude/session-handoffs/'        ($h.Contains('.claude/session-handoffs/'))
 Check 'warns: never ignore all of .claude/'      ($h.Contains('never all of'))
-Check 'Windows rule: never chain shell commands' ($h.Contains('never chain'))
+Check 'Windows rule: chained Bash may be blocked, batch via PowerShell or split' (
+    $h.Contains('block chained Bash calls') -and $h.Contains('PowerShell'))
 
 # =============================================================================
 Section 'I. Resume — frontmatter + read-only posture'
 Check 'has description:'        ($r -match '(?m)^description:\s+\S')
 Check 'argument-hint = [topic-slug] [--all]' ($r.Contains('[topic-slug] [--all]'))
-foreach ($t in 'Bash','Read','Glob','AskUserQuestion') {
+foreach ($t in 'Bash','PowerShell','Read','Glob','AskUserQuestion') {
     Check "allowed-tools lists $t" ($r.Contains("- $t"))
 }
 Check 'read-only: does NOT grant Write' (-not $r.Contains('- Write'))
@@ -177,6 +178,13 @@ Check 'documents the no-handoff fallback'           ($r.Contains('Fallback — n
 Check 'fallback does not re-read the memory index'  ($r.Contains('do **not** re-read'))
 Check 'fallback checks git log for recent activity' ($r.Contains('git log --oneline -10'))
 Check 'fallback points back to /session-handoff'    ($r.Contains('going forward so the next'))
+
+# =============================================================================
+Section 'M. Platform-conditional chaining (verified: not Windows-specific at the permission-engine level)'
+Check 'Handoff Step 1 is platform-aware (win32 vs macOS/Linux)' (
+    $h.Contains('win32') -and $h.Contains('Other platforms (macOS/Linux)'))
+Check 'Resume Safety/Windows is platform-aware (win32 vs macOS/Linux)' (
+    $r.Contains('win32') -and $r.Contains('Other platforms (macOS/Linux)'))
 
 # =============================================================================
 Write-Host ''

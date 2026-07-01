@@ -92,6 +92,15 @@ maintenance repo.
   topic list now reads those files + `git log`/`git status` for a short orientation
   briefing instead of a dead end. Read-only, no writes. Added static Section L (4 checks
   → **67/67**). Redeployed.
+- **2026-07-01 (later):** verified against `code.claude.com/docs/en/permissions` that the
+  "never chain, one call at a time" rule was overstated — sub-command matching for compound
+  commands is identical for Bash and PowerShell, on any platform; the actual Windows
+  specificity is host-local tooling (a PreToolUse hook) that can hard-block Bash chains
+  regardless. Made Step 1 (both commands) and Step 3 (resume) platform-conditional:
+  batch via PowerShell (added to both commands' `allowed-tools`) or split on `win32`,
+  chain freely elsewhere. Added a README note that the topic argument also skips
+  handoff's confirmation round-trip. Added static Section M (4 checks → **71/71**).
+  Redeployed.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next
@@ -103,7 +112,10 @@ maintenance repo.
 
 ## Conventions
 
-- Windows 11, no WSL: no `&&`/`||`/`;` chaining in Bash; create files via the Write tool;
-  edit `.gitignore` via Read+Edit; single `git`/`date` calls.
+- Windows 11, no WSL: create files via the Write tool; edit `.gitignore` via Read+Edit. On
+  `win32`, batch read-only checks via the PowerShell tool where available (some Windows
+  setups hard-block chained Bash calls even when every sub-command is approved) or fall
+  back to single Bash calls; on macOS/Linux a single chained Bash call is fine — see plan
+  Decision 18 for the verified reasoning.
 - Commands are **manual-only** (no auto-trigger) by design — that is a requirement, not a
   gap.

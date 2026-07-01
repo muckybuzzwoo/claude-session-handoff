@@ -3,6 +3,7 @@ description: Pick and load the right session-handoff to continue a topic in a fr
 argument-hint: "[topic-slug] [--all]"
 allowed-tools:
   - Bash
+  - PowerShell
   - Read
   - Glob
   - AskUserQuestion
@@ -87,7 +88,11 @@ doing any work.
 
 ## Safety / Windows
 
-- One `git` / `date` call at a time; never chain with `&&`, `||`, `;`.
+- Windows (`win32`): some setups block chained Bash calls (`&&`, `||`, `;`) even when
+  every sub-command is already approved. Batch Step 1's fallback and Step 3's checks via
+  the PowerShell tool instead, if available, or fall back to one Bash call at a time.
+- Other platforms (macOS/Linux): no such restriction observed — a single chained Bash
+  call for those same checks is fine.
 - Read-only here — never modify or delete handoffs. Archiving is done via
   `/session-handoff <topic> --done`.
 

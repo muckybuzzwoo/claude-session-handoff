@@ -121,6 +121,19 @@ Made after the original 12 grilled decisions:
     orientation briefing instead of a dead end, then suggests starting a real handoff.
     Read-only: never writes to `.claude/session-handoffs/` or to memory — same posture as
     the rest of resume.
+18. **Platform-conditional chaining (verified against `code.claude.com/docs/en/permissions`):**
+    the original "never chain, one call at a time" rule (Windows safety section, both
+    commands) overstated the problem — Claude Code splits compound commands into
+    sub-commands and matches each independently for **both** Bash and PowerShell, on any
+    platform; this isn't Windows-specific at the permission-engine level. What IS
+    Windows-specific here is host-local tooling (e.g. a PreToolUse hook) that can hard-block
+    chained Bash calls even when every sub-command is already approved. Fix: Step 1 (both
+    commands) and Step 3 (resume) are now platform-conditional — on `win32`, batch the
+    read-only date/branch/status checks via the PowerShell tool (not gated by that class of
+    hook) or fall back to one Bash call at a time; on macOS/Linux, a single chained Bash
+    call is fine. Added `PowerShell` to both commands' `allowed-tools`. Also added a
+    one-line doc note (README) that passing the topic argument skips the AskUserQuestion
+    round-trip — already true for resume, now stated for handoff too.
 
 ## Test strategy — automated layers (2026-06-30)
 On top of the 5 manual steps above:
