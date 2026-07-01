@@ -86,6 +86,12 @@ maintenance repo.
   and a focused behavioral sub-test `tests/behavioral/depth-recovery/` (subagent runs
   `/session-resume` against a handoff whose linked plan holds a rejected-option sentinel the
   handoff itself omits — proves resume actually opened the link). Redeployed.
+- **2026-07-01:** added a **no-handoff fallback** to `/session-resume` Step 1. Refines
+  Decision 15 ("resume does not read memory, it auto-loads each session") — that's only
+  true for the `MEMORY.md` index; the dossier files it links do not auto-load. Empty
+  topic list now reads those files + `git log`/`git status` for a short orientation
+  briefing instead of a dead end. Read-only, no writes. Added static Section L (4 checks
+  → **67/67**). Redeployed.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next

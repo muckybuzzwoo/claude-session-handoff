@@ -1,5 +1,5 @@
 ---
-description: Pick and load the right session-handoff to continue a topic in a fresh session (manual). Reads from .claude/session-handoffs/. Pairs with /session-handoff.
+description: Pick and load the right session-handoff to continue a topic in a fresh session (manual); falls back to a memory+git orientation briefing if none exist yet. Reads from .claude/session-handoffs/. Pairs with /session-handoff.
 argument-hint: "[topic-slug] [--all]"
 allowed-tools:
   - Bash
@@ -28,8 +28,24 @@ Glob `.claude/session-handoffs/done/*_*.md` and merge the results — otherwise 
 `Date` plus the first line of "What this is about". Sort topics by file mtime, most
 recent first.
 
-If none are found: tell the user there are no handoffs yet and that `/session-handoff`
-creates one. Stop.
+If none are found, run the **Fallback — no-handoff orientation** below instead of
+stopping cold.
+
+**Fallback — no-handoff orientation (memory + git briefing).** This project has no
+session-handoff yet — orient from what already exists instead of a dead end:
+
+- The Claude memory index (`MEMORY.md`) is already auto-loaded into context every
+  session — do **not** re-read it.
+- Glob `~/.claude/projects/*/memory/MEMORY.md` for the current project to confirm the
+  memory directory, then Read the individual files its index lines point to. Those are
+  NOT auto-loaded and hold the durable facts/decisions worth resurfacing.
+- Recent activity: `git log --oneline -10` and `git status --porcelain` (skip if not a
+  git repo).
+- Present a short briefing — durable facts/decisions from the memory files, recent
+  commits/changes — and suggest `/session-handoff <topic>` going forward so the next
+  resume has a real handoff to load instead of this fallback.
+- Then stop, same as Step 5. This path never writes to `.claude/session-handoffs/` or to
+  memory — read-only orientation, not a handoff substitute.
 
 ### Step 2 — Select
 
@@ -78,12 +94,13 @@ doing any work.
 ## Customizing
 
 - Store path and the 7-day staleness threshold: edit the references in Steps 1 and 3.
+- Fallback behavior: edit the "Fallback — no-handoff orientation" block in Step 1.
 
 ## Error handling
 
 | Situation | Response |
 |-----------|----------|
-| No handoffs found | Tell the user; suggest `/session-handoff`. |
+| No handoffs found | Run the no-handoff fallback (memory + git briefing), then suggest `/session-handoff`. |
 | Topic argument not found | List available topics; ask which. |
 | Not a git repository | Skip branch/staleness git checks; load anyway. |
 | `[READ-AT-RESUME]` link missing/unreadable | Note the gap; summarize from the handoff text and flag that the linked depth couldn't be loaded. |

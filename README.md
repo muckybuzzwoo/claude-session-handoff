@@ -64,6 +64,11 @@ handoff's summary), warns if it looks stale (older than 7 days / branch changed)
 single next action.
 Pass a topic to skip the picker: `/session-resume checkout-bug`.
 
+No topics yet? Instead of a dead end, it reads your Claude memory's linked dossier files
+(not the `MEMORY.md` index — that's already loaded every session) plus recent git
+activity, gives you a short orientation briefing, and points you to `/session-handoff` to
+start your first real one.
+
 ### Close a topic
 ```
 /session-handoff checkout-bug --done

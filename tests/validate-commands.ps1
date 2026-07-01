@@ -172,6 +172,13 @@ Check 'Resume preserves rejected options / no-decisions'    ($r.Contains('reject
 Check 'Resume has error-handling for missing linked file'   ($r.Contains('link missing/unreadable'))
 
 # =============================================================================
+Section 'L. Resume — no-handoff fallback (memory + git orientation, Decision 15 refinement)'
+Check 'documents the no-handoff fallback'           ($r.Contains('Fallback — no-handoff orientation'))
+Check 'fallback does not re-read the memory index'  ($r.Contains('do **not** re-read'))
+Check 'fallback checks git log for recent activity' ($r.Contains('git log --oneline -10'))
+Check 'fallback points back to /session-handoff'    ($r.Contains('going forward so the next'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))

@@ -112,6 +112,16 @@ Made after the original 12 grilled decisions:
     their depth (incl. rejected options) instead of trusting the handoff's compression. Closes
     a depth-loss gap where resume echoed only the handoff text.
 
+## Post-design additions (2026-07-01)
+
+17. **Resume no-handoff fallback (memory + git orientation):** refines Decision 15. The
+    `MEMORY.md` *index* still auto-loads every session (no change) — but the individual
+    dossier files it links do NOT auto-load. When `/session-resume` finds zero handoffs,
+    it now reads those linked memory files plus `git log`/`git status` for a short
+    orientation briefing instead of a dead end, then suggests starting a real handoff.
+    Read-only: never writes to `.claude/session-handoffs/` or to memory — same posture as
+    the rest of resume.
+
 ## Test strategy — automated layers (2026-06-30)
 On top of the 5 manual steps above:
 - **Static:** `tests/validate-commands.ps1` — 63 checks (structure, frontmatter, step
