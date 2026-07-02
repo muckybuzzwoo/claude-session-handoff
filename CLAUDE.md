@@ -101,6 +101,15 @@ maintenance repo.
   chain freely elsewhere. Added a README note that the topic argument also skips
   handoff's confirmation round-trip. Added static Section M (4 checks → **71/71**).
   Redeployed.
+- **2026-07-02:** repo made public (`github.com/muckybuzzwoo/claude-session-handoff`) —
+  checked first for secrets/personal paths in tracked files (none found; `buzzwoo` mentions
+  are non-sensitive context). Then extended Step 7a of `/session-handoff`: it now also
+  scans for *feedback*-type learnings (a correction the user gave, or an approach they
+  confirmed worked), not just project facts. If a candidate reads as a persistent rule for
+  how to work rather than a fact to recall, 7a flags it and points to `/revise-claude-md`
+  instead — `/session-handoff` never edits CLAUDE.md itself, that stays the dedicated
+  skill's job. Added a `CLAUDE.md:` confirm line (shown only when flagged) + static
+  Section N (4 checks → **75/75**). Redeployed.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next

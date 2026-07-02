@@ -49,11 +49,13 @@ you to confirm — so you never accidentally split one topic into two chains. Pa
 topic directly (as above) skips that confirmation round-trip.
 
 Before it stops, the handoff runs a **closing reflection** (propose-only, never automatic):
-it surfaces any *durable* fact worth saving to Claude memory, proposes a concrete update to
-a plan that's in play (including a superpowers `docs/superpowers/plans/…` plan), and offers
-to refresh any project doc this session left stale (a `README`, a `docs/*.md`, a
-`KNOWN_LIMITATIONS.md`). It shows each to you verbatim first; you approve each; nothing is
-written silently.
+it surfaces any *durable* fact or **feedback-type learning** (a correction you gave, or an
+approach you confirmed worked) worth saving to Claude memory — flagging rule-like learnings
+with a pointer to `/revise-claude-md` instead of writing to CLAUDE.md directly — proposes a
+concrete update to a plan that's in play (including a superpowers `docs/superpowers/plans/…`
+plan), and offers to refresh any project doc this session left stale (a `README`, a
+`docs/*.md`, a `KNOWN_LIMITATIONS.md`). It shows each to you verbatim first; you approve
+each; nothing is written silently.
 
 ### Resume
 ```

@@ -135,9 +135,20 @@ Made after the original 12 grilled decisions:
     one-line doc note (README) that passing the topic argument skips the AskUserQuestion
     round-trip — already true for resume, now stated for handoff too.
 
+## Post-design additions (2026-07-02)
+
+19. **Feedback-learning capture + CLAUDE.md hand-off (Step 7a extension):** Step 7a's memory
+    scan now also catches *feedback*-type learnings (a correction the user gave about how to
+    work, or an unusual approach they confirmed) — not just project facts. If a candidate
+    reads as a persistent rule for how to work rather than a fact to recall, 7a flags it and
+    points to `/revise-claude-md` instead of writing it as memory. `/session-handoff` never
+    edits CLAUDE.md itself — that stays the dedicated skill's job; this is a hand-off, not a
+    duplicate write path. Step 9's confirm block gained a `CLAUDE.md:` line, shown only when
+    7a actually flagged one.
+
 ## Test strategy — automated layers (2026-06-30)
 On top of the 5 manual steps above:
-- **Static:** `tests/validate-commands.ps1` — 63 checks (structure, frontmatter, step
+- **Static:** `tests/validate-commands.ps1` — 75 checks (structure, frontmatter, step
   numbering, cross-refs, source==deployed parity), mutation-verified, exit 0/1, no deps.
 - **Behavioral:** `tests/behavioral/` — subagent-driven; 3 scenarios (fresh handoff /
   carry-forward / resume) run the real commands in an isolated sandbox, then

@@ -110,18 +110,27 @@ every check: **detect → show the exact proposed content → ask → write only
 If nothing qualifies, skip silently. Rule of thumb: **handoff = what I was doing (verbs);
 memory = what stays true (nouns).**
 
-**7a — Durable facts → Claude memory.** Scan THIS session for anything *durable* — true
-beyond this one topic: a project constraint, an approach that was tried and rejected (with
-why), a user preference, an external reference (URL/ticket). Transient state — test status,
-next step, TODOs — is **not** a memory candidate; it stays in the handoff.
+**7a — Durable facts & learnings → Claude memory.** Scan THIS session for anything
+*durable* — true beyond this one topic: a project constraint, an approach that was tried
+and rejected (with why), a user preference, an external reference (URL/ticket), or a
+**feedback-type learning** (a correction the user gave about how to work, or an unusual
+approach they confirmed worked). Transient state — test status, next step, TODOs — is
+**not** a memory candidate; it stays in the handoff.
 
 - None qualify → skip silently.
-- Otherwise, for each candidate **draft the exact entry** (slug, one-line description, type,
-  body) and **show it to the user verbatim**. Ask per candidate: save / edit / skip.
+- Otherwise, for each candidate **draft the exact entry** (slug, one-line description,
+  type — `user`/`feedback`/`project`/`reference` — body) and **show it to the user
+  verbatim**. Ask per candidate: save / edit / skip.
 - On confirm: write the fact file into the project's Claude memory dir and add its one-line
   pointer to `MEMORY.md`, following the format already in use there (frontmatter + index
   line). If the project has **no** Claude memory dir, do **not** create one — just leave the
   candidate printed in your output so the user can decide later.
+- If a candidate reads as a **persistent rule for how to work** (belongs in CLAUDE.md's
+  instructions, not a fact to recall) rather than a one-off learning: save it to memory as
+  normal (type `feedback`), **and separately** append this flag to your output: "→ this
+  looks like a CLAUDE.md rule, not just a memory fact — consider running
+  `/revise-claude-md` after this handoff." The memory save and the flag are independent —
+  skipping the memory candidate does not remove the flag, and vice versa. **Never edit CLAUDE.md directly from this command.**
 
 **7b — Plan drift → plan file.** Only if a plan is in play (referenced in the handoff's
 "Reference → Plan", named in args, or worked on this session).
@@ -167,11 +176,12 @@ Handoff saved: <absolute path>
 Memory: <fact slug(s) written> | "—"
 Plan updated: <plan path> | "—"
 Docs updated: <doc path(s)> | "—"
+CLAUDE.md: suggested `/revise-claude-md` | "—"
 Resume: /session-resume {slug}  —  or read <absolute path>
 ```
 
 (Show the `Memory:` / `Plan updated:` / `Docs updated:` lines only when Step 7 actually
-wrote something.)
+wrote something. Show the `CLAUDE.md:` line only when 7a flagged a rule-like learning.)
 
 Then **STOP**.
 

@@ -187,6 +187,13 @@ Check 'Resume Safety/Windows is platform-aware (win32 vs macOS/Linux)' (
     $r.Contains('win32') -and $r.Contains('Other platforms (macOS/Linux)'))
 
 # =============================================================================
+Section 'N. Step 7a — feedback-learning capture + CLAUDE.md hand-off (never edits CLAUDE.md directly)'
+Check 'Step 7a scans for feedback-type learnings'      ($h.Contains('feedback-type learning'))
+Check 'Step 7a suggests /revise-claude-md for rules'   ($h.Contains('/revise-claude-md'))
+Check 'Step 7a never edits CLAUDE.md directly'         ($h.Contains('Never edit CLAUDE.md directly'))
+Check 'Confirm block has CLAUDE.md: line'              ($h.Contains('CLAUDE.md:'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))
