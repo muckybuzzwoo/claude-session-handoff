@@ -125,6 +125,10 @@ maintenance repo.
   Step 8 single-Bash rationale, Windows-rule consolidation (Hard rules → pointer to Step
   1), PID/port wording for background processes, extension points in both Customizing
   sections. Added static Section O (10 checks → **85/85**). Redeployed.
+- **2026-07-03 (release):** published **v0.1.0** on GitHub — tag `v0.1.0` on `b66a47a`,
+  release notes cover commands, features, test coverage, known limitations
+  (`github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.1.0`). Added
+  `CHANGELOG.md` mirroring the notes in-repo.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next
