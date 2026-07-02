@@ -1,5 +1,5 @@
 ---
-description: Save the current session as a structured, resumable handoff (manual, no auto-trigger). Writes to .claude/session-handoffs/, then stops. Resume later with /session-resume.
+description: Save the current session as a structured, resumable handoff. Run only on the user's explicit request — slash command or plain-text ask both count; you may SUGGEST a handoff when a session winds down, but never run it unasked. Writes to .claude/session-handoffs/, then stops. Resume later with /session-resume.
 argument-hint: "[topic-slug] [--done]"
 allowed-tools:
   - Bash
@@ -18,6 +18,10 @@ session can continue the **same topic** with full context — then **stop**. Per
 continuity tool: the file is local to the project and gitignored.
 
 Pick it up later with `/session-resume`.
+
+**Invocation policy:** run this only when the user asks for it — the slash command or an
+explicit plain-text request ("save a handoff") both count. When a session is clearly
+winding down you may *suggest* running it; never execute it unasked.
 
 ## Arguments
 
@@ -40,16 +44,23 @@ this stop.)
 Synthesize from THIS session only — no history audit (`git log`, `git diff HEAD~n`) and
 no broad filesystem sweep. The read-only status/branch calls below are fine:
 
-- Date, branch, working tree: on `win32`, either three separate Bash calls —
-  `date +%Y-%m-%d`, `git rev-parse --abbrev-ref HEAD` (ignore errors if not a repo),
-  `git status --porcelain` — or one batched PowerShell call if that tool is available
-  (`Get-Date -Format yyyy-MM-dd`, `git rev-parse --abbrev-ref HEAD`, `git status
-  --porcelain`, chained with `;`). On any other platform, chain them in a single Bash
-  call: `date +%Y-%m-%d && git rev-parse --abbrev-ref HEAD && git status --porcelain`.
-- Background processes started via `run_in_background` — shell IDs + how to kill them.
+- Date, branch, working tree: on `win32`, one batched PowerShell call if that tool is
+  available (`Get-Date -Format yyyy-MM-dd`, `git rev-parse --abbrev-ref HEAD`, `git status
+  --porcelain`, chained with `;`), or three separate Bash calls — some Windows setups
+  block chained Bash calls (`&&`, `||`, `;`) even when every sub-command is approved.
+  Other platforms (macOS/Linux): no such restriction observed — a single chained Bash
+  call is fine: `date +%Y-%m-%d && git rev-parse --abbrev-ref HEAD && git status
+  --porcelain`. Ignore git errors if not a repo. Keep the `--porcelain` output: it fills
+  the template's `Tree:` header field, which `/session-resume` compares for staleness.
+- Background processes started via `run_in_background` — record what outlives this
+  session: the command, PID/port, and how to kill or restart it (shell IDs alone die with
+  the session).
 - Open TodoWrite items (in-progress / pending).
 - Files you created or modified this session (you know them — don't grep to rediscover);
-  record them as **absolute paths**.
+  record them as **absolute paths**. Exception: if this session was compacted and you are
+  not certain the list is complete, cross-check it against the `git status --porcelain`
+  output you just collected and mark any remaining uncertainty explicitly in the handoff
+  — never reconstruct the list from guesswork.
 - If this session used superpowers `brainstorming` / `writing-plans`, their **committed**
   spec/plan live under `docs/superpowers/specs/` and `docs/superpowers/plans/` — you know
   them from this session, so record their absolute paths (for the Reference section and
@@ -62,6 +73,10 @@ no broad filesystem sweep. The read-only status/branch calls below are fine:
 2. List existing topics: Glob `.claude/session-handoffs/*_*.md`; derive the set of
    `{slug}` prefixes (strip the `_NN.md` suffix). Ignore the `done/` subfolder.
 3. **Topic given as argument:** slugify it (lowercase; non-alphanumeric → `-`; trim `-`).
+   If the slug matches a chain that exists **only** in `done/` (archived via `--done`),
+   do not silently start a new `_01` next to it — ask (AskUserQuestion): **un-archive**
+   (move that chain's files back out of `done/` with single `git mv`/`mv` calls, then
+   continue at its highest NN+1) or **start fresh** at `_01`.
 4. **No argument → propose + confirm** (prevents accidentally forking a chain under a
    slightly different slug). Use AskUserQuestion with options:
    - one per existing topic — label `continue: {slug}`,
@@ -108,7 +123,9 @@ do not run `mkdir`.
 The one place this command touches stores **other** than the handoff file. Same rule for
 every check: **detect → show the exact proposed content → ask → write only on confirm.**
 If nothing qualifies, skip silently. Rule of thumb: **handoff = what I was doing (verbs);
-memory = what stays true (nouns).**
+memory = what stays true (nouns).** These writes deliberately happen *after* Step 6 — the
+handoff artifact is secured first; what gets written here is recorded in Step 9's confirm
+block, not retrofitted into the handoff file.
 
 **7a — Durable facts & learnings → Claude memory.** Scan THIS session for anything
 *durable* — true beyond this one topic: a project constraint, an approach that was tried
@@ -163,7 +180,9 @@ If `--done` was passed:
 
 1. If there is session state worth recording, offer to write a final `_{NN}` handoff first (Steps 1–7).
 2. Archive the whole chain `.claude/session-handoffs/{slug}_*.md` into
-   `.claude/session-handoffs/done/`, using **single Bash calls** (one per command, never chained):
+   `.claude/session-handoffs/done/`, using **single Bash calls** (one per command, never
+   chained — deliberate even where Step 1 batches via PowerShell: these are writes, not
+   read-only checks; keep each one an individually observable call):
    - create the target dir once: `mkdir -p .claude/session-handoffs/done`
    - per file: `git mv <file> .claude/session-handoffs/done/` in a git repo, otherwise
      `mv <file> .claude/session-handoffs/done/`.
@@ -191,6 +210,7 @@ Then **STOP**.
 # Session Handoff: {Topic} (seq {NN})
 
 **Date:** {YYYY-MM-DD}  **Branch:** {branch or "—"}  **Previous:** {slug}_{NN-1}.md | "—"
+**Tree:** {`git status --porcelain` summary at handoff time, e.g. "3 dirty: src/a.ts, src/b.css, README.md" | "clean" | "—" if not a repo}
 
 ## What this is about / where it started
 {2–3 sentences}
@@ -202,7 +222,7 @@ Then **STOP**.
 - `{absolute path}` — {why}
 
 ## Running state
-- Background processes: {shell IDs + kill command} | "none"
+- Background processes: {command + PID/port + kill/restart command — shell IDs die with the session} | "none"
 - Dev servers / ports: {url + port} | "none"
 - Worktrees / branches: {paths} | "none"
 
@@ -239,17 +259,18 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 - Synthesize THIS session (+ carry-forward from the previous file only). No `git log`
   audit, no broad Glob sweeps.
 - Windows (`win32`): write handoff files via Write (no `mkdir` needed); edit `.gitignore`
-  via Read+Edit; for the `--done` archive use single Bash `mv`/`git mv` calls. Some
-  Windows setups block chained Bash calls (`&&`, `||`, `;`) even when every sub-command is
-  already approved — batch Step 1's read-only checks via the PowerShell tool instead, if
-  available, or fall back to one Bash call at a time.
-- Other platforms (macOS/Linux): no such restriction observed — a single chained Bash
-  call for Step 1's read-only checks is fine.
+  via Read+Edit; for the `--done` archive use single Bash `mv`/`git mv` calls. Platform
+  rules for batching the read-only checks live in Step 1 — stated once there, not
+  repeated here.
 
 ## Customizing
 
 - Store path: change the `.claude/session-handoffs/` references (Steps 2, 5, 6, 8) to relocate the store.
 - Handoff sections: edit the "Document template" block above.
+- Extension points: a new closing-reflection check goes in as Step 7d — copy 7a–7c's
+  shape (detect → show exact content → ask → write on confirm) and add its line to Step
+  9's confirm block. The 7a fact types (`user`/`feedback`/`project`/`reference`) mirror
+  the Claude memory taxonomy — extend them there, not here.
 
 ## Error handling
 

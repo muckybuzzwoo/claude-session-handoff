@@ -7,8 +7,12 @@ the work back up in a fresh session — same topic, full context, nothing lost.
   resumable handoff file, then stop.
 - **`/session-resume [topic] [--all]`** — choose the right handoff and continue.
 
-They are **manual only** (no auto-trigger), so they never collide with other
-skills/commands.
+They are **user-driven**: invoke them with the slash command or by asking in plain text
+("save a handoff" works just as well as `/session-handoff`). Claude may *suggest* a
+handoff when a session winds down, but never runs one unasked. (Note: since Claude Code
+merged commands into skills, command files are model-invocable by default — the
+never-unasked rule is enforced by each command's description and invocation-policy
+section, not by the file format.)
 
 ## Why these exist
 
@@ -63,7 +67,8 @@ each; nothing is written silently.
 ```
 Lists your topics (most recent first), you pick one, it loads the latest handoff and reads any
 decision/plan/spec files it links (so full roadmaps and rejected options come back, not just the
-handoff's summary), warns if it looks stale (older than 7 days / branch changed), and proposes the
+handoff's summary), warns if it looks stale (older than 7 days, branch changed, or the
+working tree moved compared to the snapshot recorded in the handoff), and proposes the
 single next action.
 Pass a topic to skip the picker: `/session-resume checkout-bug`.
 
@@ -77,7 +82,9 @@ start your first real one.
 /session-handoff checkout-bug --done
 ```
 Archives the whole chain to `.claude/session-handoffs/done/`. Archived topics are hidden
-from `/session-resume` unless you pass `--all`.
+from `/session-resume` unless you pass `--all` (they show an `(archived)` marker in the
+picker). Running `/session-handoff` on an archived topic asks whether to un-archive the
+chain or start fresh — it never silently forks a second chain next to the archive.
 
 ## Where files live
 

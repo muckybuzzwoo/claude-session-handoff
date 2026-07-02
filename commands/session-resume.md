@@ -1,5 +1,5 @@
 ---
-description: Pick and load the right session-handoff to continue a topic in a fresh session (manual); falls back to a memory+git orientation briefing if none exist yet. Reads from .claude/session-handoffs/. Pairs with /session-handoff.
+description: Pick and load the right session-handoff to continue a topic in a fresh session. Run only on the user's explicit request (slash command or plain-text ask), never proactively. Falls back to a memory+git orientation briefing if none exist yet. Reads from .claude/session-handoffs/. Pairs with /session-handoff.
 argument-hint: "[topic-slug] [--all]"
 allowed-tools:
   - Bash
@@ -25,9 +25,10 @@ fresh session. Pairs with `/session-handoff`. Read-only on the handoff store.
 
 Glob `.claude/session-handoffs/*_*.md` for active topics. If `--all` is set, **also**
 Glob `.claude/session-handoffs/done/*_*.md` and merge the results — otherwise exclude
-`done/`. Group by `{slug}`; for each topic take the highest `NN`, and read its header
-`Date` plus the first line of "What this is about". Sort topics by file mtime, most
-recent first.
+`done/`. Remember which topics came from `done/` — they must be visibly marked as
+archived in the picker. Group by `{slug}`; for each topic take the highest `NN`, and read
+its header `Date` plus the first line of "What this is about". Sort topics by file mtime,
+most recent first.
 
 If none are found, run the **Fallback — no-handoff orientation** below instead of
 stopping cold.
@@ -37,9 +38,11 @@ session-handoff yet — orient from what already exists instead of a dead end:
 
 - The Claude memory index (`MEMORY.md`) is already auto-loaded into context every
   session — do **not** re-read it.
-- Glob `~/.claude/projects/*/memory/MEMORY.md` for the current project to confirm the
-  memory directory, then Read the individual files its index lines point to. Those are
-  NOT auto-loaded and hold the durable facts/decisions worth resurfacing.
+- The memory directory's absolute path is usually announced in the system prompt's
+  memory section — use that directly. Only if it isn't announced, Glob
+  `~/.claude/projects/*/memory/MEMORY.md` and match the current project. Then Read the
+  individual files the index lines point to. Those are NOT auto-loaded and hold the
+  durable facts/decisions worth resurfacing.
 - Recent activity: `git log --oneline -10` and `git status --porcelain` (skip if not a
   git repo).
 - Present a short briefing — durable facts/decisions from the memory files, recent
@@ -52,7 +55,9 @@ session-handoff yet — orient from what already exists instead of a dead end:
 
 - **Topic argument given:** load that slug's highest sequence directly.
 - **Otherwise:** AskUserQuestion listing the grouped topics — label
-  `{slug} — seq {NN}, {date}`, the one-line summary as the description. User picks one.
+  `{slug} — seq {NN}, {date}` (append ` (archived)` for `done/` topics), the one-line
+  summary as the description. User picks one. If they pick an archived topic, mention
+  that a later `/session-handoff {slug}` will ask whether to un-archive the chain.
 
 ### Step 3 — Staleness check (non-blocking heads-up)
 
@@ -61,7 +66,11 @@ Surface a short note if ANY of these hold (never block):
 - The handoff `Date` is more than 7 days before today — run `date +%Y-%m-%d` (Bash) to
   get today and compare to the handoff header's `Date:` field.
 - Current branch (`git rev-parse --abbrev-ref HEAD`) ≠ the handoff's `Branch`.
-- The working tree has changed since (`git status --porcelain` non-empty) — best-effort.
+- The working tree has **moved since the handoff**: compare current `git status
+  --porcelain` against the handoff header's `Tree:` snapshot. A handoff typically
+  captures mid-work state, so a dirty tree alone means nothing — flag only a
+  *difference* from the recorded snapshot. No `Tree:` field in the header (older
+  handoff) → skip this check.
 
 Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now 'y') — treat state as possibly stale.`
 
@@ -100,6 +109,9 @@ doing any work.
 
 - Store path and the 7-day staleness threshold: edit the references in Steps 1 and 3.
 - Fallback behavior: edit the "Fallback — no-handoff orientation" block in Step 1.
+- Extension points: Step 4's link-following heuristic ("clearly a plan, spec, roadmap,
+  or decision record") and the fallback's data sources (memory files + git) — edit them
+  in place.
 
 ## Error handling
 

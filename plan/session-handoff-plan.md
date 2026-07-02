@@ -146,9 +146,37 @@ Made after the original 12 grilled decisions:
     duplicate write path. Step 9's confirm block gained a `CLAUDE.md:` line, shown only when
     7a actually flagged one.
 
+## Post-design additions (2026-07-03)
+
+20. **Invocation-policy correction (Decision 1 was overstated):** "no auto-trigger,
+    structurally guaranteed" is false since Claude Code merged commands into skills —
+    command files are model-invocable via the Skill tool by default (user-confirmed from
+    experience: plain-text asks already trigger them; docs: code.claude.com/docs/en/skills,
+    "By default, Claude can invoke any skill that doesn't have `disable-model-invocation:
+    true`"). Deliberately NOT locked down: per user decision the desired policy is
+    **explicit request runs it** (slash or plain text), **Claude may *suggest* a handoff
+    at session end, but never executes unasked**. Encoded in both frontmatter
+    descriptions + an "Invocation policy" section in the handoff body; README, CLAUDE.md
+    and lifecycle.html corrected. `disable-model-invocation: true` was considered and
+    rejected — it would also kill the wanted plain-text invocation.
+21. **2026-07-03 review fixes:** (a) staleness trigger 3 measured "dirty now", not
+    "moved since" — a systematic false positive because handoffs typically capture
+    mid-work state; the handoff header now records a `Tree:` porcelain snapshot and
+    resume compares against it (no `Tree:` field → skip, keeps old handoffs and the
+    depth-recovery fixture working). (b) Compaction cross-check in handoff Step 1: when
+    unsure of the touched-file list, verify against the collected porcelain and mark
+    uncertainty instead of reconstructing. (c) Archived-chain fork guard: handoff Step 2
+    asks un-archive vs. fresh when the slug exists only in `done/`; resume `--all` picker
+    marks `(archived)`. (d) Minor: Step-7-after-Step-6 ordering made explicit (artifact
+    secured first), Step 8's unconditional single-Bash rule got its rationale (writes,
+    not read-only checks), Windows platform rules consolidated into Step 1 (Hard rules
+    point there), background-process capture reworded to PID/port/kill (shell IDs die
+    with the session), extension points documented in both Customizing sections.
+    Static Section O (10 checks → 85 total).
+
 ## Test strategy — automated layers (2026-06-30)
 On top of the 5 manual steps above:
-- **Static:** `tests/validate-commands.ps1` — 75 checks (structure, frontmatter, step
+- **Static:** `tests/validate-commands.ps1` — 85 checks (structure, frontmatter, step
   numbering, cross-refs, source==deployed parity), mutation-verified, exit 0/1, no deps.
 - **Behavioral:** `tests/behavioral/` — subagent-driven; 3 scenarios (fresh handoff /
   carry-forward / resume) run the real commands in an isolated sandbox, then

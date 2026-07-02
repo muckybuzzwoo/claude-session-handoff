@@ -110,6 +110,21 @@ maintenance repo.
   instead — `/session-handoff` never edits CLAUDE.md itself, that stays the dedicated
   skill's job. Added a `CLAUDE.md:` confirm line (shown only when flagged) + static
   Section N (4 checks → **75/75**). Redeployed.
+- **2026-07-03 (critical re-review + fixes):** full design + clara re-review (handoff B
+  50/60, resume A 54/60; no contradictions/ordering defects found). Fixes applied:
+  (a) **invocation policy corrected** — since the commands→skills merge, command files are
+  model-invocable by default, so "manual-only, structurally guaranteed" (Decision 1) was
+  wrong; new policy per user decision: explicit request (slash OR plain text) runs it,
+  Claude may *suggest* a handoff at session end, never executes unasked — encoded in both
+  descriptions + an "Invocation policy" section; (b) **staleness tree check fixed** — the
+  handoff header now records a `Tree:` porcelain snapshot and resume compares against it
+  (dirty-now alone was a systematic false positive), skipping older handoffs without the
+  field; (c) **archived-chain fork guard** — handoff Step 2 asks un-archive vs. fresh when
+  the slug exists only in `done/`; resume marks `(archived)` in the `--all` picker;
+  (d) smaller: compaction cross-check in Step 1, Step-7-after-Step-6 ordering rationale,
+  Step 8 single-Bash rationale, Windows-rule consolidation (Hard rules → pointer to Step
+  1), PID/port wording for background processes, extension points in both Customizing
+  sections. Added static Section O (10 checks → **85/85**). Redeployed.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next
@@ -126,5 +141,8 @@ maintenance repo.
   setups hard-block chained Bash calls even when every sub-command is approved) or fall
   back to single Bash calls; on macOS/Linux a single chained Bash call is fine — see plan
   Decision 18 for the verified reasoning.
-- Commands are **manual-only** (no auto-trigger) by design — that is a requirement, not a
-  gap.
+- Commands are **user-driven** by design: explicit request (slash command or plain-text
+  ask) runs them; Claude may *suggest* a handoff when a session winds down but never
+  executes one unasked. Since the commands→skills merge they are model-invocable at the
+  harness level — the never-unasked rule lives in each command's description and
+  "Invocation policy" section, not in the file format (see plan addition 20).

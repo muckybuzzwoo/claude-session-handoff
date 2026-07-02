@@ -194,6 +194,23 @@ Check 'Step 7a never edits CLAUDE.md directly'         ($h.Contains('Never edit 
 Check 'Confirm block has CLAUDE.md: line'              ($h.Contains('CLAUDE.md:'))
 
 # =============================================================================
+Section 'O. 2026-07-03 review fixes (invocation policy, tree snapshot, archive guard)'
+# Invocation policy: explicit request only; suggest ok, never run unasked.
+Check 'Handoff description: never run unasked'       ($h.Contains('never run it unasked'))
+Check 'Handoff body states the invocation policy'    ($h.Contains('Invocation policy'))
+Check 'Resume description: never proactively'        ($r.Contains('never proactively'))
+# Tree snapshot: handoff records it, resume compares against it (not "dirty now").
+Check 'Handoff template header has Tree: field'      ($h.Contains('**Tree:**'))
+Check 'Handoff Step 1 keeps porcelain for Tree:'     ($h.Contains('fills') -and $h.Contains('`Tree:` header field'))
+Check 'Resume staleness compares the Tree: snapshot' ($r.Contains('`Tree:` snapshot'))
+Check 'Resume skips tree check on older handoffs'    ($r.Contains('older') -and $r.Contains('skip this check'))
+# Compaction-uncertainty cross-check in Step 1.
+Check 'Handoff Step 1 has compaction cross-check'    ($h.Contains('compacted'))
+# Archived-chain fork guard (handoff Step 2 + resume picker marking).
+Check 'Handoff Step 2 guards archived chains (un-archive vs fresh)' ($h.Contains('un-archive'))
+Check 'Resume picker marks archived topics'          ($r.Contains('(archived)'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))
