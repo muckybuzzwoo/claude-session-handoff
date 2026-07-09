@@ -107,7 +107,7 @@ run. Only that path is ignored; your committed `.claude/plans/` are untouched.
 ```
 
 They live in the **pause/resume** middle of a task — they do not replace planning
-(`/new-cycle`) or finishing (`/end-cycle`). See `lifecycle.html` for the visual.
+(`/new-cycle`) or finishing (`/end-cycle`). See `docs/how-it-works.html` for the visual.
 
 ## Testing
 

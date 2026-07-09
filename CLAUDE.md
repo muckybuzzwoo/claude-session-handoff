@@ -17,7 +17,8 @@ location — see Deploy below.
 session-handoff-command/
 ├── CLAUDE.md                     # this file
 ├── README.md                     # user-facing documentation (English)
-├── lifecycle.html                # visual: where the commands sit + how they work
+├── docs/                         # visual explainer (open in a browser)
+│   └── how-it-works.html         #   how it works + under-the-hood (tabbed)
 ├── commands/                     # CANONICAL command sources — edit HERE
 │   ├── session-handoff.md
 │   └── session-resume.md
