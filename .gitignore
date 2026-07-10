@@ -1,5 +1,8 @@
 # Dogfooding session-handoff working notes — local only, not part of the package
 .claude/session-handoffs/
 
+# Idea/briefing drop-off from other projects — local only, not part of the package
+docs/ideas/
+
 # Throwaway behavioral-test sandboxes (each contains an embedded git repo + captured output)
 .sandbox/
