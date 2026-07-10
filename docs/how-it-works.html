@@ -211,7 +211,9 @@
           <ol>
             <li>Scan the store, group by topic, newest first (skip <code>done/</code> unless <code>--all</code>).</li>
             <li>Pick a topic (or pass one to load it directly).</li>
-            <li>Staleness heads-up — &gt; 7 days old, branch changed, or working tree moved.</li>
+            <li>Staleness heads-up — &gt; 7 days old, git branch changed, or the working tree
+                moved since the save (current <code>git status</code> compared against the
+                snapshot stored in the handoff).</li>
             <li>Load the latest file, <strong>follow its plan / spec links</strong>, and summarize:
                 where it left off + key files + running state + the full decisions and rejected options.</li>
             <li>Propose the single next action — but <strong>do not auto-implement</strong>.</li>
@@ -369,6 +371,13 @@
       <p>Files are written with the editor's file tools rather than shell tricks, and the read-only
          checks batch through PowerShell where a plain chained shell command would trip up. Nothing
          about the commands assumes macOS or Linux.</p>
+
+      <h2>Git: read and compare, never commit</h2>
+      <p>Saving records the current git branch and a <code>git status</code> snapshot in the handoff
+         header; resuming runs the same read-only checks again and compares — that's where the
+         staleness note comes from. Neither command ever commits or pushes (that stays with
+         <code>/end-cycle</code>); the only git writes are the one-time <code>.gitignore</code> entry
+         and the <code>git mv</code> that archives a finished topic.</p>
 
       <h2>Tested, not just written</h2>
       <p>Both commands ship with two layers of tests so changes don't quietly break them:</p>
