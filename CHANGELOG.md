@@ -3,7 +3,9 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [Unreleased]
+## [0.2.0] — 2026-07-29
+
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.2.0).
 
 ### Changed — token-aware loading (keeps resume cheap on large projects)
 
