@@ -231,6 +231,20 @@ Check 'Resume reads old bare-tag format (backward-compat)'  ($r.Contains('old ha
 Check 'Resume no longer blind-loads untagged plan-like files' ($r.Contains('do not full-load them'))
 
 # =============================================================================
+Section 'Q. Addendum 8e (real-test process findings: after-handoff reminder, cross-chain pointer, memory reconcile)'
+# 1 — after-handoff activity is invisible: fixed reminder in the confirm block
+Check 'Handoff confirm block warns work-after-handoff is invisible' ($h.Contains('invisible to the next resume'))
+Check 'Handoff states the reminder is fixed (always printed)'       ($h.Contains('closing `Note:` is **fixed**'))
+# 2 — cross-chain pointer (handoff writes it, resume surfaces it, neither loads the foreign project)
+Check 'Handoff template has Continue first in: pointer field'       ($h.Contains('Continue first in:'))
+Check 'Handoff hard-rule defines the cross-chain pointer'           ($h.Contains('Cross-chain pointer') -and $h.Contains('pointer only'))
+Check 'Resume surfaces the Continue first in: pointer'              ($r.Contains('Continue first in:'))
+Check 'Resume prints the pointer only, never loads the other repo'  ($r.Contains('never open or load'))
+# 3 — memory-index reconciliation on resume (no extra load; names both, resolves nothing silently)
+Check 'Resume reconciles briefing against the memory index'         ($r.Contains('Reconcile against the memory index'))
+Check 'Resume names BOTH states, does not silently pick one'        ($r.Contains('name BOTH states') -and $r.Contains('Do not silently pick one'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))

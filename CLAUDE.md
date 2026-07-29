@@ -146,7 +146,24 @@ maintenance repo.
   Redeployed. Behavioral coverage added: new sub-test `tests/behavioral/load-discipline/`
   (21/21 — proves anchor loads only its section + untagged big file not read whole) and the
   `depth-recovery` regression (15/15 — bare tag still dereferenced) both green.
-- NOT yet runtime-tested in a real project (sandbox-tested only).
+- **2026-07-29 (8e — first real-project resume + process fixes):** ran the first live
+  `/session-resume` with the v0.2.0 commands (APEX, old-format handoff). The token-aware
+  **loading validated in the real world** — byte-check caught a 98 KB backlog behind a bare
+  tag → headings + two targeted section reads (~7k vs ~24.5k), untagged links correctly not
+  loaded, old format fine, ~55k avoided. So the resume *loading* path needs no change and was
+  left untouched (Marcus: don't touch it — it worked). Three gaps surfaced *beside* the
+  loading (briefing addendum 8e), all shipped: (1) **after-handoff reminder** — fixed `Note:`
+  in handoff Step 9 confirm block (work after the write is invisible to the next resume; the
+  detect-at-session-end + in-place-update variants were rejected — a command can't self-trigger
+  at session end, and in-place update breaks the immutable-snapshot model the staleness check
+  relies on); (2) **cross-chain pointer** — optional `Continue first in: <chain> @ <path>` line
+  in "→ Pick up here", resume surfaces it at the top, print-only, never loads the foreign repo;
+  (3) **memory-index reconciliation** — resume Step 4 compares the briefing against auto-loaded
+  `MEMORY.md`, names both states on contradiction, resolves nothing silently, adds no load.
+  The 8e **marginal note** (loosen the untagged-plan-like-link offer rule) was **dropped** — it
+  is load discipline (fenced off) and the observed deviation was harmless. Added static
+  **Section Q** (8 checks → **107/107**); no new behavioral test (small additive text, static
+  coverage proportionate). Redeployed. **Released v0.3.0.**
 
 ## Next
 

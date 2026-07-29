@@ -225,11 +225,16 @@ Docs updated: <doc path(s)> | "—"
 Split proposed: <file → archive> | "—"
 CLAUDE.md: suggested `/revise-claude-md` | "—"
 Resume: /session-resume {slug}  —  or read <absolute path>
+
+Note: anything you do after this handoff is invisible to the next resume — run
+/session-handoff again if you keep working on this topic.
 ```
 
 (Show the `Memory:` / `Plan updated:` / `Docs updated:` / `Split proposed:` lines only when
 Step 7 actually did something. Show the `CLAUDE.md:` line only when 7a flagged a rule-like
-learning.)
+learning. The closing `Note:` is **fixed** — always print it. Handoffs are point-in-time
+snapshots; work done after this write does not travel to the next resume unless you run the
+command again, which the append-only chain records as the next `_{NN}`.)
 
 Then **STOP**.
 
@@ -269,6 +274,7 @@ Then **STOP**.
 - Plan: `{path}` [READ-AT-RESUME] (or `[READ-AT-RESUME: <heading>]` for one section, or a plain lazy link when the essence above already covers it) (e.g. `docs/superpowers/plans/…`) · Spec/PRD: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/specs/…`) · MR/issue: {url}
 
 ## → Pick up here
+{Continue first in: <chain/topic> @ <absolute project path> — include this line ONLY when the very next step actually lives in ANOTHER handoff chain or repo; omit it entirely otherwise}
 {exactly one next action}
 
 ---
@@ -305,6 +311,13 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
   faithfully into the handoff, keep the full `[READ-AT-RESUME]` tag — never shrink when
   unsure (a false shrink costs one extra load; the tree stays intact).
 - Absolute paths everywhere (the next session may have a different cwd).
+- **Cross-chain pointer** (optional line in "→ Pick up here"): a `/session-resume {slug}`
+  only ever sees *this* project's chains. When the genuinely next step continues in a
+  **different** handoff chain or repo, add a `Continue first in: <chain> @ <absolute
+  project path>` line so the pointer isn't lost. It is a **pointer only** — the next
+  resume prints it, it never opens or loads the other project. Omit the line entirely when
+  the next step stays in this same chain (do not emit a placeholder — this is the one
+  optional line, not a section).
 - Never invent state — if a section has nothing, write "none"; never omit a section.
 - No hype, no emojis. Terse and concrete: paths, commands, shell IDs, decisions.
 - Synthesize THIS session (+ carry-forward from the previous file only). No `git log`

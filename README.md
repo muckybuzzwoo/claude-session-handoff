@@ -59,7 +59,9 @@ with a pointer to `/revise-claude-md` instead of writing to CLAUDE.md directly �
 concrete update to a plan that's in play (including a superpowers `docs/superpowers/plans/…`
 plan), and offers to refresh any project doc this session left stale (a `README`, a
 `docs/*.md`, a `KNOWN_LIMITATIONS.md`). It shows each to you verbatim first; you approve
-each; nothing is written silently.
+each; nothing is written silently. On finishing it always reminds you that **anything you
+do after the handoff is invisible to the next resume** — run it again to capture continued
+work as the next `_NN`.
 
 ### Resume
 ```
@@ -80,6 +82,12 @@ essence written into the handoff itself and are linked lazily — and if a large
 finished sections piling up, the handoff can offer to archive them into a `-DONE.md` sibling
 (you confirm; nothing is deleted, open to-dos never move). Old handoffs written before this
 still resume fine — no migration needed.
+
+It also **cross-checks the briefing against your Claude memory index** and flags any
+contradiction (a handoff is a point-in-time snapshot; memory may hold a newer truth) —
+naming both, resolving neither silently. And if the handoff recorded that the next step
+continues in **another** chain or repo (a `Continue first in:` pointer), resume surfaces
+that at the top — it prints the pointer, it never opens the other project.
 
 No topics yet? Instead of a dead end, it reads your Claude memory's linked dossier files
 (not the `MEMORY.md` index — that's already loaded every session) plus recent git
@@ -122,7 +130,7 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (99 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (107 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →

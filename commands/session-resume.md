@@ -103,7 +103,19 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
    and roadmap — and **explicitly list rejected options / deliberate no-decisions**; do
    not compress those away. For anything you did not fully load, point to the exact file +
    section (and the skeleton you printed) rather than dropping it.
-4. Present the next action as a **suggestion**.
+   - If the handoff carries a **`Continue first in:` cross-chain pointer**, surface it
+     prominently at the **TOP** of the briefing, before your own next-action suggestion —
+     the real next step lives in another chain/repo. **Print it only; never open or load
+     that other project or chain** (that would be a separate, explicit `/session-resume`
+     the user runs there).
+4. **Reconcile against the memory index.** If a Claude memory index (`MEMORY.md`) is
+   already in context (it auto-loads each session), compare your briefing against it. On
+   any contradiction between memory and the handoff — a next step, status, or decision
+   that differs — **name BOTH states** with their dates, flag the contradiction, and note
+   the newer as the likelier truth (a handoff reflects only its write time; memory may be
+   newer or older). **Do not silently pick one** — surface both and let the user resolve.
+   Costs nothing (the index is already in context). No memory index present → skip.
+5. Present the next action as a **suggestion**.
 
 ### Step 5 — Do not auto-implement
 

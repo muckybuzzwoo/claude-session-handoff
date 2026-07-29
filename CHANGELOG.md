@@ -3,6 +3,37 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.3.0] — 2026-07-29
+
+First real-project `/session-resume` run (addendum 8e) confirmed the token-aware **loading**
+works as designed (~55k avoided on a 98 KB backlog behind a bare tag). The three fixes here
+close gaps found *beside* the loading path — in the handoff content and the resume's
+consistency check, not in what gets loaded.
+
+### Added
+
+- **After-handoff reminder (handoff Step 9).** The confirm block now always closes with a
+  fixed note: anything done *after* the handoff is invisible to the next resume — run the
+  command again to capture it as the next `_NN`. A handoff is a point-in-time snapshot; this
+  makes that explicit at the moment it matters.
+- **Cross-chain pointer (handoff + resume).** The "→ Pick up here" block gains an optional
+  `Continue first in: <chain> @ <absolute project path>` line for when the genuinely next
+  step lives in another handoff chain or repo. Resume surfaces it at the top of the briefing
+  — it prints the pointer only, it never opens or loads the other project.
+- **Memory-index reconciliation (resume Step 4).** Resume now compares its briefing against
+  the auto-loaded `MEMORY.md` and flags any contradiction (a handoff reflects only its write
+  time; memory may be newer). It names both states and resolves neither silently. Costs no
+  extra load — the index is already in context.
+
+### Notes
+
+- The load discipline itself is unchanged — it validated in the real test, so it was left
+  alone (including the untagged-plan-like-link offer rule).
+
+### Tests
+
+- Static suite grew to **107 checks** (new Section Q for the three 8e findings).
+
 ## [0.2.0] — 2026-07-29
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.2.0).
