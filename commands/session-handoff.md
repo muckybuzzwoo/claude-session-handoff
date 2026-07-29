@@ -33,9 +33,9 @@ winding down you may *suggest* running it; never execute it unasked.
 
 After writing, you are finished. Do **not** implement, explore code, say
 "while we're here…", or suggest next steps beyond the handoff's own "→ Pick up here".
-(The closing reflection in Step 7 — surfacing memory facts, plan updates, and stale-doc
-updates — is part of *capturing* the session, not continuing the work; it does not breach
-this stop.)
+(The closing reflection in Step 7 — surfacing memory facts, plan updates, stale-doc
+updates, and an optional large-file archive-split — is part of *capturing* the session,
+not continuing the work; it does not breach this stop.)
 
 ## Workflow
 
@@ -174,6 +174,33 @@ source code, plans (7b owns those), specs (reference-only), and memory (7a owns 
 - On confirm: Edit the doc surgically, matching its existing style — never rewrite
   wholesale.
 
+**7d — Large-file archive-split → project file (propose-only, opt-in).** The one
+reflection check that edits a real *project* file, so the bar is high. Fires only when the
+link ladder (Hard rules) hit case **(c)** — a large file (`bytes/4` above roughly 15k)
+the next session needs whole — AND you are **confident** it holds substantial *finished*
+sections that no longer drive open work. That confidence is format-dependent judgement you
+can only make from having worked in this project this session; a blind rule can't. When
+unsure → skip and inline the essence instead. A false split costs trust; a skipped one
+costs only tokens — so bias hard toward skipping.
+
+- Detect → propose the **exact** split (which sections move, target archive filename) →
+  show it → ask: apply / skip. Never split unasked.
+- Invariants when you do split (all mandatory):
+  - **Nothing is deleted — sections move verbatim** into a sibling archive file
+    (convention `<name>-DONE.md`, or match an archive file the project already uses).
+  - **Open to-dos / ideas / open questions are NEVER archived.** The active file must keep
+    the full forward view; only finished, non-binding history moves. (Living docs can
+    re-grow through their *open* items — a split won't fix that, and must not try by
+    archiving anything still open.)
+  - The archive file gets a short header: where it came from, why, and "on conflict the
+    active file wins". The active file keeps a **plain** link to the archive — never
+    `[READ-AT-RESUME]` (lazy on purpose).
+  - Respect project sync rules (e.g. MD+HTML twins move together — you know these from this
+    session; a blind rule would not).
+  - Do the split in its **own commit** so it is trivially revertible. Do not push.
+- Skipped or declined → the file stays whole; the essence you inlined under Hard-rules
+  (a)/(c) already carries the next session, so nothing is lost.
+
 ### Step 8 — `--done` handling
 
 If `--done` was passed:
@@ -195,12 +222,14 @@ Handoff saved: <absolute path>
 Memory: <fact slug(s) written> | "—"
 Plan updated: <plan path> | "—"
 Docs updated: <doc path(s)> | "—"
+Split proposed: <file → archive> | "—"
 CLAUDE.md: suggested `/revise-claude-md` | "—"
 Resume: /session-resume {slug}  —  or read <absolute path>
 ```
 
-(Show the `Memory:` / `Plan updated:` / `Docs updated:` lines only when Step 7 actually
-wrote something. Show the `CLAUDE.md:` line only when 7a flagged a rule-like learning.)
+(Show the `Memory:` / `Plan updated:` / `Docs updated:` / `Split proposed:` lines only when
+Step 7 actually did something. Show the `CLAUDE.md:` line only when 7a flagged a rule-like
+learning.)
 
 Then **STOP**.
 
@@ -236,8 +265,8 @@ Then **STOP**.
 - Deferred: {item} — {why}
 - Open: {question} — {context}
 
-## Reference (do NOT duplicate — link by path/URL; tag substantial targets)
-- Plan: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/plans/…`) · Spec/PRD: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/specs/…`) · MR/issue: {url}
+## Reference (do NOT duplicate — inline the essence above; link by path/URL; tag per the Hard-rules ladder)
+- Plan: `{path}` [READ-AT-RESUME] (or `[READ-AT-RESUME: <heading>]` for one section, or a plain lazy link when the essence above already covers it) (e.g. `docs/superpowers/plans/…`) · Spec/PRD: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/specs/…`) · MR/issue: {url}
 
 ## → Pick up here
 {exactly one next action}
@@ -248,11 +277,33 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 
 ## Hard rules
 
-- `[READ-AT-RESUME]` tag: append it to any Reference- or Key-files link whose target holds
-  the FULL decision record, roadmap, rejected options, or spec — NOT just a pointer. It
-  signals `/session-resume` to open that file and fold its substance (rejected options
-  included) into the summary instead of trusting this handoff's compression. Omit it for
-  shallow pointers (MR/issue URL, a file that merely needs opening later).
+- `[READ-AT-RESUME]` tag: controls what `/session-resume` auto-loads — the single biggest
+  driver of resume token cost. Before tagging any substantial Reference- or Key-files link,
+  measure the target's **size in bytes** (`bytes/4` ~ tokens — robust and format-neutral;
+  line count lies: a 220-line file can be ~39k tokens if its lines are long) and walk this
+  ladder **per link**, cheapest first. All of this happens at write time, where this
+  session already has the files in context — it costs a size-stat and a little judgement,
+  not content loads:
+  - **(a) Redundancy — is the essence already in this handoff?** If you already wrote the
+    file's decision-relevant substance into this handoff (Decisions / Deferred /
+    Pick-up-here), do **NOT** tag it — a plain lazy link suffices. This is empirically the
+    most frequent win: re-loading a file whose essence the handoff already carries is pure
+    waste.
+  - **(b) Is only one section needed?** Tag it with a **section anchor**:
+    `[READ-AT-RESUME: <exact heading text>]`. Resume greps that heading and reads only that
+    section, not the whole file. Use for large living docs where one part is relevant.
+  - **(c) Is the whole file needed AND large (`bytes/4` above roughly 15k)?** Don't
+    blind-tag it. Inline its short essence here (checklist below) + a plain lazy link; and
+    if the file holds substantial *finished* sections, offer an archive-split (Step 7d).
+    Unsure whether a split is safe → do **not** split; inline the essence and lazy-link
+    (the harmless step).
+  - **(d) Otherwise** (a small file whose full body the next session truly needs) → a plain
+    `[READ-AT-RESUME]` tag. Omit any tag for shallow pointers (MR/issue URL, a file that
+    merely needs opening later).
+  Essence must-contain checklist (when inlining under (a)/(c)): goal · open work packages ·
+  still-binding decisions + constraints · rejected options / no-gos. If you cannot fit that
+  faithfully into the handoff, keep the full `[READ-AT-RESUME]` tag — never shrink when
+  unsure (a false shrink costs one extra load; the tree stays intact).
 - Absolute paths everywhere (the next session may have a different cwd).
 - Never invent state — if a section has nothing, write "none"; never omit a section.
 - No hype, no emojis. Terse and concrete: paths, commands, shell IDs, decisions.
@@ -267,7 +318,7 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 
 - Store path: change the `.claude/session-handoffs/` references (Steps 2, 5, 6, 8) to relocate the store.
 - Handoff sections: edit the "Document template" block above.
-- Extension points: a new closing-reflection check goes in as Step 7d — copy 7a–7c's
+- Extension points: a new closing-reflection check goes in as Step 7e — copy 7a–7d's
   shape (detect → show exact content → ask → write on confirm) and add its line to Step
   9's confirm block. The 7a fact types (`user`/`feedback`/`project`/`reference`) mirror
   the Claude memory taxonomy — extend them there, not here.

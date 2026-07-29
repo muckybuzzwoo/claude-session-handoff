@@ -130,6 +130,22 @@ maintenance repo.
   release notes cover commands, features, test coverage, known limitations
   (`github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.1.0`). Added
   `CHANGELOG.md` mirroring the notes in-repo.
+- **2026-07-29 (token-optimization rebuild):** implemented the plan
+  `plan/token-optimization-plan.md` (addendum 8d from the local briefing). Handoff now
+  classifies each Reference/Key-files link at write time by **byte size** (`bytes/4` ~
+  tokens, not line count): (a) essence already in the handoff → plain lazy link, no tag;
+  (b) only one section needed → section anchor `[READ-AT-RESUME: <heading>]`; (c) big whole
+  file → inline essence + offer an archive-split; (d) else a plain `[READ-AT-RESUME]` tag.
+  New **Step 7d** = propose-only, opt-in archive-split of finished sections (Marcus decision:
+  suggestion-only, no per-project persist mechanic; invariants — nothing deleted / verbatim
+  move / open items never archived / plain archive link / own commit). Resume Step 4:
+  anchors → targeted section read; bare tags load with a **big-file safeguard**; untagged
+  plan-like links are peeked + offered, never blind-loaded. **Backward-compatible:**
+  old-format handoffs (bare `[READ-AT-RESUME]`) read unchanged, no migration — existing
+  chains of any length keep working. Added static **Section P** (14 checks → **99/99**).
+  Redeployed. Behavioral coverage added: new sub-test `tests/behavioral/load-discipline/`
+  (21/21 — proves anchor loads only its section + untagged big file not read whole) and the
+  `depth-recovery` regression (15/15 — bare tag still dereferenced) both green.
 - NOT yet runtime-tested in a real project (sandbox-tested only).
 
 ## Next

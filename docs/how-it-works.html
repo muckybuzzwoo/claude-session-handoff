@@ -200,7 +200,9 @@
             <li>Carry-forward from the previous handoff so the newest file is the complete current state.</li>
             <li>Warn on any secret pattern (reference creds by path, never values).</li>
             <li>Ensure <code>.claude/session-handoffs/</code> is in <code>.gitignore</code> (once).</li>
-            <li>Write <code>{topic}_{NN}.md</code>.</li>
+            <li>Write <code>{topic}_{NN}.md</code> — for a <em>big</em> linked file, write its short
+                essence into the handoff and link the file lazily (so the next resume stays cheap),
+                or tag just the one section that matters.</li>
             <li><strong>Closing reflection</strong> (propose-only): surface durable facts worth saving to
                 memory, plan drift, or a stale doc — show, ask, write only on confirm.</li>
             <li>Confirm + <strong>hard stop</strong>.</li>
@@ -214,8 +216,12 @@
             <li>Staleness heads-up — &gt; 7 days old, git branch changed, or the working tree
                 moved since the save (current <code>git status</code> compared against the
                 snapshot stored in the handoff).</li>
-            <li>Load the latest file, <strong>follow its plan / spec links</strong>, and summarize:
-                where it left off + key files + running state + the full decisions and rejected options.</li>
+            <li>Load the latest file and <strong>follow its links, but only load what's needed</strong>:
+                a link tagged to one heading pulls just that section; a plain link to a big file is
+                <em>not</em> slurped in — you get its table of contents and an offer to open it; a
+                fully-tagged file is read whole. Then summarize: where it left off + key files +
+                running state + the full decisions and rejected options. (This is what keeps a resume
+                cheap — big linked files no longer cost tokens on every resume.)</li>
             <li>Propose the single next action — but <strong>do not auto-implement</strong>.</li>
           </ol>
         </div>
@@ -386,7 +392,9 @@
             numbering, and that the deployed copy matches the source.</li>
         <li><b>Behavioural checks</b> — Claude runs the commands for real in a throwaway sandbox
             (save → carry a topic forward → resume), then a script inspects the files they produced to
-            confirm they behaved: propose-only, read-only on resume, correct chaining.</li>
+            confirm they behaved: propose-only, read-only on resume, correct chaining, and that resume
+            loads only what's needed (a section-anchored link pulls just that section; an untagged big
+            file is not read whole).</li>
       </ul>
       <p class="muted" style="font-size:13px">The full decision log and test details live in the repo
          (<code>plan/</code> and <code>tests/</code>) — this page is just the overview.</p>

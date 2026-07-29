@@ -211,6 +211,26 @@ Check 'Handoff Step 2 guards archived chains (un-archive vs fresh)' ($h.Contains
 Check 'Resume picker marks archived topics'          ($r.Contains('(archived)'))
 
 # =============================================================================
+Section 'P. Token-optimization rebuild (addendum 8d: byte size, redundancy, section anchors, archive-split)'
+# Handoff — link-classification ladder + byte-size trigger
+Check 'Handoff measures size in bytes, not lines'            ($h.Contains('bytes/4'))
+Check 'Handoff (a) redundancy check (essence already inlined -> no tag)' ($h.Contains('Redundancy'))
+Check 'Handoff (b) section-anchor tag [READ-AT-RESUME: <heading>]' ($h.Contains('[READ-AT-RESUME: <'))
+Check 'Handoff has essence must-contain checklist'          ($h.Contains('must-contain'))
+# Handoff — Step 7d archive-split (propose-only, opt-in) + invariants
+Check 'Handoff Step 7d = archive-split (propose-only)'       ($h.Contains('**7d'))
+Check 'Split invariant: nothing deleted, sections move verbatim' ($h.Contains('move verbatim'))
+Check 'Split invariant: open items NEVER archived'          ($h.Contains('NEVER archived'))
+Check 'Split invariant: own commit, revertible'             ($h.Contains('own commit'))
+Check 'Confirm block has Split proposed: line'              ($h.Contains('Split proposed:'))
+# Resume — targeted load + big-file safeguard + backward-compat
+Check 'Resume resolves section-anchor tags'                 ($r.Contains('[READ-AT-RESUME: <'))
+Check 'Resume measures target size in bytes'                ($r.Contains('bytes/4'))
+Check 'Resume big-file safeguard (no blind full-load)'      ($r.Contains('swallow the whole file'))
+Check 'Resume reads old bare-tag format (backward-compat)'  ($r.Contains('old handoff format'))
+Check 'Resume no longer blind-loads untagged plan-like files' ($r.Contains('do not full-load them'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))

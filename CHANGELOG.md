@@ -3,6 +3,37 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [Unreleased]
+
+### Changed — token-aware loading (keeps resume cheap on large projects)
+
+Motivated by real measurements in another project where a single `/session-resume` cost
+~40–97k tokens, almost all of it one or two large files that were re-read in full every time.
+
+- **Handoff now classifies each linked file by size (in bytes, not lines) at save time** and
+  picks the cheapest option: if the handoff already carries the file's essence → a plain lazy
+  link, no auto-load tag; if only one section matters → a section anchor
+  `[READ-AT-RESUME: <heading>]`; if a big whole file is needed → inline its essence + offer an
+  archive-split; otherwise a plain `[READ-AT-RESUME]` tag.
+- **Resume loads only what's needed** — section anchors pull just that section; a bare tag on a
+  large file is read with a safeguard (headings + relevant part, not the whole file); an
+  untagged plan-like file is peeked (table of contents) and offered, never blind-loaded. This
+  reverses the earlier "full-load anything that looks like a plan" behaviour, which was the
+  main cost leak.
+- **New opt-in archive-split** (handoff Step 7d, suggestion-only): when a large file has
+  finished sections, the handoff can offer to move them verbatim into a `-DONE.md` sibling —
+  you confirm each time, nothing is deleted, open to-dos are never archived, own revertible
+  commit.
+- **Backward-compatible:** old-format handoffs (bare `[READ-AT-RESUME]`, no anchor) resume
+  unchanged; no migration — existing chains of any length keep working, the new format appears
+  from the next handoff on.
+
+### Tests
+
+- Static suite grew to **99 checks** (new Section P for the load paths).
+- New behavioural sub-test `tests/behavioral/load-discipline/` (21 checks): proves at runtime
+  that a section anchor loads only its section and an untagged big file is not read whole.
+
 ## [0.1.0] — 2026-07-03
 
 First release ([GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.1.0)).

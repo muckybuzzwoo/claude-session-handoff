@@ -74,20 +74,35 @@ Surface a short note if ANY of these hold (never block):
 
 Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now 'y') — treat state as possibly stale.`
 
-### Step 4 — Load + summarize (follow the deep links)
+### Step 4 — Load + summarize (follow the links, but don't blind-load)
 
 1. Read the selected handoff file fully.
-2. **Then follow its links.** Any path under "Reference" or "Key files" that is tagged
-   `[READ-AT-RESUME]` — or, untagged, is clearly a plan, spec, roadmap, or decision
-   record — MUST also be read (Read tool, absolute path). The handoff deliberately does
-   NOT duplicate those files, so their depth (full roadmap, rejected options, grilled
-   decisions) lives ONLY there. Skip shallow pointers (MR/issue URLs, anything outside
-   the project).
-3. Summarize from the handoff AND the linked files together: where it left off, key
-   files to open first, running state, and the "→ Pick up here" next action. Carry the
-   full decisions and roadmap — and **explicitly list rejected options / deliberate
-   no-decisions**; do not compress those away. If a detail is too large to inline, point
-   to the exact file + section rather than dropping it.
+2. **Then resolve its links** under "Reference" and "Key files". Before reading any
+   target, measure its **size in bytes** (`bytes/4` ~ tokens — a short file can still be
+   huge; `(Get-Item <path>).Length` on `win32`, or `wc -c`, is enough). Then, per link:
+   - **`[READ-AT-RESUME: <heading>]`** (section anchor) → Grep the file for that heading,
+     then read **only** that section (a targeted Read with offset/limit down to the next
+     heading). State in the briefing that you loaded only that section. Heading not found
+     → fall back to reading the file's heading skeleton + note the miss; never blind-load.
+   - **`[READ-AT-RESUME]`** (bare tag — this is also the **old handoff format**; keep
+     reading it, no migration needed) → load it, but if it is large (`bytes/4` above
+     roughly 15k) do **not** swallow the whole file: read its heading skeleton plus the
+     sections that bear on the open work, and flag the omission ("loaded headings + §X of
+     Y — pull more if needed"). Small tagged files load fully. (Until now only the built-in
+     ~25k Read cap kept this from exploding — by accident, not design; this makes it
+     deliberate.)
+   - **Untagged** links that are clearly a plan, spec, roadmap, or decision record →
+     **do not full-load them** (this is exactly where resume cost silently leaks back in).
+     Print their **heading skeleton** (table of contents) and **offer**: "linked plan X is
+     untagged, ~Yk — load it fully, or just a section?". This is a deliberate change from
+     the older full-load-if-it-looks-like-a-plan behaviour: the depth is now carried by the
+     essence the handoff inlined, so a blind load is no longer needed.
+   - Skip shallow pointers (MR/issue URLs, anything outside the project).
+3. Summarize from the handoff AND what you loaded: where it left off, key files to open
+   first, running state, and the "→ Pick up here" next action. Carry the full decisions
+   and roadmap — and **explicitly list rejected options / deliberate no-decisions**; do
+   not compress those away. For anything you did not fully load, point to the exact file +
+   section (and the skeleton you printed) rather than dropping it.
 4. Present the next action as a **suggestion**.
 
 ### Step 5 — Do not auto-implement
@@ -120,4 +135,5 @@ doing any work.
 | No handoffs found | Run the no-handoff fallback (memory + git briefing), then suggest `/session-handoff`. |
 | Topic argument not found | List available topics; ask which. |
 | Not a git repository | Skip branch/staleness git checks; load anyway. |
+| Old-format handoff (bare `[READ-AT-RESUME]`, no section anchor) | Fully supported — load with the big-file safeguard in Step 4; no migration needed. Old chains (any length) keep working; the new anchor format appears only from the next `/session-handoff` on. |
 | `[READ-AT-RESUME]` link missing/unreadable | Note the gap; summarize from the handoff text and flag that the linked depth couldn't be loaded. |

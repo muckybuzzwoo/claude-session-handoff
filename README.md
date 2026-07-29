@@ -72,6 +72,15 @@ working tree moved compared to the snapshot recorded in the handoff), and propos
 single next action.
 Pass a topic to skip the picker: `/session-resume checkout-bug`.
 
+**It loads those linked files frugally** so a resume stays cheap even when a plan has grown
+large: a link tagged to one heading (`[READ-AT-RESUME: <heading>]`) pulls only that section,
+an untagged big file is *not* read whole (you get its outline and an offer to open it), and
+only a fully-tagged file is loaded in full. When you save a handoff, big files get their
+essence written into the handoff itself and are linked lazily — and if a large plan has
+finished sections piling up, the handoff can offer to archive them into a `-DONE.md` sibling
+(you confirm; nothing is deleted, open to-dos never move). Old handoffs written before this
+still resume fine — no migration needed.
+
 No topics yet? Instead of a dead end, it reads your Claude memory's linked dossier files
 (not the `MEMORY.md` index — that's already loaded every session) plus recent git
 activity, gives you a short orientation briefing, and points you to `/session-handoff` to
@@ -113,17 +122,19 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (exit 0/1, no dependencies). See `tests/README.md`.
+parity (99 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →
 resume), then `verify-artifacts.ps1` asserts on the produced artifacts (26 checks). It
 proves the runtime properties — Step 7 propose-only, carry-forward, staleness, read-only —
-that a static test can't. A focused sub-test, `tests/behavioral/depth-recovery/` (15 checks),
-additionally proves the `[READ-AT-RESUME]` contract: that resume actually opens the decision/
-plan files a handoff links and folds their depth (full roadmap, rejected options) into the
-summary — instead of parroting the compressed handoff text. See `tests/behavioral/README.md`
-to re-run.
+that a static test can't. Two focused sub-tests add runtime proof of the deep-link
+behaviour: `tests/behavioral/depth-recovery/` (15 checks) proves resume actually opens the
+decision/plan files a handoff links and folds their depth (full roadmap, rejected options)
+into the summary — instead of parroting the compressed handoff text; and
+`tests/behavioral/load-discipline/` (21 checks) proves the token-aware loading — a
+section-anchored link pulls only that section, and an untagged big file is peeked + offered,
+never read whole. See `tests/behavioral/README.md` to re-run.
 
 **Manual spot-check (behavioural):**
 
