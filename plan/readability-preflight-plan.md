@@ -3,6 +3,14 @@
 **Status:** planned, **not implemented**. Decided 2026-08-06 (Marcus), implementation in a
 later session. Nothing in this plan has been applied to `commands/` yet.
 
+> **Before implementing anything: review this plan again.** Marcus's instruction (2026-08-06).
+> The plan was written and revised across one long session; one of its premises was already
+> refuted mid-flight by the field survey in §14, and three decisions are marked unsettled in
+> §13. A fresh session must re-read it critically first — check §13 and §14 against the
+> current state of `commands/`, confirm the two tracks in §7 are still cut correctly, and only
+> then start. Treat this review as the first work item of the implementation session, not as a
+> formality.
+
 Two separate pieces of work, deliberately kept independently revertible: **Track A —
 readability (v0.4.0)** and **Track B — workflow (v0.5.0)**. Own branch, own release, own test
 method each; see §7. Neither depends on the other.
@@ -49,22 +57,14 @@ it, the file is wrong from the moment it is saved.
 
 ## 3. Decisions (locked 2026-08-06)
 
-- **1C** — bound the additive decision list. Added to scope and moved to the front on
-  2026-08-06, on the argument that the decision list was the growth driver.
-  **⚠ CONTESTED — the evidence for that argument did not survive the field survey.** The
-  per-section measurement in §14.1 shows Decisions grows 1.6× while *Open work* grows 3.3×,
-  and that decisions are never carried forward verbatim in the first place, so 1C's sequence
-  tags have nothing to de-duplicate. **Decide before implementing** (this is Marcus's call,
-  since the current ordering was his):
-  - **(i) Recommended — drop 1C from Track A, put 1B first** and fold its budget into the
-    per-item identity requirement in §4.2. That is where the measured growth and the measured
-    failure mode (§14.2, items evaporating) both sit.
-  - **(ii) Keep 1C but re-aim it** at the one thing it would still buy: making the
-    "Alles aus _101…_129 gilt weiter" pointer resolvable, and formalising the
-    "CLOSED, nicht wieder aufmachen" bullet that the chain already invented by hand.
-  - **(iii) Keep 1C first as decided.** Costs a change that the field data does not support.
+- **1C** — **DROPPED** (Marcus, 2026-08-06, after the field survey). It was briefly in scope
+  and first, on the argument that the decision list drove the file growth. §14.1 refuted that:
+  Decisions grows 1.6× while Open work grows 3.3×, and decisions are never carried forward
+  verbatim, so sequence tags had nothing to de-duplicate. Record kept in §11.
+- **1B** — one "Open work" section with explicit labels, **one item per bullet**, explicit
+  closing. Approved and **first**: this is where the measured growth (§14.1) and the measured
+  failure mode (§14.2, open items evaporating) both sit.
 - **1A** — status head, forward-looking content first. Approved.
-- **1B** — one "Open work" section with explicit labels. Approved.
 - **2C** — pre-flight obligation check with a size threshold: small items are offered for
   immediate execution, larger ones are recorded as open work instead. Approved, including
   the resulting softening of HARD STOP.
@@ -72,44 +72,13 @@ it, the file is wrong from the moment it is saved.
   2026-07-03 "secure the artifact first" ordering, see §6 for the replacement safety net.
 - Deferred, explicitly not part of v0.4.0: see §11.
 
-## 4. Change 1 — readability (1C + 1A + 1B)
+## 4. Change 1 — readability (1B + 1A)
 
-### 4.1 Bound the additive decision list (1C) — ⚠ contested, see §3 and §14.1
+1C is **not** part of this change. It was dropped on 2026-08-06 after the field survey removed
+its premise; the record and the reasoning are in §11, the measurement in §14.1. Do not
+reintroduce sequence tags without first re-reading §14.1.
 
-**Read §14.1 before implementing this.** The field survey showed the premise below is not what
-the real chain does: decisions are already carried as a delta plus a pointer, not verbatim, and
-Decisions is the slowest-growing section. What follows is the specification as designed; it is
-kept intact so option (ii) in §3 has something to re-aim, not because it is settled.
-
-Step 3 (carry-forward) nominally keeps "Decisions & what shipped" additive: every
-session appends, nothing is ever retired or marked. Two rules replace that:
-
-- **Sequence tag.** Every decision carries the sequence it was made in:
-  `- [_03] {decision} — {why, and where it lives}`. Carried-forward entries keep their
-  original tag; only this session's entries get the current `NN`. This makes "what is new"
-  visible at a glance, which is impossible today.
-- **Supersede-collapse.** When a decision made earlier is overturned or replaced by a later
-  one, the older entry collapses to a single line naming its replacement
-  (`- [_03] {decision} — superseded by [_07]`), and the *why* lives only at the entry that
-  now holds. Nothing is deleted; the audit trail stays walkable, but it stops costing a
-  paragraph per obsolete decision.
-
-Invariants:
-
-- A decision that still binds is **never** collapsed, however old it is. Only genuine
-  supersession collapses — "we no longer do it that way", not "we did that a while ago".
-  When unsure whether a decision still binds, leave it in full.
-- **Legacy entries are never back-tagged.** On the first new-format handoff in an existing
-  chain, Step 3 carries forward decisions that have no `[_NN]` tag. Leave them untagged, or
-  prefix them once with a literal `[pre]`. **Never guess which sequence an old decision came
-  from** — the previous file does not record it, and a fabricated tag is worse than no tag.
-  Only decisions made from this change onward get real sequence numbers.
-
-Do this change **before** 1A/1B: it is the one that touches the section which actually grows,
-and doing it first means the A/B in §12 measures the fix that matters against a real long
-chain.
-
-### 4.2 Template: forward-looking block first
+### 4.1 Template: forward-looking block first
 
 Reorder `commands/session-handoff.md` "Document template" into two blocks. Everything the
 next session needs in order to *act* comes first; everything it needs in order to
@@ -162,7 +131,7 @@ value — it is the measured growth driver (3.3×) and the site of the measured 
   the two now sit a few lines apart, so the duplication stops being harmless. Open work holds
   what comes *after* the next action, never the next action itself.
 
-### 4.3 Resume: same order in the briefing
+### 4.2 Resume: same order in the briefing
 
 `commands/session-resume.md` Step 4.3 currently describes *what* to carry, not in which
 order. Add an explicit opening shape, phrased positively (describing the wanted output is
@@ -296,9 +265,12 @@ reflection sits. The two were coupled only in the writing, not in the design.
 Touches: `commands/session-handoff.md` (Step 3 carry-forward rule, Document template) and
 `commands/session-resume.md` (Step 4.3 briefing order). Commits, in order:
 
-1. **1C (§4.1)** — sequence tags + supersede-collapse. First, because it is the fix for the
-   measured cause (§3) and the cheapest to check against the real APEX chain.
-2. **1A + 1B (§4.2, §4.3)** — template reorder, "Open work" rename, resume briefing order.
+0. **Re-review this plan** before the first edit — see the note at the top of the file. Check
+   §13 and §14 against the current `commands/`, confirm the track cut still holds.
+1. **1B (§4.1)** — the "Open work" section: rename, one item per bullet, explicit closing,
+   never repeat the next action. First, because §14.1/§14.2 put both the measured growth and
+   the measured failure mode here.
+2. **1A (§4.1, §4.2)** — status head, "→ Pick up here" moved to the top, resume briefing order.
 
 ### Track B — workflow · branch `feat/v0.5.0-preflight` · release v0.5.0
 
@@ -343,10 +315,9 @@ be updated (verified 2026-08-06):
 
 New static checks to add:
 
-- Step 3 (carry-forward) requires the `[_NN]` sequence tag on decisions, and the template's
-  decision line carries it.
-- Step 3 states the supersede-collapse rule **and** its counter-invariant — a still-binding
-  decision is never collapsed regardless of age.
+- Step 3 (carry-forward) requires **one open item per bullet** and states that closing an item
+  is an explicit act — a carried item is marked done or it stays, never silently dropped.
+- The Open-work rule states that it must **not** repeat the "→ Pick up here" next action.
 - Template has `## Status` with both bullet labels, and it appears before
   `## Decisions & what shipped` (this one *is* an order assertion — write it as an index
   comparison, not a `Contains`).
@@ -408,8 +379,9 @@ as an end-of-file or end-of-section delimiter.
 **G2 — the mixed chain (Track A).** The case that will actually happen in APEX the moment
 this ships: `_NN` is old-format, `_NN+1` is written by the new version. Assert that Step 3
 carries forward correctly across the format boundary — the old `Deferred & open questions`
-content lands in the new `Open work` section, and untagged legacy decisions stay untagged per
-§4.1's invariant rather than being back-tagged with a guessed sequence.
+content lands in the new `Open work` section, and the run-on collected bullets that the old
+files use ("Unverändert aus _125…_129: … · … · …") are split into one item per bullet without
+losing or inventing an item. Count them before and after.
 
 **G3 — the archive-split behaves exactly as before (Track B).** Track B moves **when** the
 split runs, not **what** it does. Every invariant in the current Step 7d — nothing deleted,
@@ -443,8 +415,14 @@ which defeats the split in §7.
 
 ## 11. Deferred (decided: not now, keep for later)
 
-- ~~**1C**~~ — **no longer deferred.** Moved into v0.4.0 scope on 2026-08-06 on the measured
-  growth evidence and put first in the execution order; see §3 and §4.1.
+- **1C — dropped 2026-08-06, do not reintroduce without re-reading §14.1.** The idea: tag each
+  decision with its sequence (`[_NN] …`) and collapse superseded decisions to a one-line
+  pointer. It was briefly in scope and first. The field survey killed the premise: Decisions
+  grows 1.6× against Open work's 3.3×, decisions are already carried as a delta plus a pointer
+  rather than verbatim (`_130.md:15`), and the chain already writes a "CLOSED, nicht wieder
+  aufmachen" bullet by hand (`_130.md:122-126`). So the tags had nothing to de-duplicate and
+  the collapse rule duplicated an existing habit. One piece of it may be worth reviving later
+  in a different form: making the "Alles aus _101…_129 gilt weiter" pointer resolvable.
 - **1D — hard length budgets.** One line per decision, roughly seven per session, and "if it
   needs more than one line, the detail belongs in the linked file". Directly implements the
   Opus 5 length-calibration guidance.
@@ -703,8 +681,8 @@ de-duplicate: every bullet in a file already comes from that file's own session.
 Supersede-collapse is likewise already happening organically: `_130.md:122-126` carries a
 "**CLOSED, nicht wieder aufmachen:**" bullet listing reversed options.
 
-**Consequence: 1C as specified solves a problem this chain does not have.** See §3 for the
-open decision on what to do about that.
+**Consequence: 1C as specified solves a problem this chain does not have.** Marcus dropped it
+on this evidence (2026-08-06) and moved 1B to the front; record in §11.
 
 ### 14.2 The real failure mode: open items evaporate
 
