@@ -43,11 +43,11 @@ maintenance repo.
 
 ## Testing
 
-Run `pwsh -File .\tests\validate-commands.ps1` after every edit + deploy — static structure,
-frontmatter, step numbering, cross-references, and source==deployed parity (exit 0/1, no
-dependencies). Runtime behaviour is covered by `tests/behavioral/`, where Claude dispatches
-subagents that execute the commands in a sandbox and `verify-artifacts.ps1` asserts on the
-output. Suite contents, check counts and how to re-run: `tests/README.md` +
+Run `pwsh -File .\tests\validate-commands.ps1` after changing and deploying a command file —
+static structure, frontmatter, step numbering, cross-references, and source==deployed parity
+(exit 0/1, no dependencies). Runtime behaviour is covered by `tests/behavioral/`, where
+Claude dispatches subagents that execute the commands in a sandbox and `verify-artifacts.ps1`
+asserts on the output. Suite contents, check counts and how to re-run: `tests/README.md` +
 `tests/behavioral/README.md`.
 
 ## Status
