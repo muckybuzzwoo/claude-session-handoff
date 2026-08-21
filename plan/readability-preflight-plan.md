@@ -473,19 +473,35 @@ Without a rule the expected count is a matter of taste, so fix it narrowly:
   `Deferred: **#137** (…) · **#138** (…) · **Weg 2**` and
   `Aus #149 weiter offen: … · #57 Stufe 2`. Split without re-attaching the label and items two
   and three lose their classification, which is a silent change of meaning, not a reformat.
+- **A bullet ending in a colon is a group header, not an item.** Its nested bullets **are** the
+  items, and they are counted individually. This is the one exception to "nested bullets are
+  never counted alone", and without it the naive rule drops them: `_175`'s
+  `- **Bei Marcus offen (unverändert aus _174):**` carries its items as indented children, and
+  `_113` does the same. Two headers chain-wide, holding **7 items** that would otherwise vanish.
 
-**Measured against the real chain (2026-08-21, all 175 files, mechanical scan):**
+**Measured against the real chain (2026-08-21, all 175 files) with
+`tests/compat-old-chain.ps1`, which is the reproducible version of this scan:**
 
 | | count |
 |---|---|
 | files carrying the **old** heading `## Deferred & open questions` | **175 of 175** |
-| top-level open bullets, all files | 1106 |
+| top-level open bullets (group headers and carry lines excluded) | 1104 |
 | bullets that hide several items behind a middot | 170 |
 | middot separators inside those bullets | 533 |
-| files whose carry pointer has **no number** | 7 (`_114 _115 _116 _117 _120 _122 _125`) |
+| group headers with nested items | 2, holding 7 items |
+| **open items in total, under this grammar** | **1644** |
+| carry-style bullets referencing a previous `_NN` (CLOSED records excluded) | 99 |
+| of those, enumerating their own items → resolvable from the bullet | 61 |
+| of those, listing nothing → **count must be established, not inherited** | 38, in 36 files |
 
 Sampled bullets confirm the middot is an item separator, not intra-item punctuation. `+` and
 commas inside an item are **not** separators, which is why the grammar names only ` · `.
+
+> **Correction.** An earlier draft of this section claimed 7 files carry a numberless pointer.
+> That number came from a `grep` run and was wrong: `grep` matches bytes, so the pattern
+> `unver.ndert` missed every "unverändert" — the German umlaut is two bytes and `.` matched one.
+> The measured figure is 38 bullets in 36 files. Keep the scan in `tests/compat-old-chain.ps1`
+> rather than re-deriving it on the command line.
 
 **Boundary rules for the first new-format write on an old chain (added 2026-08-21):**
 
@@ -496,9 +512,13 @@ commas inside an item are **not** separators, which is why the grammar names onl
   `Carried unchanged:` line to already exist — no old file has one. V4's arithmetic starts
   applying from the *second* new-format file onward.
 - **Never invent a count.** Where the old file's pointer is prose without a number
-  ("alles aus `_125`…`_129` gilt weiter" — 7 files), keep it as **one** item, label it as an
-  unresolved carry, and say so in the handoff. Turning it into a number would fabricate the one
-  fact the invariant exists to protect.
+  ("Unverändert die komplette Liste aus `_152`" — 38 bullets in 36 files), keep it as **one**
+  item, label it as an unresolved carry, and say so in the handoff. Turning it into a number
+  would fabricate the one fact the invariant exists to protect.
+- **Proof before and after.** `tests/compat-old-chain.ps1 -Path <chain>` records the baseline
+  today and re-checks it after the change. It is deterministic, needs no LLM, and it already
+  earned itself: it found the missing group-header rule and the umlaut miscount above before
+  either could reach `commands/`.
 
 That makes the before/after count reproducible by anyone, including a static check.
 
