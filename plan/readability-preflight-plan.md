@@ -3,15 +3,17 @@
 **Status:** planned, **not implemented**. Decided 2026-08-06 (Marcus), implementation in a
 later session. Nothing in this plan has been applied to `commands/` yet.
 
-> **Re-review done 2026-08-21.** Every file-and-line claim in §8, §9 and §14 was re-checked
-> against the working tree and still holds. The field survey was extended by 45 files (§14.8),
-> which corrected §14.1's method, confirmed §14.6, and produced **V4 — the one open point that
-> blocks the first commit** (§13). Also added: the second rename site in §8 and the split
-> baseline test as Track B item 0 (§7). The two tracks in §7 are still cut correctly.
+> **Re-review done 2026-08-21, and the plan is cleared to start.** Every file-and-line claim in
+> §8, §9 and §14 was re-checked against the working tree and still holds. The field survey was
+> extended by 45 files (§14.8), which corrected §14.1's method and confirmed §14.6. Two external
+> reviews (architect + QA, both via Codex, both graded 3/6) are in `reviews/`. What they changed
+> is folded in below — the carry-forward rule is now **decided** (V4, §13), and §7 and §9 carry
+> the revert-order rule, the counting grammar for G2, the corrected G3 wording, the split
+> baseline spec and the test-data rule.
 >
-> **Still to do before editing `commands/`:** settle V4, and let an external reviewer read this
-> plan (Marcus, 2026-08-21). V1 is Track B's problem, V2 and V3 are measurement questions before
-> a release, so neither blocks the start.
+> **What is still open, and none of it blocks the first commit:** V1 is Track B's problem, V2
+> and V3 are measurement questions before a release, and 1E (§11) is a one-line extra that
+> Marcus can add to Track A or leave out.
 
 Two separate pieces of work, deliberately kept independently revertible: **Track A —
 readability (v0.4.0)** and **Track B — workflow (v0.5.0)**. Own branch, own release, own test
@@ -124,9 +126,10 @@ Notes:
 **Two rules the field survey (§14) makes non-optional. This section, not 1C, carries Track A's
 value — it is the volatile section and the site of the measured failure mode.**
 
-> **Settle V4 (§13) before writing either rule.** The re-measurement in §14.8 found that the
-> chain carries open items by *pointer*, not verbatim, so "carried forward with its own text"
-> below is not yet a decided rule. Everything else in this section is unaffected.
+> **Read V4 (§13) before writing either rule — it is settled and it overrides the wording
+> below.** "Carried forward with its own text" applies to items that are new, changed or closed
+> this session. Unchanged items are carried by **one counted pointer line** instead. V4 holds the
+> exact rule and the arithmetic invariant.
 
 - **One item per bullet — per-item identity.** Today long-lived TODOs are compressed into a
   single run-on bullet ("Unverändert aus _125…_129: … · … · …", `_130.md:119-121`; nine items
@@ -293,6 +296,25 @@ cross-references, the reflection intro, and adds Step 0. Commits, in order:
    never run from the command in 175 APEX files, so "nothing broke" is otherwise unprovable —
    G3 as written only compares instruction text, not behaviour. Own commit, no production file
    touched, so it is revertible on its own and can be written before the branch even exists.
+
+   **Spec, so this is buildable** (both reviews flagged the first draft as too vague). Follow
+   the shape of `tests/behavioral/depth-recovery/`. Fixture: a sandbox project whose plan file
+   is **above the ladder's case-(c) threshold** — `bytes/4` over roughly 15k, so over about
+   60 KB — needed whole, and containing two unmistakably finished sections plus one section with
+   open to-dos in it. Drive the handoff and answer *apply* when the split is offered. Recorded
+   baseline, asserted per the current Step 7d invariants:
+   - an archive file exists, named `<name>-DONE.md`, and holds the two finished sections
+     **verbatim**
+   - the active file is smaller by exactly those sections and **nothing was deleted** anywhere
+   - the section holding open to-dos is **still in the active file**
+   - the active file links the archive **plainly**, with no `[READ-AT-RESUME]` tag
+   - the archive header names its origin and the "on conflict the active file wins" rule
+   - the split sits in **its own commit**, and nothing was pushed
+
+   Assert these **classes**, not byte-equality of the artifact: filename, timestamps and commit
+   hash differ by construction on every run. The same discipline applies to §5.2's "roughly five
+   tool calls" threshold — a test may assert the three outcome classes using fixtures that are
+   unambiguously small, outward-facing or large, and must never assert the boundary itself.
 1. **Change 3 (§6)** — the 6/7 swap and the link-ladder relocation.
 2. **Change 2 (§5)** — Step 0 pre-flight.
 
@@ -300,6 +322,22 @@ cross-references, the reflection intro, and adds Step 0. Commits, in order:
 step by number. Written that way, commit 2 survives a revert of commit 1 and vice versa. If
 Step 0 ends up needing a numbered cross-reference, say so explicitly instead of quietly
 coupling the two.
+
+### Revert order — the direction that is NOT free (added 2026-08-21)
+
+The architect review found the gap: the two tracks are independent *in design*, and Track B
+still branches from `main` **after** Track A merges. So v0.5.0 physically sits on top of v0.4.0,
+and the revertibility is one-directional:
+
+- **Revert B while A stays:** always available. This is the case the split in §7 was built for.
+- **Revert A while B stays: not available.** Once v0.5.0 has shipped, Track A's commits are
+  buried under Track B's edits to the same file.
+
+**Rule:** if Track A ever has to come out after Track B shipped, B is reverted first, then A,
+then B is re-applied on the new base. Say that out loud at the v0.5.0 release rather than
+discovering it under pressure. **Consequence for sequencing:** do not start Track B until Track
+A has run in real use long enough that reverting it is no longer plausible. Nothing in this plan
+sets that bar, and it should not be invented here — Marcus calls it at the v0.4.0 release.
 
 ### Per track, before the release
 
@@ -396,6 +434,14 @@ Derived hard requirements for any instruction text touching these: match `## Ref
 **prefix**, detect the tag as a **substring** (bold wrappers exist), and never treat the footer
 as an end-of-file or end-of-section delimiter.
 
+**Test-data rule (added 2026-08-21, both reviews).** The named fixtures are *real* files from a
+private project, and this repo is meant to be handed to someone else one day. So: **no real APEX
+handoff is ever committed here.** G1 copies them from the local apex-roadtrip path at test-run
+time into the sandbox, and **skips with a clear message** when that project is not present. The
+sandbox is disposable, nothing lands in `tests/` and nothing lands in git. A shared package must
+never carry Marcus's private session content, and a sanitised copy is not a substitute — the
+whole point of G1 is that the files are unedited.
+
 **Re-verified 2026-08-21 against `_131`–`_175` (§14.8): the fixture list above stands as it is.**
 All 45 newer files carry the nine canonical headings verbatim, the full header field set, and a
 `Resume:` footer — zero structural deviation, and zero bold-wrapped tags. Every anomaly class G1
@@ -410,6 +456,21 @@ content lands in the new `Open work` section, and the run-on collected bullets t
 files use ("Unverändert aus _125…_129: … · … · …") are split into one item per bullet without
 losing or inventing an item. Count them before and after.
 
+**Counting grammar (added 2026-08-21 — the QA review is right that "count them" was undefined).**
+Without a rule the expected count is a matter of taste, so fix it narrowly:
+
+- A **bullet** is a line starting with `- ` at the top level of the section. Nested bullets belong
+  to their parent and are never counted as items of their own.
+- A bullet is split into several items **only** on the middot separator ` · ` (space, middot,
+  space). Nothing else splits: not commas, not "and"/"und", not semicolons, not line wraps.
+- A bullet with no ` · ` is exactly one item, however long it runs.
+- `items(section) = bullets + total ` · ` separators inside those bullets`.
+- Migration happens **once**, at the next write after this ships. A file already migrated is
+  never re-split.
+- The `Carried unchanged: {N}` line from V4 is not an item and is never counted as one.
+
+That makes the before/after count reproducible by anyone, including a static check.
+
 **G3 — the archive-split behaves exactly as before (Track B).** Track B moves **when** the
 split runs, not **what** it does. Every invariant in the current Step 7d — nothing deleted,
 sections move verbatim, open to-dos never archived, plain (never `[READ-AT-RESUME]`) archive
@@ -417,6 +478,13 @@ link, project sync rules respected, own commit — must survive the move **chara
 character**. If any of them appears to need adjusting for the new ordering, stop: that is a
 separate decision and a signal that V1 (§13) resolved the wrong way, not a detail to fix in
 passing.
+
+**Corrected 2026-08-21 (QA review).** "Character for character" applies to the **invariant text
+in `commands/session-handoff.md`**, and to nothing else. It can never apply to what a split
+*produces*: the archive filename, the timestamps and the commit hash differ on every run by
+construction, so a byte comparison of artifacts would fail even when the behaviour is identical.
+The produced artifact is asserted by the classes listed in §7's Track B item 0. Two different
+comparisons, and conflating them would have made G3 unpassable.
 
 Note from §14.6: the command's split has **never actually fired** in APEX — the two real splits
 there were done by hand before the feature shipped. So there is no field behaviour to regress,
@@ -452,6 +520,14 @@ which defeats the split in §7.
   the collapse rule duplicated an existing habit. **The one piece worth reviving — making the
   "Alles aus _101…_129 gilt weiter" pointer resolvable — is now live as option (b) of V4
   (§13), because §14.8 found the same habit inside Open work.**
+- **1E — a `Format:` field in the header** (proposed 2026-08-21 by the architect review, not yet
+  decided). One more header field next to `Date/Branch/Previous/Tree`, e.g. `**Format:** 2`.
+  Today the format is inferred from which headings are present, which is exactly the brittle
+  detection G1 and G2 exist to cover, and it gets worse with every future variant. Cost is one
+  template line plus one static check. **Recommendation: fold it into Track A**, because Track A
+  changes the format anyway — adding the marker later means a second format change for the same
+  benefit. Marcus's call, and it changes nothing else in the plan either way. Absent field means
+  format 1, so old files need no migration.
 - **1D — hard length budgets.** One line per decision, roughly seven per session, and "if it
   needs more than one line, the detail belongs in the linked file". Directly implements the
   Opus 5 length-calibration guidance.
@@ -628,8 +704,9 @@ iterate on the branch.
 
 Four decisions in this plan were made without enough evidence to be confident. Each must be
 settled during implementation — none of them may be left to stand simply because it is
-already written down here. **V4 was added 2026-08-21 and is the only one that blocks the first
-commit.** V1 sits inside Track B, V2 and V3 concern measurement before a release.
+already written down here. **V4 was added and settled on 2026-08-21** and no longer blocks
+anything. V1 sits inside Track B, V2 and V3 concern measurement before a release, so **no open
+point blocks the first commit any more.**
 
 ### V1 — is the link-ladder relocation the right fix? (§6)
 
@@ -682,10 +759,11 @@ variance is already, say, 15%, then a 10% threshold is noise and the gate is mea
 Set the threshold above the measured variance, or replace it with an absolute token budget.
 Until that measurement exists, treat this criterion as **not yet defined** rather than as 10%.
 
-### V4 — verbatim carry-forward vs. the chain's pointer habit (§4.1) — BLOCKS 1B
+### V4 — SETTLED 2026-08-21: option (b), pointer with a counted invariant
 
-Found 2026-08-21 by the re-measurement, §14.8. Unlike V1–V3 this one **must be settled before
-the first 1B commit**, because it defines the carry-forward rule that 1B is.
+Found 2026-08-21 by the re-measurement, §14.8, and settled the same day. It defined the
+carry-forward rule that 1B *is*, so nothing could be built before it. The decision and its
+exact rules are at the end of this section — the analysis is kept because it is the reason.
 
 **The decision as written:** each open item is one bullet, "carried forward with its own text",
 and closing it is an explicit act.
@@ -711,10 +789,53 @@ being closed.
 - **(c) Split by label.** `Open:` items carry verbatim (they are the ones that must not die),
   `Deferred:` and `Question:` carry by pointer. Mixed rule, more text to get right.
 
-**How to settle it:** Marcus decides. Recommendation is **(b)** — it is the only option that
-targets the measured defect (unresolvable pointers) without reintroducing the measured
-complaint (length). Record the choice and the reason in `docs/decision-log.md` before editing
-`commands/`.
+**Decided: (b)** — Marcus, 2026-08-21. It is the only option that targets the measured defect
+(unresolvable pointers) without reintroducing the measured complaint (length). Both external
+reviews landed on (b) independently, and both refused to accept it without an exact resolution
+rule (`reviews/gemini-plan-review-2026-08-21-architect.md`,
+`reviews/gemini-plan-review-2026-08-21-qa.md`). So the rules are part of the decision:
+
+**The carry rule.** Open work has two parts, in this order:
+
+1. **Items written out in full** — everything new this session, everything whose text changed,
+   and everything closed this session. One item per bullet, with its own text.
+2. **At most one carry line**, last:
+   `Carried unchanged: {N} items — see {previous filename}`. It may reference **only the
+   immediately previous handoff of the same chain**. Never an older file, never two carry lines.
+
+**The count is the invariant.** `N` equals the previous file's total open-item count minus what
+this session closed:
+
+```
+N_carry(NN) = full_items(NN-1) + N_carry(NN-1) − closed_in(NN)
+```
+
+Every term is readable from two adjacent files, so verification needs **one hop**, never a walk
+back through the chain. This is the acceptance criterion the QA review asked for, and it is
+arithmetic rather than judgement.
+
+**Closing is a written act.** A closed item is written out in full in the current file with a
+`Done:` label, and only then disappears from later files. **An item may never leave by being
+omitted.** If `N` drops without a matching `Done:` line, the handoff is wrong — that is exactly
+the defect §14.2 measured.
+
+**Failure cases, decided:**
+
+- Previous file missing or unreadable → say so, treat `N` as unknown, ask. Never guess a count.
+- The arithmetic does not add up → surface it, never silently correct it.
+- `N = 0` → omit the carry line entirely.
+
+**What resume does with it (§4.2):** resolve exactly one hop. If the carry line's target carries
+its own carry line, report "{N} items carried, the older ones live in {file}" and do **not** walk
+further. Depth on demand, not by default.
+
+**Answers to the reviewers' open questions, for the record:** the authoritative list is always
+the *current* file (full items plus one counted pointer). Traversal is capped at one hop by
+construction. An item keeps its identity through its own text — if the wording is reworded or
+reframed it counts as *changed*, so rule 1 forces it to be written out in full that session,
+which is precisely what §14.2's evaporating item never got.
+
+Record the choice in `docs/decision-log.md` before editing `commands/`.
 
 ## 14. Field evidence from the APEX chain (surveyed 2026-08-06)
 
