@@ -468,6 +468,37 @@ Without a rule the expected count is a matter of taste, so fix it narrowly:
 - Migration happens **once**, at the next write after this ships. A file already migrated is
   never re-split.
 - The `Carried unchanged: {N}` line from V4 is not an item and is never counted as one.
+- **The label carries.** Where a bullet reads `{label}: {item} · {item} · {item}`, the text
+  before the first colon applies to every item split out of it. Real cases:
+  `Deferred: **#137** (…) · **#138** (…) · **Weg 2**` and
+  `Aus #149 weiter offen: … · #57 Stufe 2`. Split without re-attaching the label and items two
+  and three lose their classification, which is a silent change of meaning, not a reformat.
+
+**Measured against the real chain (2026-08-21, all 175 files, mechanical scan):**
+
+| | count |
+|---|---|
+| files carrying the **old** heading `## Deferred & open questions` | **175 of 175** |
+| top-level open bullets, all files | 1106 |
+| bullets that hide several items behind a middot | 170 |
+| middot separators inside those bullets | 533 |
+| files whose carry pointer has **no number** | 7 (`_114 _115 _116 _117 _120 _122 _125`) |
+
+Sampled bullets confirm the middot is an item separator, not intra-item punctuation. `+` and
+commas inside an item are **not** separators, which is why the grammar names only ` · `.
+
+**Boundary rules for the first new-format write on an old chain (added 2026-08-21):**
+
+- **The old heading must be accepted.** All 175 real files use it, so Step 3 reads either
+  heading. This is not a nicety, it is the only way `_176` can ever be written.
+- **Establish, do not carry, at the boundary.** For the first new-format file, `N` is *computed*
+  from the previous old file with the grammar above and written down. Do not expect a
+  `Carried unchanged:` line to already exist — no old file has one. V4's arithmetic starts
+  applying from the *second* new-format file onward.
+- **Never invent a count.** Where the old file's pointer is prose without a number
+  ("alles aus `_125`…`_129` gilt weiter" — 7 files), keep it as **one** item, label it as an
+  unresolved carry, and say so in the handoff. Turning it into a number would fabricate the one
+  fact the invariant exists to protect.
 
 That makes the before/after count reproducible by anyone, including a static check.
 
