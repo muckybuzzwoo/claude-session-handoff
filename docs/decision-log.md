@@ -246,3 +246,30 @@ project file stays small. Entries below are in the original order.
   that prose under the list is not an item.
   Rewording those two rules broke two existing static checks, which is the suite doing its job.
   Suite **166 to 171/171**, plus 25 behavioural assertions and 4 guard-fixture assertions.
+- **2026-08-21 (Gate G1 passed, and five clarifications it forced):** copied five *real*
+  pre-v0.4.0 handoffs from the apex-roadtrip chain into a gitignored sandbox — one per
+  structural deviation the 2026-08-06 survey named (bare `## Reference` plus a German-renamed
+  Decisions heading, bold-wrapped tags, no `---` and no `Resume:` footer at all, an extra
+  out-of-order section, and one file with no tag anywhere) — and had a subagent run the real
+  `/session-resume` against each. **All five produced a usable briefing and all five are
+  byte-identical afterwards** (SHA256 snapshot taken before the run, 43 assertions in
+  `tests/behavioral/old-format-resume/verify.ps1`). Real files are never committed, per the
+  test-data rule.
+  The gate also produced findings no reading had: an explicit `[READ-AT-RESUME]` tag and the
+  "skip anything outside the project" rule contradict each other with no ranking, and the tag
+  now wins when the path is readable. A size stated in a handoff's own prose must never stand in
+  for a file that was not opened. A `Tree:` field written as prose — real files use it to
+  correct their predecessor — now skips the staleness comparison instead of inventing a
+  difference. A section the template does not know is carried rather than dropped, and surfaced
+  *with* the open work when it flags doubt, because `_119`'s "Low-confidence decisions, CHECK
+  THESE" block is arguably the most important content in that file and the mandated briefing
+  order had no slot for it. And the memory reconcile now runs only when the index belongs to the
+  same project, since comparing a handoff from project A against project B's memory manufactures
+  contradictions.
+  **Honest coverage limit, recorded rather than glossed:** every linked target in those five
+  files lies outside the sandbox, so G1 exercised no tagged-link *loading* at all. Its briefings
+  rest entirely on text the handoffs inlined — a real result about inlining discipline, but the
+  Step 4 loading paths are proved by `depth-recovery/`, not by G1. Also observed: the five
+  fixture headers disagree with their fixture filenames because the copies were renamed into
+  slugs, which is a harness artifact and not a property of the real files.
+  Static suite **171 to 176/176. Released v0.4.0.**

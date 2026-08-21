@@ -197,6 +197,13 @@ Check 'resume does not walk further'         ($r.Contains('do **not**') -and $r.
 Check 'resume reports how many it resolved'  ($r.Contains('items you resolved'))
 Check 'resume tolerates old files with no carry line' ($r.Contains('Old handoffs have no carry line'))
 
+# --- five clarifications the G1 gate run surfaced (2026-08-21) ---
+Check 'an explicit tag outranks the outside-project skip' ($r.Contains('outranks this skip'))
+Check 'never substitutes a size the prose claims'         ($r.Contains('Never substitute a size'))
+Check 'a prose Tree field skips the comparison'           ($r.Contains('written as prose'))
+Check 'an unknown extra section is carried, not dropped'  ($r.Contains('does not know is not noise'))
+Check 'memory reconcile only for the same project'        ($r.Contains('belongs to THIS project'))
+
 # =============================================================================
 Section 'H. Handoff — gitignore + Windows safety invariants'
 Check 'ignores .claude/session-handoffs/'        ($h.Contains('.claude/session-handoffs/'))
