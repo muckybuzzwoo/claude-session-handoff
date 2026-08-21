@@ -50,27 +50,16 @@ Claude dispatches subagents that execute the commands in a sandbox and `verify-a
 asserts on the output. Suite contents, check counts and how to re-run: `tests/README.md` +
 `tests/behavioral/README.md`.
 
-## Status
+## Where to look
 
-**v0.3.0 released** (2026-07-29), deployed, all static checks green. Validated in a real
-project — the token-aware loading held up on a 98 KB file behind a bare `[READ-AT-RESUME]`
-tag (~55k tokens avoided).
-
+- Current state and open work: this project's Claude memory (`MEMORY.md` + fact files)
 - Released versions and their contents: `CHANGELOG.md`
 - Why things are the way they are, incl. rejected alternatives: `docs/decision-log.md`
 - Visual explainer (open in a browser): `docs/how-it-works.html`
 
-## Next
-
-- No open work item.
-- If it proves useful: propose to the buzzwoo-standard maintainer for inclusion next to
-  `/park` (then switch the store path to a buzzwoo convention + integrate resume into
-  `/resume-bw`).
-
 ## Invocation policy
 
-The commands are **user-driven** by design: explicit request (slash command or plain-text
-ask) runs them; Claude may *suggest* a handoff when a session winds down but never executes
-one unasked. Since the commands→skills merge they are model-invocable at the harness level —
-the never-unasked rule lives in each command's description and "Invocation policy" section,
-not in the file format (see plan addition 20).
+Since the commands→skills merge they are model-invocable at the harness level — the
+never-unasked rule therefore lives in each command's `description` and "Invocation policy"
+section, not in the file format (see plan addition 20). Both stay: the command files must be
+self-contained for anyone who gets them without this repo.
