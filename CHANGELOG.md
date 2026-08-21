@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.0] — 2026-08-21
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.0).
+
 Readability. A handoff now opens with what the next session needs in order to **act**, and
 every open item is individually addressable so it can be closed instead of quietly
 disappearing. Driven by measurement, not taste: a scan of a real 176-file chain found **2570
