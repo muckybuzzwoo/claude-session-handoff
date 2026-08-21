@@ -858,8 +858,11 @@ Not added to either track. Recorded here so the next scoping decision has them.
 ### 14.8 Re-measurement 2026-08-21 (`_131`–`_175`, 45 further files)
 
 The chain grew from 130 to 175 files in the fifteen days after the original survey. Machine
-measurement only, using `wc`, `grep` and `awk`. No file was read in full. Scripts kept at
-`scratchpad/survey-131-175.sh` plus `survey-deferred.sh`. What changed and what did not:
+measurement only, using `wc`, `grep` and `awk`. No file was read in full, and the survey scripts
+were throwaway. To reproduce: per file, `wc -c` for the file size, `awk '/^## Deferred/,/^## Reference/'`
+piped to `wc -c` and `grep -c '^- '` for the Open-work size and bullet count, `grep -h '^## '`
+across the range for the heading inventory, and `grep -L` for absent headers, tags and footers.
+What changed and what did not:
 
 **The series is a sawtooth, not a growth curve.** Open work measured per file, `_100`–`_175`:
 it climbs for six to ten sessions (to 12–13 bullets, roughly 2.5–3.5 KB) and then drops to 2–3
