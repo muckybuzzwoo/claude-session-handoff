@@ -3,13 +3,15 @@
 **Status:** planned, **not implemented**. Decided 2026-08-06 (Marcus), implementation in a
 later session. Nothing in this plan has been applied to `commands/` yet.
 
-> **Before implementing anything: review this plan again.** Marcus's instruction (2026-08-06).
-> The plan was written and revised across one long session; one of its premises was already
-> refuted mid-flight by the field survey in §14, and three decisions are marked unsettled in
-> §13. A fresh session must re-read it critically first — check §13 and §14 against the
-> current state of `commands/`, confirm the two tracks in §7 are still cut correctly, and only
-> then start. Treat this review as the first work item of the implementation session, not as a
-> formality.
+> **Re-review done 2026-08-21.** Every file-and-line claim in §8, §9 and §14 was re-checked
+> against the working tree and still holds. The field survey was extended by 45 files (§14.8),
+> which corrected §14.1's method, confirmed §14.6, and produced **V4 — the one open point that
+> blocks the first commit** (§13). Also added: the second rename site in §8 and the split
+> baseline test as Track B item 0 (§7). The two tracks in §7 are still cut correctly.
+>
+> **Still to do before editing `commands/`:** settle V4, and let an external reviewer read this
+> plan (Marcus, 2026-08-21). V1 is Track B's problem, V2 and V3 are measurement questions before
+> a release, so neither blocks the start.
 
 Two separate pieces of work, deliberately kept independently revertible: **Track A —
 readability (v0.4.0)** and **Track B — workflow (v0.5.0)**. Own branch, own release, own test
@@ -59,8 +61,11 @@ it, the file is wrong from the moment it is saved.
 
 - **1C** — **DROPPED** (Marcus, 2026-08-06, after the field survey). It was briefly in scope
   and first, on the argument that the decision list drove the file growth. §14.1 refuted that:
-  Decisions grows 1.6× while Open work grows 3.3×, and decisions are never carried forward
-  verbatim, so sequence tags had nothing to de-duplicate. Record kept in §11.
+  Decisions is the stable section while Open work is the volatile one, and decisions are never
+  carried forward verbatim, so sequence tags had nothing to de-duplicate. Record kept in §11.
+  (The original wording quoted "1.6× against 3.3×". Those multipliers were withdrawn on
+  2026-08-21 as two-point samples of a sawtooth — see the method correction in §14.1. The
+  ranking they were used for survives, so the decision to drop 1C stands unchanged.)
 - **1B** — one "Open work" section with explicit labels, **one item per bullet**, explicit
   closing. Approved and **first**: this is where the measured growth (§14.1) and the measured
   failure mode (§14.2, open items evaporating) both sit.
@@ -117,7 +122,11 @@ Notes:
 - No other section is renamed, removed, or reordered.
 
 **Two rules the field survey (§14) makes non-optional. This section, not 1C, carries Track A's
-value — it is the measured growth driver (3.3×) and the site of the measured failure mode.**
+value — it is the volatile section and the site of the measured failure mode.**
+
+> **Settle V4 (§13) before writing either rule.** The re-measurement in §14.8 found that the
+> chain carries open items by *pointer*, not verbatim, so "carried forward with its own text"
+> below is not yet a decided rule. Everything else in this section is unaffected.
 
 - **One item per bullet — per-item identity.** Today long-lived TODOs are compressed into a
   single run-on bullet ("Unverändert aus _125…_129: … · … · …", `_130.md:119-121`; nine items
@@ -278,6 +287,12 @@ Branched from `main` **after** Track A merges, to avoid two branches editing
 `session-handoff.md` in parallel. Touches: HARD STOP, the step headers and their
 cross-references, the reflection intro, and adds Step 0. Commits, in order:
 
+0. **Establish the split baseline first** (decided 2026-08-21, Marcus). Before any reordering
+   commit, build a behavioural sub-test that makes the archive-split *actually fire* on today's
+   v0.3.0 and record its output as the reference. Rationale: §14.6 measured that the split has
+   never run from the command in 175 APEX files, so "nothing broke" is otherwise unprovable —
+   G3 as written only compares instruction text, not behaviour. Own commit, no production file
+   touched, so it is revertible on its own and can be written before the branch even exists.
 1. **Change 3 (§6)** — the 6/7 swap and the link-ladder relocation.
 2. **Change 2 (§5)** — Step 0 pre-flight.
 
@@ -303,6 +318,11 @@ be updated (verified 2026-08-06):
 - `tests/validate-commands.ps1:131` — template section list contains
   `'Deferred & open questions'` → change to `'Open work'`.
 - `tests/behavioral/verify-artifacts.ps1:43` — section list; add `Status` and `Open work`.
+- **`commands/session-handoff.md:93` — the second rename site** (found 2026-08-21, was missing
+  from this list). Step 3's carry-forward prose enumerates the sections by name and includes
+  `Deferred & open questions`. Renaming only the template leaves Step 3 instructing the old
+  name, and every static check still passes because they test presence, not agreement between
+  the two places. Add a check that the two lists name the same sections.
 - **Do NOT modernize the sub-test fixtures.** `tests/behavioral/depth-recovery/setup.ps1:82`
   and `tests/behavioral/load-discipline/setup.ps1:103` write `## Deferred & open questions`,
   and both write `## -> Pick up here` at the bottom. These are *inputs* to `/session-resume`,
@@ -376,6 +396,13 @@ Derived hard requirements for any instruction text touching these: match `## Ref
 **prefix**, detect the tag as a **substring** (bold wrappers exist), and never treat the footer
 as an end-of-file or end-of-section delimiter.
 
+**Re-verified 2026-08-21 against `_131`–`_175` (§14.8): the fixture list above stands as it is.**
+All 45 newer files carry the nine canonical headings verbatim, the full header field set, and a
+`Resume:` footer — zero structural deviation, and zero bold-wrapped tags. Every anomaly class G1
+must cover therefore lives in the *older* files, which is where the named fixtures already come
+from. No new fixture is needed, and the deviations must not be dismissed as historical: they are
+still the files a real resume will hit.
+
 **G2 — the mixed chain (Track A).** The case that will actually happen in APEX the moment
 this ships: `_NN` is old-format, `_NN+1` is written by the new version. Assert that Step 3
 carries forward correctly across the format boundary — the old `Deferred & open questions`
@@ -417,12 +444,14 @@ which defeats the split in §7.
 
 - **1C — dropped 2026-08-06, do not reintroduce without re-reading §14.1.** The idea: tag each
   decision with its sequence (`[_NN] …`) and collapse superseded decisions to a one-line
-  pointer. It was briefly in scope and first. The field survey killed the premise: Decisions
-  grows 1.6× against Open work's 3.3×, decisions are already carried as a delta plus a pointer
+  pointer. It was briefly in scope and first. The field survey killed the premise: Decisions is
+  the stable section against Open work's volatile one (the original multipliers were withdrawn
+  2026-08-21, see §14.1), decisions are already carried as a delta plus a pointer
   rather than verbatim (`_130.md:15`), and the chain already writes a "CLOSED, nicht wieder
   aufmachen" bullet by hand (`_130.md:122-126`). So the tags had nothing to de-duplicate and
-  the collapse rule duplicated an existing habit. One piece of it may be worth reviving later
-  in a different form: making the "Alles aus _101…_129 gilt weiter" pointer resolvable.
+  the collapse rule duplicated an existing habit. **The one piece worth reviving — making the
+  "Alles aus _101…_129 gilt weiter" pointer resolvable — is now live as option (b) of V4
+  (§13), because §14.8 found the same habit inside Open work.**
 - **1D — hard length budgets.** One line per decision, roughly seven per session, and "if it
   needs more than one line, the detail belongs in the linked file". Directly implements the
   Opus 5 length-calibration guidance.
@@ -597,9 +626,10 @@ iterate on the branch.
 
 ## 13. Open validation points
 
-Three decisions in this plan were made without enough evidence to be confident. Each must be
+Four decisions in this plan were made without enough evidence to be confident. Each must be
 settled during implementation — none of them may be left to stand simply because it is
-already written down here.
+already written down here. **V4 was added 2026-08-21 and is the only one that blocks the first
+commit.** V1 sits inside Track B, V2 and V3 concern measurement before a release.
 
 ### V1 — is the link-ladder relocation the right fix? (§6)
 
@@ -652,12 +682,50 @@ variance is already, say, 15%, then a 10% threshold is noise and the gate is mea
 Set the threshold above the measured variance, or replace it with an absolute token budget.
 Until that measurement exists, treat this criterion as **not yet defined** rather than as 10%.
 
+### V4 — verbatim carry-forward vs. the chain's pointer habit (§4.1) — BLOCKS 1B
+
+Found 2026-08-21 by the re-measurement, §14.8. Unlike V1–V3 this one **must be settled before
+the first 1B commit**, because it defines the carry-forward rule that 1B is.
+
+**The decision as written:** each open item is one bullet, "carried forward with its own text",
+and closing it is an explicit act.
+
+**What the field actually does:** it carries a *pointer*, not the text. `_114`'s Open work is
+three bullets, the first being "All of \_113's list stands. Additionally:" — 13 items delegated
+by reference to the previous file. Five such compressions in `_100`–`_175`.
+
+**The conflict:** enforcing verbatim carry-forward re-inflates every file by the 2.5–3.5 KB that
+this habit exists to avoid, which is the same length complaint that started this plan (§1.1).
+Enforcing it as written therefore trades problem 1 against problem 1. But leaving the pointer
+alone keeps the defect §14.2 documents: an item behind a pointer nobody resolves dies without
+being closed.
+
+**Options, none costed yet:**
+
+- **(a) Verbatim, as written.** Cheapest to specify, and it makes every item closable. Pays with
+  file growth that the chain has been avoiding by hand for 75 sessions.
+- **(b) Pointer, but resolvable and counted.** Allow "N items carried from `_NN`", require the
+  count, and require an explicit line per item that is *closed*. Items stay findable in exactly
+  one place, closing stays an explicit act, files stay small. This is the piece of 1C that §11
+  kept for later — it would return here instead of in a decisions-tagging form.
+- **(c) Split by label.** `Open:` items carry verbatim (they are the ones that must not die),
+  `Deferred:` and `Question:` carry by pointer. Mixed rule, more text to get right.
+
+**How to settle it:** Marcus decides. Recommendation is **(b)** — it is the only option that
+targets the measured defect (unresolvable pointers) without reintroducing the measured
+complaint (length). Record the choice and the reason in `docs/decision-log.md` before editing
+`commands/`.
+
 ## 14. Field evidence from the APEX chain (surveyed 2026-08-06)
 
 A read-only survey of all 130 files in
 `C:\Users\marcu\claude-projects\privat\projects\apex-roadtrip\.claude\session-handoffs\`
 (10 read in full, 15 machine-measured per section, headings/headers/footers/tag forms scanned
 across all 130). It **refutes one premise of this plan** and hardens several others.
+
+**Extended 2026-08-21 to `_175`** — the chain had grown by 45 files. The re-measurement is
+§14.8. It corrects §14.1's method, confirms §14.6, and produces the blocking question V4.
+Where §14.1–§14.7 and §14.8 disagree, **§14.8 is the newer measurement.**
 
 ### 14.1 The growth driver is Open work, not Decisions — 1C's premise was wrong
 
@@ -671,6 +739,14 @@ Measured section bytes, `_01` → `_130`:
 
 Decisions is the *largest* section everywhere (24–40%) but the *slowest-growing* one. The file
 grew because everything grew, led by Deferred.
+
+> **Method correction (2026-08-21).** The growth multipliers above are **two-point samples**, and
+> §14.8 shows the series is a sawtooth, not a line: Open work climbs to 12–13 bullets and then
+> drops back to 2–3 within one file, repeatedly. So "3.3×" is the ratio between one low start and
+> one high end, and picking different endpoints yields anything from 1× to 6×. **Do not quote it
+> as a growth rate.** What survives the correction is the *ranking* — Open work is the volatile,
+> fastest-swinging section and Decisions is the stable one — and that is all 1C was dropped on.
+> The load-bearing evidence for 1B is §14.2 and §14.8, not this table.
 
 Worse for 1C: **decisions are not carried forward verbatim at all.** Each file's Decisions
 section is a pure delta plus a one-line pointer — `apex-roadtrip_130.md:15`
@@ -756,6 +832,12 @@ whether it offered and was declined). Likewise `--done` has never archived an ap
 regression risk from the §6 reorder is lower than assumed. The flip side is that the feature is
 **entirely unvalidated** — do not treat "it still passes the static checks" as evidence it works.
 
+**Re-verified 2026-08-21:** still zero split evidence, now across all 175 files (`_131`–`_175`
+carry no archive/`-DONE` split target at all). Forty-five more sessions and the feature has still
+never run. Consequence: Marcus decided (2026-08-21) that Track B starts by building a behavioural
+test that makes the split actually fire on v0.3.0, so the reorder has a real baseline to be
+compared against — see §7, Track B item 0.
+
 ### 14.7 Cheap waste, not yet in scope
 
 Evidence-backed, each small on its own:
@@ -772,3 +854,41 @@ Evidence-backed, each small on its own:
   `_130.md:137-138`.
 
 Not added to either track. Recorded here so the next scoping decision has them.
+
+### 14.8 Re-measurement 2026-08-21 (`_131`–`_175`, 45 further files)
+
+The chain grew from 130 to 175 files in the fifteen days after the original survey. Machine
+measurement only, using `wc`, `grep` and `awk`. No file was read in full. Scripts kept at
+`scratchpad/survey-131-175.sh` plus `survey-deferred.sh`. What changed and what did not:
+
+**The series is a sawtooth, not a growth curve.** Open work measured per file, `_100`–`_175`:
+it climbs for six to ten sessions (to 12–13 bullets, roughly 2.5–3.5 KB) and then drops to 2–3
+bullets in a single step, at `_114`, `_116`, `_123`, `_136`, `_153`. Five full cycles are
+visible. This is what invalidates §14.1's two-point multipliers.
+
+**The drop is not item loss. It is pointer compression.** Verified at the `_113`→`_114`
+boundary: `_113` carries 13 open bullets, `_114` carries 3, and its first bullet reads
+"All of \_113's list stands. Additionally:". Nothing was dropped at that step. The items were
+delegated by reference. **This is the habit that §11 already identified as the salvageable piece
+of 1C ("making the pointer resolvable"), and it collides with 1B as currently specified. See
+V4 in §13.** §14.2's evaporating item is the *downstream* effect of this habit, not a separate
+mechanism: an item that lives behind a pointer nobody re-reads dies quietly.
+
+**Structural variance has gone to zero in the newer files.** All 45 carry the nine canonical
+headings verbatim, all carry `Date/Branch/Previous/Tree`, all carry a `Resume:` footer. Bold
+wrapped `**[READ-AT-RESUME]**`: **0** occurrences, against 51 in the older files. Section
+anchors: 15, so the v0.2.0 feature is in genuine use. 20 of 45 files carry no tag at all, which
+remains a normal state. Consequence for G1 in §9: the fixture list needs no addition, and every
+anomaly it covers is old-file-only.
+
+**Track B's failure mode recurs at a higher rate.** True supplement handoffs, meaning a file
+that exists only because work continued after the write, in the new range: `_135` ("Marcus
+tested after the handoff"), `_136` ("closing supplement"), `_153` ("supplement to \_152, same
+session, after the first handoff"). That is 3 in 45 (6.7%) against 3 in 130 (2.3%) before. A
+broader keyword sweep returns 15 files, but 12 of those use the word in an unrelated sense. The
+honest number is 3.
+
+**§14.7's cheap-waste findings have partly decayed.** "Background processes: none" now appears
+in 21 of 45 files, down from 93 of 130, and the dev-server line in 10 of 45, down from 90 of
+130. The boilerplate is thinning on its own, which lowers the value of an omit-when-empty rule.
+Left deferred.
