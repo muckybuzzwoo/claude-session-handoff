@@ -216,3 +216,33 @@ project file stays small. Entries below are in the original order.
   point. Writing them caught a trap immediately: an unscoped `IndexOf('## Open work')` matches
   the prose mention inside Step 3 rather than the template, so the order assertions are scoped
   to the document-template block. Suite **149 to 166/166**. Redeployed.
+- **2026-08-21 (behavioural proof of the format boundary, and the two rule holes it found):**
+  added `tests/behavioral/format-boundary/` — a self-contained sub-test for the case that decides
+  whether existing chains survive v0.4.0: the first new-format handoff written on top of an
+  old-format predecessor. The fixture is shaped like the hardest real file in the field: old
+  heading, no `Format:` field, nothing to inherit, one carry bullet wrapping over four lines with
+  middot separators on the continuation lines, one group header whose items are a numbered child
+  list, one prose pointer with no number, and `→ Pick up here` still at the bottom. 16 open items,
+  a figure verified with the scanner rather than derived by hand — the hand-derived number was 17,
+  off by one.
+  **The run passed.** A subagent read the real command file and wrote the boundary handoff. It
+  found the old heading, joined the wrapped bullet before counting, re-attached the label to each
+  split item, treated the colon-ending bullet as a label with four numbered children, kept the
+  unnumbered pointer as exactly one item without inventing a count, arrived at 16, closed the two
+  items the session actually settled, and wrote `Carried unchanged: 14`. `verify.ps1` asserts 25
+  properties including that `_01` was left byte-intact. All green.
+  **Two real holes surfaced that no amount of reading had found, both now fixed.**
+  First: the rule "Open work never repeats the next action" let a *new* next action live only in
+  `→ Pick up here`, with no `- Open:` bullet — so the next handoff's count would never see it and
+  the item would be lost, which is the exact defect the invariant exists to prevent. Reworded:
+  `→ Pick up here` is a **spotlight, not a container**. It names which item is next and the detail
+  to start it, while the item itself stays in Open work to be counted and closed. What stays
+  forbidden is restating the whole next-action paragraph a second time.
+  Second: Step 3 demanded that an unnumbered prose carry be "labelled and said so", but the
+  template had no slot for it — a bullet would be counted by the next writer and nothing may
+  follow the `Carried unchanged:` line. The agent put it in loose paragraphs, which the scanner
+  correctly does not count, so the item was preserved in prose and lost to the ledger. Fixed with
+  a real label, `- Unresolved carry: … — count unknown, see {file}`, plus an explicit statement
+  that prose under the list is not an item.
+  Rewording those two rules broke two existing static checks, which is the suite doing its job.
+  Suite **166 to 171/171**, plus 25 behavioural assertions and 4 guard-fixture assertions.

@@ -138,9 +138,16 @@ foreach ($s in @(
 Section 'R. Handoff — Open work section + carry rule (v0.4.0, 1B)'
 
 # --- the template's labels ---
-foreach ($lbl in @('- Open:', '- Deferred:', '- Question:', '- Done:', '- Carried unchanged:')) {
+foreach ($lbl in @('- Open:', '- Deferred:', '- Question:', '- Done:',
+                   '- Unresolved carry:', '- Carried unchanged:')) {
     Check "Open-work template has label: $lbl" ($h.Contains($lbl))
 }
+# Both found by the 2026-08-21 behavioural run, which is the only thing that surfaced them.
+Check 'the next action must ALSO exist as a countable item' (
+    $h.Contains('ONLY in "→ Pick up here" is invisible'))
+Check 'spotlight-not-container wording is present' ($h.Contains('spotlight, not a container'))
+Check 'an unnumbered carry gets its own labelled bullet' ($h.Contains('count unknown, see'))
+Check 'loose prose is explicitly not an item' ($h.Contains('prose under the list is not an item'))
 Check 'old section name is gone from the template' (-not ($h -match '(?m)^## Deferred & open questions'))
 
 # --- both places that name the sections agree ---
@@ -161,7 +168,7 @@ Check 'N must add up'                             ($h.Contains('must add up'))
 Check 'never adjust the number to fit'            ($h.Contains('never adjust the number'))
 Check 'closing is explicit, via a Done bullet'    ($h.Contains('Closing is explicit'))
 Check 'an item may never leave by being omitted'  ($h.Contains('never leave by being omitted'))
-Check 'Open work never repeats Pick up here'      ($h -match 'never repeats "→ Pick up here"')
+Check 'Open work must not restate the next action' ($h.Contains('must not restate the next action'))
 
 # --- the counting grammar ---
 Check 'splits only on the middot separator'       ($h.Contains('space, middot'))
@@ -171,7 +178,7 @@ Check 'wrapped bullets are joined before counting'  ($h.Contains('A bullet wraps
 Check 'numbered children count like bullet children' ($h.Contains('numbered `1.` `2.` list'))
 Check 'label is re-attached to every split item'  ($h.Contains('re-attach'))
 Check 'boundary count is established, not inherited' ($h.Contains('established, not inherited'))
-Check 'numberless prose pointer stays one item'   ($h.Contains('unresolved carry'))
+Check 'numberless prose pointer stays one item'   ($h.Contains('carrying no number'))
 Check 'never invent a count'                      ($h.Contains('Never invent a count'))
 
 # --- Step 1 says where the TodoWrite items go ---

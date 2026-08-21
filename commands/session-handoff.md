@@ -108,7 +108,13 @@ written before this format. **Accept either** — every pre-existing chain uses 
   session. If it does not add up, say so in the handoff — never adjust the number to fit.
 - **Closing is explicit.** A closed item gets a `- Done: {item}` bullet in *this* file, and
   only then disappears from later ones. **An item may never leave by being omitted.**
-- Open work holds what comes *after* the next action. It never repeats "→ Pick up here".
+- **Open work must not restate the next action as prose — but the item itself must be
+  there.** "→ Pick up here" is a spotlight, not a container: it names *which* item is next
+  and the detail needed to start it, while the item stays in Open work so it can be counted
+  and closed. Written out as `- Open:` if it is new or changed, otherwise inside the carried
+  count. What this rule forbids is the old habit of repeating the whole next-action paragraph
+  a second time under Open work. **An item that exists ONLY in "→ Pick up here" is invisible
+  to the next handoff's count and will be lost** — that is what this rule prevents.
 
 **Counting the items of an old-format section** (you need this for `N` at the boundary):
 
@@ -126,7 +132,10 @@ written before this format. **Accept either** — every pre-existing chain uses 
 - At the boundary the count is **established, not inherited** — no old file has a
   `Carried unchanged:` line. Compute `N` from the previous file and write it down.
 - A prose pointer carrying no number ("the whole list from `_152` still applies") stays
-  **one** item, labelled as an unresolved carry, and you say so. Never invent a count.
+  **one** item. Write it as its own labelled bullet —
+  `- Unresolved carry: {what the old file said} — count unknown, see {file}` — so it is
+  countable like any other item. Never invent a count, and never leave it as a loose
+  paragraph: prose under the list is not an item and the next writer will not count it.
 
 ### Step 4 — Secrets (convention + warn, never auto-rewrite)
 
@@ -294,6 +303,7 @@ Then **STOP**.
 - Deferred: {item} — {why}
 - Question: {open question} — {context}
 - Done: {item} — {closed this session; it does not appear in later handoffs}
+- Unresolved carry: {what an old file said without a number} — count unknown, see {file}
 - Carried unchanged: {N} items — see {slug}_{NN-1}.md
 
 ## What this is about / where it started
