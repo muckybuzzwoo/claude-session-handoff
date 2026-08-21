@@ -27,8 +27,14 @@ Glob `.claude/session-handoffs/*_*.md` for active topics. If `--all` is set, **a
 Glob `.claude/session-handoffs/done/*_*.md` and merge the results — otherwise exclude
 `done/`. Remember which topics came from `done/` — they must be visibly marked as
 archived in the picker. Group by `{slug}`; for each topic take the highest `NN`, and read
-its header `Date` plus the first line of "What this is about". Sort topics by file mtime,
-most recent first.
+its header `Date`, its `Format:` field, plus the first line of "What this is about". Sort
+topics by file mtime, most recent first.
+
+**`Format:` is the only format signal — never infer the format from a tag.** `Format: 2` is the
+counted-carry format; **no `Format:` field at all** means format 1. Both are fully supported and
+nothing is ever migrated. Do not read the format off a `[READ-AT-RESUME]` tag's shape: a format-2
+file may carry a bare tag (write-time ladder case (d)), and a format-1 file may carry a section
+anchor, because anchors shipped three weeks before the field did.
 
 If none are found, run the **Fallback — no-handoff orientation** below instead of
 stopping cold.
@@ -86,8 +92,8 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      then read **only** that section (a targeted Read with offset/limit down to the next
      heading). State in the briefing that you loaded only that section. Heading not found
      → fall back to reading the file's heading skeleton + note the miss; never blind-load.
-   - **`[READ-AT-RESUME]`** (bare tag — this is also the **old handoff format**; keep
-     reading it, no migration needed) → load it, but if it is large (`bytes/4` above
+   - **`[READ-AT-RESUME]`** (bare tag — **any** format writes these; it says nothing about the
+     handoff's format, see Step 1) → load it, but if it is large (`bytes/4` above
      roughly 15k) do **not** swallow the whole file: read its heading skeleton plus the
      sections that bear on the open work, and flag the omission ("loaded headings + §X of
      Y — pull more if needed"). Small tagged files load fully. (Until now only the built-in
@@ -106,12 +112,24 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      unreadable or outside your reach → say so and carry on. Never substitute a size or a
      summary that the handoff's own prose claims for a file you did not open.
    - **`Carried unchanged: {N} items — see {file}` in Open work → resolve exactly ONE hop.**
-     Read that file's Open-work section only (the same targeted read as a section anchor) and
-     fold its items into the briefing. If that file carries a carry line of its own, do **not**
-     walk further: report "{N} items carried, the older ones live in {file}" and stop. Say how
-     many items you resolved. Count mismatch, or the file is missing → name both numbers, or
-     say the file is gone, and do not guess. Old handoffs have no carry line — then there is
-     nothing to resolve and this bullet does not apply.
+     Read that file's Open-work section only (the same targeted read as a section anchor). That
+     section is headed `## Open work`, or `## Deferred & open questions` in files written before
+     format 2 — **accept either**. At the format boundary the hop target always has the old one.
+     Fold only its **open** items into the briefing: a `- Done:` bullet is a **closed** item and
+     must never be presented as open work, and that file's own `Carried unchanged:` line is not
+     an item either. If that file carries a carry line of its own, do **not** walk further:
+     report "{N} items carried, the older ones live in {file}" and stop. Say how many
+     items you resolved. File missing → say it is gone and carry on, do not guess its contents.
+     **Then check the count, with these operands.** `prev_total` = the hop file's written-out
+     still-open items **plus** its own `Carried unchanged:` number. The conservation law is
+     `N + this file's Done: bullets + this file's written-out still-open items - prev_total`,
+     and it must be `>= 0` — the remainder is new work this session. A **negative** result is a
+     shortfall: that many items left the chain without a `Done:` line. Report the arithmetic and
+     both totals; never guess which items were lost. Do **not** treat a plain difference between
+     `N` and `prev_total` as a mismatch — on a correct chain they differ by exactly what this
+     session closed and wrote out.
+     Old handoffs have no carry line — then there is nothing to resolve and this bullet does not
+     apply.
 3. Summarize from the handoff AND what you loaded.
 
    **Open the briefing with exactly three things, in this order:** where the topic stands
@@ -177,5 +195,5 @@ doing any work.
 | No handoffs found | Run the no-handoff fallback (memory + git briefing), then suggest `/session-handoff`. |
 | Topic argument not found | List available topics; ask which. |
 | Not a git repository | Skip branch/staleness git checks; load anyway. |
-| Old-format handoff (bare `[READ-AT-RESUME]`, no section anchor) | Fully supported — load with the big-file safeguard in Step 4; no migration needed. Old chains (any length) keep working; the new anchor format appears only from the next `/session-handoff` on. |
+| Old-format handoff (no `Format:` field in the header) | Fully supported — load with the big-file safeguard in Step 4; no migration needed. Old chains (any length) keep working, and both Open-work headings are accepted. The counted carry appears only from the next `/session-handoff` on. |
 | `[READ-AT-RESUME]` link missing/unreadable | Note the gap; summarize from the handoff text and flag that the linked depth couldn't be loaded. |

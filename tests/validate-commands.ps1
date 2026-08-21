@@ -358,7 +358,11 @@ Check 'Confirm block has Split proposed: line'              ($h.Contains('Split 
 Check 'Resume resolves section-anchor tags'                 ($r.Contains('[READ-AT-RESUME: <'))
 Check 'Resume measures target size in bytes'                ($r.Contains('bytes/4'))
 Check 'Resume big-file safeguard (no blind full-load)'      ($r.Contains('swallow the whole file'))
-Check 'Resume reads old bare-tag format (backward-compat)'  ($r.Contains('old handoff format'))
+# Was: asserted the phrase 'old handoff format' on the bare-tag bullet. That phrase WAS the
+# v0.4.1 defect — a bare tag says nothing about the format. Backward-compat is now asserted
+# where it actually lives, in Section U.
+Check 'Resume does not equate a bare tag with the old format' (
+    -not $r.Contains('this is also the **old handoff format**'))
 Check 'Resume no longer blind-loads untagged plan-like files' ($r.Contains('do not full-load them'))
 
 # =============================================================================
@@ -374,6 +378,42 @@ Check 'Resume prints the pointer only, never loads the other repo'  ($r.Contains
 # 3 — memory-index reconciliation on resume (no extra load; names both, resolves nothing silently)
 Check 'Resume reconciles briefing against the memory index'         ($r.Contains('Reconcile against the memory index'))
 Check 'Resume names BOTH states, does not silently pick one'        ($r.Contains('name BOTH states') -and $r.Contains('Do not silently pick one'))
+
+# =============================================================================
+Section 'U. Resume — writer/reader contract (v0.4.2: Format field, both headings, Done: bullets)'
+# The writer emitted three things the reader never read. Scoped where scoping is possible:
+# the carry-hop rules must sit INSIDE the carry bullet, not merely somewhere in the file.
+$carryAt  = $r.IndexOf('Carried unchanged: {N} items')
+Check 'carry-hop bullet found'                        ($carryAt -ge 0)
+$hopEnd   = if ($carryAt -ge 0) { $r.IndexOf('3. Summarize from the handoff', $carryAt) } else { -1 }
+$hop      = if ($carryAt -ge 0 -and $hopEnd -gt $carryAt) { $r.Substring($carryAt, $hopEnd - $carryAt) } else { '' }
+Check 'carry-hop bullet is delimited'                 ($hop -ne '')
+
+# 1 — the Format: field is read, and is the ONLY format signal
+Check 'Resume reads the Format: header field'         ($r.Contains('its `Format:` field'))
+Check 'Format: is named the only format signal'       ($r.Contains('only format signal'))
+Check 'Resume must not infer format from a tag'       ($r.Contains('never infer the format from a tag'))
+Check 'a missing Format: field means format 1'        ($r.Contains('no `Format:` field at all'))
+Check 'both formats stay supported, nothing migrated' ($r.Contains('nothing is ever migrated'))
+Check 'error table keys the old format off the field' ($r.Contains('no `Format:` field in the header'))
+
+# 2 — both Open-work headings, asserted inside the hop bullet
+Check 'hop accepts the OLD Open-work heading'         ($hop.Contains('## Deferred & open questions'))
+Check 'hop accepts either heading, explicitly'        ($hop.Contains('accept either'))
+Check 'hop names the boundary as the always-old case' ($hop.Contains('format boundary'))
+
+# 3 — Done: bullets are closed items, never folded in as open work
+Check 'hop folds ONLY open items'                     ($hop.Contains('only its **open** items'))
+Check 'hop calls a Done: bullet a closed item'        ($hop.Contains('`- Done:` bullet is a **closed** item'))
+Check 'hop excludes the nested carry line too'        ($hop.Contains('is not') -and $hop.Contains('an item either'))
+
+# 4 — the count check has defined operands (the old wording had none and fired on correct chains)
+Check 'hop defines prev_total'                        ($hop.Contains('prev_total'))
+Check 'hop states the conservation law'               ($hop.Contains('conservation law'))
+Check 'hop requires the law to be >= 0'               ($hop.Contains('must be `>= 0`'))
+Check 'hop reads a negative result as a shortfall'    ($hop.Contains('shortfall'))
+Check 'hop forbids flagging a plain N difference'     ($hop.Contains('not** treat a plain difference'))
+Check 'hop still refuses to guess lost items'         ($hop.Contains('never guess which items'))
 
 # =============================================================================
 Write-Host ''

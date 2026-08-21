@@ -3,6 +3,41 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.2] — 2026-08-21
+
+Reader side of the v0.4.1 fix. `/session-handoff` wrote three things `/session-resume` never
+read. Same subagent review (`reviews/subagent-review-2026-08-21.md` §3).
+
+### Fixed
+
+- **`Format:` is now read, and is the only format signal.** Resume inferred the format from the
+  shape of a `[READ-AT-RESUME]` tag, which is false in both directions: a format-2 file may write
+  a bare tag (write-time ladder case (d)), and a format-1 file may carry a section anchor, because
+  anchors shipped three weeks before the field did. Step 1 reads the field with `Date`, and the
+  error-handling table keys the old format off the field's absence instead of the tag.
+- **The one-hop carry resolution accepts both Open-work headings.** It only knew `## Open work`.
+  At the format boundary — the only hop that exists in the field — the target always has
+  `## Deferred & open questions`, so the section it was told to read was the one heading it could
+  not find.
+- **`- Done:` bullets are no longer folded in as open work.** They are closed items. On a format-2
+  hop target they can be the whole section, which meant resume presented closed items as open. The
+  hop file's own `Carried unchanged:` line is excluded too.
+- **The count check has defined operands.** "Count mismatch → name both numbers" named nothing to
+  compare, and the only computable reading fires on every correct chain. Resume now checks the same
+  conservation law the compat scanner enforces, reports the arithmetic, and explicitly does not
+  treat a plain `N` vs `prev_total` difference as a mismatch.
+
+### Tests
+
+Static suite **176 → 196**. New Section U asserts the carry-hop rules **inside** the carry bullet
+rather than anywhere in the file (1669 of 12902 characters), so a rule that drifts out of the
+bullet fails the check. One old check was removed rather than kept: it asserted the phrase
+"old handoff format" on the bare-tag bullet, and that phrase was the defect.
+
+### Compatibility
+
+Reader-only. No template change, no format change, nothing written or migrated.
+
 ## [0.4.1] — 2026-08-21
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.1).
