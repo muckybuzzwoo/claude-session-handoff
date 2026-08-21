@@ -117,50 +117,70 @@ foreach ($f in $files) {
     $sec = Get-OpenWorkSection $lines
     if ($null -eq $sec) { $sec = @() }
 
-    # Top-level bullets only. A nested bullet normally belongs to its parent item — EXCEPT
-    # under a group header (a bullet whose text ends in a colon), where the nested bullets
-    # ARE the items and the header itself is only a label. Two such headers exist in the
-    # APEX chain and they hold 7 items, which a naive rule would silently drop.
-    $bullets = @($sec | Where-Object { $_ -match '^- ' })
-    $nested  = @($sec | Where-Object { $_ -match '^\s+- ' })
-
-    $headerBullets = @()
-    $headerChildren = 0
-    for ($k = 0; $k -lt $sec.Count; $k++) {
-        if ($sec[$k] -notmatch '^- ') { continue }
-        if ($sec[$k].TrimEnd() -notmatch ':(\*{0,2})$') { continue }
-        $kids = 0
-        for ($j = $k + 1; $j -lt $sec.Count; $j++) {
-            if ($sec[$j] -match '^\s+- ') { $kids++ }
-            elseif ($sec[$j] -match '^- ') { break }
+    # Build LOGICAL bullets. A real bullet often wraps over several lines, and counting
+    # line by line loses every separator on a continuation line — in apex-roadtrip_176 that
+    # is 30+ items hidden in one wrapped bullet. So: join continuation lines into their
+    # bullet, and count nested children (either "- " or "1." style) separately.
+    #
+    # A nested child normally belongs to its parent item — EXCEPT under a group header
+    # (a bullet whose text ends in a colon), where the children ARE the items and the
+    # header line is only a label.
+    $units = @()
+    $u = $null
+    $seenKid = $false
+    foreach ($ln in $sec) {
+        if ($ln -match '^- ') {
+            if ($null -ne $u) { $units += $u }
+            $u = [pscustomobject]@{ Text = $ln; Kids = 0 }
+            $seenKid = $false
         }
-        if ($kids -gt 0) {
-            $headerBullets += $sec[$k]
-            $headerChildren += $kids
+        elseif ($ln -match '^\s+(-|\d+\.)\s') {
+            if ($null -ne $u) { $u.Kids++ }
+            $seenKid = $true
+        }
+        elseif ($ln.Trim() -ne '') {
+            # Continuation text. Once children have started it belongs to a child, not to
+            # the parent, so it must not add separators to the parent's text.
+            if ($null -ne $u -and -not $seenKid) { $u.Text = $u.Text + ' ' + $ln.Trim() }
         }
     }
+    if ($null -ne $u) { $units += $u }
 
-    # The carry line is not an item. Group headers are not items either.
-    $carryLine  = @($bullets | Where-Object { $_ -match 'Carried unchanged:' })
-    $realBullet = @($bullets | Where-Object { $_ -notmatch 'Carried unchanged:' -and $headerBullets -notcontains $_ })
+    $nested = [int](($units | Measure-Object Kids -Sum).Sum)
+
+    $headerUnits = @($units | Where-Object { $_.Kids -gt 0 -and $_.Text.TrimEnd() -match ':(\*{0,2})$' })
+    $headerChildren = 0
+    if ($headerUnits.Count -gt 0) { $headerChildren = [int](($headerUnits | Measure-Object Kids -Sum).Sum) }
+
+    # Not open items: the carry line, group headers (labels), and Done: bullets (closed by
+    # definition — counting them would inflate the total the NEXT file has to carry).
+    $carryLine  = @($units | Where-Object { $_.Text -match 'Carried unchanged:' })
+    $doneBullet = @($units | Where-Object { $_.Text -match '(?i)^\-\s+\*{0,2}Done:' })
+    $realBullet = @($units | Where-Object {
+        $_.Text -notmatch 'Carried unchanged:' -and
+        $_.Text -notmatch '(?i)^\-\s+\*{0,2}Done:' -and
+        $headerUnits -notcontains $_
+    })
+
+    $bullets = $units
 
     $carryN = $null
     if ($carryLine.Count -gt 0) {
-        $m = [regex]::Match($carryLine[0], 'Carried unchanged:\s*(\d+)')
+        $m = [regex]::Match($carryLine[0].Text, 'Carried unchanged:\s*(\d+)')
         if ($m.Success) { $carryN = [int]$m.Groups[1].Value }
     }
 
-    $dotBullets = @($realBullet | Where-Object { $_.Contains($Sep) })
+    $dotBullets = @($realBullet | Where-Object { $_.Text.Contains($Sep) })
     $dots = 0
     foreach ($b in $dotBullets) {
-        $dots += ([regex]::Matches($b, [regex]::Escape($Sep))).Count
+        $dots += ([regex]::Matches($b.Text, [regex]::Escape($Sep))).Count
     }
 
     # Items under the v0.4.0 grammar: each bullet counts once, plus one per separator,
     # plus the children of every group header (whose own line is only a label).
     $items = $realBullet.Count + $dots + $headerChildren
 
-    $doneCount = @($realBullet | Where-Object { $_ -match '(?i)^\-\s+\*{0,2}Done:' }).Count
+    $doneCount = $doneBullet.Count
 
     # Carry-style bullets: they reference a previous handoff by sequence and assert that its
     # items still apply. Three classes, and only the last one is a problem:
@@ -173,12 +193,13 @@ foreach ($f in $files) {
     $enumerating  = 0
     $unresolvable = 0
     foreach ($b in $realBullet) {
-        $isCarry = ($b -match '(?i)(unver.ndert|unchanged|gilt weiter|gelten weiter|list stands|alles aus|weiter offen)') `
-                   -and ($b -match '_\d+')
+        $t = $b.Text
+        $isCarry = ($t -match '(?i)(unver.ndert|unchanged|gilt weiter|gelten weiter|list stands|alles aus|weiter offen)') `
+                   -and ($t -match '_\d+')
         if (-not $isCarry) { continue }
-        if ($b -match '(?i)(CLOSED|abgeschlossen|nicht wieder aufmachen)') { continue }
+        if ($t -match '(?i)(CLOSED|abgeschlossen|nicht wieder aufmachen)') { continue }
         $carryStyle++
-        if ($b.Contains($Sep) -or $b -match '#\d+') { $enumerating++ } else { $unresolvable++ }
+        if ($t.Contains($Sep) -or $t -match '#\d+') { $enumerating++ } else { $unresolvable++ }
     }
     $prosePointer = ($unresolvable -gt 0)
 
@@ -190,14 +211,14 @@ foreach ($f in $files) {
         Bullets      = $realBullet.Count
         DotBullets   = $dotBullets.Count
         Dots         = $dots
-        Nested       = $nested.Count
+        Nested       = $nested
         CarryN       = $carryN
         Done         = $doneCount
         CarryStyle   = $carryStyle
         Enumerating  = $enumerating
         Unresolvable = $unresolvable
         ProsePointer = $prosePointer
-        Headers      = $headerBullets.Count
+        Headers      = $headerUnits.Count
         HeaderKids   = $headerChildren
     }
 }
@@ -270,22 +291,34 @@ for ($i = 1; $i -lt $rows.Count; $i++) {
     if ($null -eq $cur.CarryN)  { continue }   # no carry line: everything written in full
     $checked++
 
-    if ($prev.Heading -ne 'new') {
-        # Boundary: the count is established from the old file, not inherited.
-        Check "_$($cur.Seq): carry count established from old _$($prev.Seq) (expected $($prev.Items))" `
-              ($cur.CarryN -eq $prev.Items)
-        continue
+    # The previous file's TOTAL open items: what it wrote out, plus what it carried.
+    # $prev.Items already includes middot splits and group-header children.
+    $prevTotal = $prev.Items
+    if ($null -ne $prev.CarryN) { $prevTotal += $prev.CarryN }
+
+    # Conservation law. Every open item of the previous file must end up in exactly one of
+    # three places in this file: carried, written out in full because it changed, or closed.
+    # Anything written out on top of that is NEW work from this session.
+    #
+    #   implied_new = carried + closed + written_out_and_still_open - previous_total
+    #
+    # A negative result means items are unaccounted for — they left without being closed,
+    # which is the exact defect the invariant exists to catch. Deriving the new-item count
+    # instead of demanding equality means a session that adds work never false-alarms.
+    $accounted   = $cur.CarryN + $cur.Done + $cur.Items
+    $impliedNew  = $accounted - $prevTotal
+    $where = if ($prev.Heading -eq 'new') { 'carried from' } else { 'established from old' }
+
+    Check ("_$($cur.Seq): nothing lost — carry $($cur.CarryN) + closed $($cur.Done) + written $($cur.Items) = $accounted, " +
+           "$where _$($prev.Seq) total $prevTotal, so $impliedNew new") `
+          ($impliedNew -ge 0)
+
+    if ($impliedNew -lt 0) {
+        Write-Host "         $([Math]::Abs($impliedNew)) item(s) left _$($prev.Seq) without a Done: line." -ForegroundColor Red
     }
 
-    $prevTotal = $prev.Items
-    if ($null -ne $prev.CarryN) { $prevTotal = $prev.Bullets + $prev.Dots + $prev.CarryN }
-    $expected = $prevTotal - $cur.Done
-
-    Check "_$($cur.Seq): carry $($cur.CarryN) = _$($prev.Seq) total $prevTotal minus $($cur.Done) closed" `
-          ($cur.CarryN -eq $expected)
-
     if ($cur.CarryN -lt $prevTotal) {
-        Check "_$($cur.Seq): shrinking count has matching Done: lines" ($cur.Done -gt 0)
+        Check "_$($cur.Seq): shrinking carry count has matching Done: lines" ($cur.Done -gt 0)
     }
 }
 

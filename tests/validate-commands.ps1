@@ -167,6 +167,8 @@ Check 'Open work never repeats Pick up here'      ($h -match 'never repeats "→
 Check 'splits only on the middot separator'       ($h.Contains('space, middot'))
 Check 'never splits on commas or and'             ($h.Contains('never on commas'))
 Check 'bullet ending in a colon is a group header' ($h.Contains('group header'))
+Check 'wrapped bullets are joined before counting'  ($h.Contains('A bullet wraps'))
+Check 'numbered children count like bullet children' ($h.Contains('numbered `1.` `2.` list'))
 Check 'label is re-attached to every split item'  ($h.Contains('re-attach'))
 Check 'boundary count is established, not inherited' ($h.Contains('established, not inherited'))
 Check 'numberless prose pointer stays one item'   ($h.Contains('unresolved carry'))
@@ -194,6 +196,29 @@ Check 'ignores .claude/session-handoffs/'        ($h.Contains('.claude/session-h
 Check 'warns: never ignore all of .claude/'      ($h.Contains('never all of'))
 Check 'Windows rule: chained Bash may be blocked, batch via PowerShell or split' (
     $h.Contains('block chained Bash calls') -and $h.Contains('PowerShell'))
+
+# =============================================================================
+Section 'S. Carry-invariant guard actually fires (fixture chains)'
+# The rest of this suite proves the INSTRUCTION text is present. This section proves the
+# safety net around it works: compat-old-chain.ps1 must accept a correct chain and reject a
+# chain where items left without being closed. A guard that has never caught anything is
+# not a guard.
+$scanner    = Join-Path $PSScriptRoot 'compat-old-chain.ps1'
+$fixtureOk  = Join-Path $PSScriptRoot 'fixtures/carry-ok'
+$fixtureBad = Join-Path $PSScriptRoot 'fixtures/carry-bad'
+
+Check 'scanner exists'            (Test-Path $scanner)
+Check 'passing fixture exists'    (Test-Path (Join-Path $fixtureOk  'demo_03.md'))
+Check 'failing fixture exists'    (Test-Path (Join-Path $fixtureBad 'demo_02.md'))
+
+$null = & pwsh -NoProfile -File $scanner -Path $fixtureOk *>&1
+$okExit = $LASTEXITCODE
+Check 'correct chain passes (exit 0)' ($okExit -eq 0)
+
+$badOut  = & pwsh -NoProfile -File $scanner -Path $fixtureBad *>&1
+$badExit = $LASTEXITCODE
+Check 'chain with dropped items FAILS (exit 1)' ($badExit -eq 1)
+Check 'and it names how many items were lost'   (($badOut | Out-String) -match 'item\(s\) left')
 
 # =============================================================================
 Section 'I. Resume — frontmatter + read-only posture'

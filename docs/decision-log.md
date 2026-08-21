@@ -164,3 +164,37 @@ project file stays small. Entries below are in the original order.
   working as free backward-compatibility coverage. Static suite **107 → 141/141**. Redeployed.
   Not yet proven behaviourally: no real `/session-resume` run against an old chain has been
   made under the new text.
+- **2026-08-21 (the carry guard, and three bugs it found in itself):** `tests/compat-old-chain.ps1`
+  had never seen a new-format file — it reported "nothing to check" and passed. A guard that has
+  never caught anything is not a guard, so two fixture chains were added and wired into the static
+  suite as section S: `tests/fixtures/carry-ok` (old to new to new, one item closed and one
+  reworded) must exit 0, and `tests/fixtures/carry-bad` (three carried where five were open, with
+  nothing marked done) must exit 1 and name the two lost items. Writing them found three real
+  defects in the guard, none of which reading had caught: it did not subtract closed items at the
+  format boundary, it omitted group-header children from the previous file's total, and it counted
+  `Done:` bullets as open items, which inflated the total the next file had to carry.
+  **The invariant itself was wrong and is now a conservation law.** The first formula,
+  `N_carry(NN) = full_items(NN-1) + N_carry(NN-1) - closed_in(NN)`, ignored the items a file writes
+  out in full, so a handoff that merely reworded one item failed the check. Replaced by
+  `implied_new = carried + closed + written_out_still_open - previous_total`, which must be `>= 0`.
+  Every previous item lands in exactly one of three places — carried, rewritten, or closed — and a
+  negative result is the count of items that left without being closed. Deriving the new-item count
+  instead of demanding equality means a session that adds work never false-alarms. Static suite
+  **141 to 147/147**.
+- **2026-08-21 (the wrapped-bullet bug — the most consequential find of the day):** the counting
+  grammar and the scanner both read the Open-work section line by line. Real bullets wrap, and
+  every middot separator on a continuation line was invisible. Chain-wide that hid roughly **900
+  open items**: the apex-roadtrip total went from 1654 to **2570** once continuation lines were
+  joined. `apex-roadtrip_176` alone counted 11 items instead of **44**, because one wrapped bullet
+  carries more than thirty items behind separators on its second and later lines. Had the first
+  new-format handoff established its count from that number, **33 items would have been dropped at
+  the format crossing** — the exact failure the invariant exists to prevent. Fixed in both places:
+  the scanner builds logical bullets before counting, and the command's grammar now states that a
+  bullet wraps and that numbered `1.` children count like `- ` children. Found by pointing the
+  scanner at a real file and disbelieving the number, not by reading either file.
+  **Also observed, worth knowing operationally:** `_176` was written at 16:54, ten minutes *after*
+  the new commands were deployed at 16:44, and it is in the **old** format. A session that is
+  already running does not pick up a redeployed command — most likely because it loaded the file
+  at session start. Not verified beyond the timestamps, so treat the mechanism as inference. The
+  practical consequence is real either way: after a deploy, sessions already open keep writing the
+  old format, which is exactly why Step 3 must accept both headings.

@@ -114,8 +114,13 @@ written before this format. **Accept either** — every pre-existing chain uses 
 
 - An item is a top-level `- ` bullet. Split one further **only** on ` · ` (space, middot,
   space) — never on commas, "and"/"und", or line wraps.
+- **A bullet wraps.** Join its continuation lines before you count: a separator on the
+  second or third line counts exactly like one on the first. This is where the largest loss
+  hides — a single wrapped bullet can carry dozens of items, and reading line by line sees
+  only the first two.
 - A bullet whose text ends in `:` is a **group header**: it is not an item, its indented
-  child bullets are. Everywhere else an indented bullet belongs to its parent item.
+  children are. Children may be `- ` bullets **or** a numbered `1.` `2.` list — both count.
+  Everywhere else an indented bullet belongs to its parent item.
 - Where a bullet reads `{label}: {item} · {item}`, re-attach `{label}` to every item you
   split out of it, or the second and third lose their classification.
 - At the boundary the count is **established, not inherited** — no old file has a

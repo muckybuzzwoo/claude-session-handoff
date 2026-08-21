@@ -484,24 +484,36 @@ Without a rule the expected count is a matter of taste, so fix it narrowly:
 
 | | count |
 |---|---|
-| files carrying the **old** heading `## Deferred & open questions` | **175 of 175** |
-| top-level open bullets (group headers and carry lines excluded) | 1104 |
-| bullets that hide several items behind a middot | 170 |
-| middot separators inside those bullets | 533 |
-| group headers with nested items | 2, holding 7 items |
-| **open items in total, under this grammar** | **1644** |
-| carry-style bullets referencing a previous `_NN` (CLOSED records excluded) | 99 |
-| of those, enumerating their own items → resolvable from the bullet | 61 |
-| of those, listing nothing → **count must be established, not inherited** | 38, in 36 files |
+| files carrying the **old** heading `## Deferred & open questions` | **176 of 176** |
+| top-level open bullets (group headers and carry lines excluded) | 1109 |
+| bullets that hide several items behind a middot | 235 |
+| middot separators inside those bullets | 1436 |
+| group headers with nested items | 6, holding 25 items |
+| **open items in total, under this grammar** | **2570** |
+| carry-style bullets referencing a previous `_NN` (CLOSED records excluded) | 102 |
+| of those, enumerating their own items → resolvable from the bullet | 78 |
+| of those, listing nothing → **count must be established, not inherited** | 24, in 24 files |
+
+The chain grew to `_176` while this section was being written — another session wrote a handoff
+mid-work. Re-run the scanner rather than trusting the table.
 
 Sampled bullets confirm the middot is an item separator, not intra-item punctuation. `+` and
 commas inside an item are **not** separators, which is why the grammar names only ` · `.
 
-> **Correction.** An earlier draft of this section claimed 7 files carry a numberless pointer.
-> That number came from a `grep` run and was wrong: `grep` matches bytes, so the pattern
-> `unver.ndert` missed every "unverändert" — the German umlaut is two bytes and `.` matched one.
-> The measured figure is 38 bullets in 36 files. Keep the scan in `tests/compat-old-chain.ps1`
-> rather than re-deriving it on the command line.
+> **Two corrections, both from running the scan rather than reading.**
+>
+> 1. An earlier draft claimed 7 files carry a numberless pointer. That came from `grep`, which
+>    matches bytes: the pattern `unver.ndert` missed every "unverändert" because the German
+>    umlaut is two bytes and `.` matched one. Never count German prose with a byte matcher.
+> 2. **The bigger one: bullets wrap, and counting line by line lost roughly 900 items
+>    chain-wide.** `_176` holds one wrapped bullet carrying 30+ items behind middots on its
+>    continuation lines; a line-oriented count saw 11 items in that file instead of 44. Had the
+>    first new-format write used that number, 33 items would have been dropped at the crossing —
+>    the precise failure this whole section exists to prevent. The grammar now says: join
+>    continuation lines before counting, and count numbered `1.` children like `- ` children.
+>
+> Keep the scan in `tests/compat-old-chain.ps1`. Both errors survived being read and died on
+> being run.
 
 **Boundary rules for the first new-format write on an old chain (added 2026-08-21):**
 
@@ -854,16 +866,35 @@ rule (`reviews/gemini-plan-review-2026-08-21-architect.md`,
    `Carried unchanged: {N} items — see {previous filename}`. It may reference **only the
    immediately previous handoff of the same chain**. Never an older file, never two carry lines.
 
-**The count is the invariant.** `N` equals the previous file's total open-item count minus what
-this session closed:
+**The count is the invariant — as a conservation law, not an equation.** Every open item of the
+previous file must land in exactly one of three places in this one: carried, written out in full
+because it changed, or closed. Anything written out beyond that is new work from this session:
 
 ```
-N_carry(NN) = full_items(NN-1) + N_carry(NN-1) − closed_in(NN)
+implied_new(NN) = carried(NN) + closed(NN) + written_out_still_open(NN) − total_open(NN-1)
+
+    total_open(NN) = written_out_still_open(NN) + carried(NN)
+    must hold:  implied_new(NN) >= 0
 ```
+
+A **negative** result is the failure: that many items left the chain without being closed, which
+is exactly the defect §14.2 measured. Deriving the new-item count instead of demanding equality
+means a session that *adds* work never raises a false alarm.
+
+> **Corrected 2026-08-21, second pass.** The first version of this formula read
+> `N_carry(NN) = full_items(NN-1) + N_carry(NN-1) − closed_in(NN)` and was wrong: it ignored the
+> items the current file writes out in full, so a legitimate handoff that reworded one item
+> failed the check. Found by the fixture chain in `tests/fixtures/carry-ok`, not by reading.
+> The formula above is the one the guard implements.
 
 Every term is readable from two adjacent files, so verification needs **one hop**, never a walk
 back through the chain. This is the acceptance criterion the QA review asked for, and it is
 arithmetic rather than judgement.
+
+**The guard is tested against itself.** `tests/fixtures/carry-ok` (old → new → new, one close
+and one reword) must pass, and `tests/fixtures/carry-bad` (three carried where five were open,
+nothing marked done) must fail naming the two lost items. Both run inside the static suite,
+section S. A guard that has never caught anything is not a guard.
 
 **Closing is a written act.** A closed item is written out in full in the current file with a
 `Done:` label, and only then disappears from later files. **An item may never leave by being
