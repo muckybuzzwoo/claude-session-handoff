@@ -27,6 +27,41 @@ always-on memory system. These commands synthesize the best existing patterns:
 | REMvisual (claude-handoff) | Sequence chain-linking — continue the same topic across many sessions |
 | buzzwoo `/park` | File persistence (survives `/clear`) |
 
+## What a handoff looks like (v0.4.0)
+
+The file opens with what the next session needs in order to **act**, and only then with what it
+needs in order to **understand**:
+
+```markdown
+**Date:** …  **Branch:** …  **Previous:** …_01.md
+**Tree:** clean
+**Format:** 2
+
+## Status
+- **Where it stands:** {one sentence about the topic}
+- **This session:** {one sentence about what changed}
+
+## → Pick up here
+{exactly one next action — it exists once in the file, and only here}
+
+## Open work
+- Open: {item} — {context}
+- Done: {item} — {closed this session, so it leaves the chain by being written, not by vanishing}
+- Carried unchanged: 14 items — see {topic}_01.md
+```
+
+Then the retrospective: what this is about, decisions, key files, running state, verification,
+suggested skills, reference.
+
+Two rules make open items survive a long chain. **One item per line**, so an item can be
+pointed at and therefore closed. And **the carry count must add up** — carried plus closed plus
+written-out can never fall short of what the previous file held, and the shortfall is exactly
+the number of items that went missing. Checking that needs one hop, not a walk through the whole
+chain, and `tests/compat-old-chain.ps1` does it for you.
+
+Older handoffs keep working as they are: a missing `Format:` field means the earlier layout,
+nothing is migrated, and no existing file is ever rewritten.
+
 ## Install / deploy
 
 Claude Code loads personal commands from `~/.claude/commands/`. Copy the two files there:
@@ -36,7 +71,10 @@ Copy-Item .\commands\session-handoff.md "$env:USERPROFILE\.claude\commands\sessi
 Copy-Item .\commands\session-resume.md  "$env:USERPROFILE\.claude\commands\session-resume.md"  -Force
 ```
 
-Then restart / reload Claude Code so the new commands are registered.
+Then restart / reload Claude Code so the new commands are registered. **A session that is
+already running keeps the version it loaded at start** — observed directly on 2026-08-21, when
+a session wrote a handoff ten minutes after a redeploy and still used the previous format. So
+copying the files is not enough for open sessions.
 
 ## Usage
 
@@ -130,7 +168,7 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (107 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (176 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →
@@ -142,7 +180,16 @@ decision/plan files a handoff links and folds their depth (full roadmap, rejecte
 into the summary — instead of parroting the compressed handoff text; and
 `tests/behavioral/load-discipline/` (21 checks) proves the token-aware loading — a
 section-anchored link pulls only that section, and an untagged big file is peeked + offered,
-never read whole. See `tests/behavioral/README.md` to re-run.
+never read whole. Two more cover v0.4.0: `tests/behavioral/format-boundary/` (25 checks)
+writes the first new-format handoff on top of an old-format predecessor shaped like the
+hardest real file, and `tests/behavioral/old-format-resume/` (gate G1, 43 checks) resumes
+five *real* pre-v0.4.0 handoffs, one per structural deviation, and proves every one of them
+is byte-identical afterwards. See `tests/behavioral/README.md` to re-run.
+
+**Automated (compatibility, no AI):** `pwsh -File .\tests\compat-old-chain.ps1 -Path <handoff-dir>`
+scans any existing chain and checks whether it still adds up — the format census, the open-item
+count, how many items hide inside collapsed or wrapped lines, and the carry arithmetic. Run it
+before and after a format change so "nothing was lost" is a measurement.
 
 **Manual spot-check (behavioural):**
 

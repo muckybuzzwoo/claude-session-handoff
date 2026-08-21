@@ -40,9 +40,12 @@ Check 'no stray memory dir created in sandbox'           (-not (Test-Path (Join-
 # -----------------------------------------------------------------------------
 Section 'S1 — fresh handoff artifact (_01)'
 Check '_01 file created' ($h01 -ne '')
-foreach($s in 'What this is about','Decisions','Key files','Running state','Verification','Pick up here'){
+foreach($s in 'Status','What this is about','Decisions','Key files','Running state','Verification','Open work','Pick up here'){
     Check "_01 has section: $s" ($h01.Contains($s))
 }
+Check '_01 carries the Format header field' ($h01 -match '(?m)^\*\*Format:\*\*\s*2')
+Check '_01 puts Pick up here before the retrospective' (
+    $h01.IndexOf('Pick up here') -lt $h01.IndexOf('What this is about'))
 Check '_01 records the grid decision'        ($h01 -match '(?i)grid')
 $h01n = $h01 -replace '\\','/'   # normalize Windows backslash paths before matching
 Check '_01 references the plan by path'       ($h01n.Contains('docs/superpowers/plans/2026-06-30-widget-redesign'))

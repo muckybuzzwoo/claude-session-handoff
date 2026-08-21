@@ -128,11 +128,81 @@ foreach ($s in @(
     'Running state',
     'Verification',
     'Suggested skills',
-    'Deferred & open questions',
+    '## Open work',
     '## Reference',
     'Pick up here')) {
     Check "template has section: $s" ($h.Contains($s))
 }
+
+# =============================================================================
+Section 'R. Handoff — Open work section + carry rule (v0.4.0, 1B)'
+
+# --- the template's labels ---
+foreach ($lbl in @('- Open:', '- Deferred:', '- Question:', '- Done:',
+                   '- Unresolved carry:', '- Carried unchanged:')) {
+    Check "Open-work template has label: $lbl" ($h.Contains($lbl))
+}
+# Both found by the 2026-08-21 behavioural run, which is the only thing that surfaced them.
+Check 'the next action must ALSO exist as a countable item' (
+    $h.Contains('ONLY in "→ Pick up here" is invisible'))
+Check 'spotlight-not-container wording is present' ($h.Contains('spotlight, not a container'))
+Check 'an unnumbered carry gets its own labelled bullet' ($h.Contains('count unknown, see'))
+Check 'loose prose is explicitly not an item' ($h.Contains('prose under the list is not an item'))
+Check 'old section name is gone from the template' (-not ($h -match '(?m)^## Deferred & open questions'))
+
+# --- both places that name the sections agree ---
+$step3 = ($h -split "`n") | Where-Object { $_ -match 'Running state, Verification, Suggested skills' } |
+         Select-Object -First 1
+Check 'Step 3 section list names Open work'            ($step3 -and $step3.Contains('Open work'))
+Check 'Step 3 section list no longer names the old one' ($step3 -and -not $step3.Contains('Deferred & open questions'))
+
+# --- backward compatibility, the whole point of 1B not breaking anything ---
+Check 'Step 3 accepts the OLD heading too'  ($h.Contains('## Deferred & open questions') -and $h.Contains('Accept either'))
+Check 'says every pre-existing chain uses the old heading' ($h.Contains('before this format'))
+
+# --- the carry rule ---
+Check 'one item per bullet'                       ($h.Contains('one item') -and $h.Contains('per bullet'))
+Check 'carry line: only the immediately previous file' ($h.Contains('immediately previous'))
+Check 'carry line: never two such lines'          ($h.Contains('never two such lines'))
+Check 'N must add up'                             ($h.Contains('must add up'))
+Check 'never adjust the number to fit'            ($h.Contains('never adjust the number'))
+Check 'closing is explicit, via a Done bullet'    ($h.Contains('Closing is explicit'))
+Check 'an item may never leave by being omitted'  ($h.Contains('never leave by being omitted'))
+Check 'Open work must not restate the next action' ($h.Contains('must not restate the next action'))
+
+# --- the counting grammar ---
+Check 'splits only on the middot separator'       ($h.Contains('space, middot'))
+Check 'never splits on commas or and'             ($h.Contains('never on commas'))
+Check 'bullet ending in a colon is a group header' ($h.Contains('group header'))
+Check 'wrapped bullets are joined before counting'  ($h.Contains('A bullet wraps'))
+Check 'numbered children count like bullet children' ($h.Contains('numbered `1.` `2.` list'))
+Check 'label is re-attached to every split item'  ($h.Contains('re-attach'))
+Check 'boundary count is established, not inherited' ($h.Contains('established, not inherited'))
+Check 'numberless prose pointer stays one item'   ($h.Contains('carrying no number'))
+Check 'never invent a count'                      ($h.Contains('Never invent a count'))
+
+# --- Step 1 says where the TodoWrite items go ---
+Check 'Step 1 routes TodoWrite items to Open work' (
+    $h -match "(?s)Open TodoWrite items.{0,160}Open work")
+
+# --- 1E: the Format header field ---
+Check 'template header has a Format field'   ($h.Contains('**Format:** 2'))
+Check 'absent Format means format 1'         ($h.Contains('format 1 (everything written before'))
+Check 'no old file is ever rewritten'        ($h.Contains('no old file is ever rewritten'))
+
+# --- resume resolves the carry line, one hop only ---
+Check 'resume resolves the carry line'       ($r.Contains('Carried unchanged'))
+Check 'resume resolves exactly ONE hop'      ($r.Contains('ONE hop'))
+Check 'resume does not walk further'         ($r.Contains('do **not**') -and $r.Contains('walk further'))
+Check 'resume reports how many it resolved'  ($r.Contains('items you resolved'))
+Check 'resume tolerates old files with no carry line' ($r.Contains('Old handoffs have no carry line'))
+
+# --- five clarifications the G1 gate run surfaced (2026-08-21) ---
+Check 'an explicit tag outranks the outside-project skip' ($r.Contains('outranks this skip'))
+Check 'never substitutes a size the prose claims'         ($r.Contains('Never substitute a size'))
+Check 'a prose Tree field skips the comparison'           ($r.Contains('written as prose'))
+Check 'an unknown extra section is carried, not dropped'  ($r.Contains('does not know is not noise'))
+Check 'memory reconcile only for the same project'        ($r.Contains('belongs to THIS project'))
 
 # =============================================================================
 Section 'H. Handoff — gitignore + Windows safety invariants'
@@ -140,6 +210,67 @@ Check 'ignores .claude/session-handoffs/'        ($h.Contains('.claude/session-h
 Check 'warns: never ignore all of .claude/'      ($h.Contains('never all of'))
 Check 'Windows rule: chained Bash may be blocked, batch via PowerShell or split' (
     $h.Contains('block chained Bash calls') -and $h.Contains('PowerShell'))
+
+# =============================================================================
+Section 'T. Handoff — forward-looking block first (v0.4.0, 1A)'
+
+Check 'template has ## Status'                 ($h.Contains('## Status'))
+Check 'Status has the Where it stands bullet'  ($h.Contains('**Where it stands:**'))
+Check 'Status has the This session bullet'     ($h.Contains('**This session:**'))
+Check 'Status has NO Next: line'               (-not ($h -match '(?m)^\s*-\s+\*\*Next:\*\*'))
+
+# Order assertions. Index comparison, not Contains — the whole point of 1A is position.
+# Scoped to the template block: the step texts mention `## Open work` in prose earlier in
+# the file, and an unscoped IndexOf would compare the wrong occurrences.
+$tplAt = $h.IndexOf('## Document template')
+Check 'document template block found' ($tplAt -ge 0)
+$tpl = if ($tplAt -ge 0) { $h.Substring($tplAt) } else { '' }
+
+$iStatus = $tpl.IndexOf('## Status')
+$iPick   = $tpl.IndexOf('## → Pick up here')
+$iOpen   = $tpl.IndexOf('## Open work')
+$iAbout  = $tpl.IndexOf('## What this is about')
+$iDec    = $tpl.IndexOf('## Decisions & what shipped')
+$iRef    = $tpl.IndexOf('## Reference')
+
+Check 'all six template anchors found' (@($iStatus,$iPick,$iOpen,$iAbout,$iDec,$iRef) -notcontains -1)
+Check 'Status comes before Pick up here'          ($iStatus -lt $iPick)
+Check 'Pick up here comes before Open work'       ($iPick   -lt $iOpen)
+Check 'Open work comes before What this is about' ($iOpen   -lt $iAbout)
+Check 'Status comes before Decisions'             ($iStatus -lt $iDec)
+Check 'Reference stays last of the sections'      ($iRef    -gt $iDec)
+Check 'Pick up here appears exactly once' (
+    ([regex]::Matches($h, [regex]::Escape('## → Pick up here'))).Count -eq 1)
+
+# --- resume briefing order, without weakening completeness ---
+Check 'resume opens with exactly three things'   ($r.Contains('exactly three things, in this order'))
+Check 'resume puts open work after those three'  ($r.Contains('Then'))
+Check 'resume defers the depth'                  ($r.Contains('Only after that'))
+Check 'resume KEEPS the do-not-compress rule'    ($r.Contains('do not compress those away'))
+Check 'resume says it is order, not content'     ($r.Contains('about *order*'))
+
+# =============================================================================
+Section 'S. Carry-invariant guard actually fires (fixture chains)'
+# The rest of this suite proves the INSTRUCTION text is present. This section proves the
+# safety net around it works: compat-old-chain.ps1 must accept a correct chain and reject a
+# chain where items left without being closed. A guard that has never caught anything is
+# not a guard.
+$scanner    = Join-Path $PSScriptRoot 'compat-old-chain.ps1'
+$fixtureOk  = Join-Path $PSScriptRoot 'fixtures/carry-ok'
+$fixtureBad = Join-Path $PSScriptRoot 'fixtures/carry-bad'
+
+Check 'scanner exists'            (Test-Path $scanner)
+Check 'passing fixture exists'    (Test-Path (Join-Path $fixtureOk  'demo_03.md'))
+Check 'failing fixture exists'    (Test-Path (Join-Path $fixtureBad 'demo_02.md'))
+
+$null = & pwsh -NoProfile -File $scanner -Path $fixtureOk *>&1
+$okExit = $LASTEXITCODE
+Check 'correct chain passes (exit 0)' ($okExit -eq 0)
+
+$badOut  = & pwsh -NoProfile -File $scanner -Path $fixtureBad *>&1
+$badExit = $LASTEXITCODE
+Check 'chain with dropped items FAILS (exit 1)' ($badExit -eq 1)
+Check 'and it names how many items were lost'   (($badOut | Out-String) -match 'item\(s\) left')
 
 # =============================================================================
 Section 'I. Resume — frontmatter + read-only posture'

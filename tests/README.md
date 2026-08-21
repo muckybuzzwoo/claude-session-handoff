@@ -53,3 +53,40 @@ prints these as **NOT COVERED** reminders; verify them by hand per `README.md �
 - Staleness note fires correctly (>7 days / branch change).
 - `--done` archives to `done/` and resume hides it without `--all`.
 - Secret-pattern warning triggers before writing.
+
+## Compatibility scanner (standalone, no LLM)
+
+`compat-old-chain.ps1 -Path <handoff-dir>` scans any existing chain and answers one question
+deterministically: does it still add up? Run it **before** a format change to record a
+baseline and **after** to compare, so "nothing was lost" is a measurement rather than a hope.
+
+```powershell
+pwsh -File .\tests\compat-old-chain.ps1 -Path 'C:\path\to\project\.claude\session-handoffs'
+pwsh -File .\tests\compat-old-chain.ps1 -Path .\.claude\session-handoffs -Detail
+```
+
+It reports the format census (old heading / new heading / none), the open-item count under the
+v0.4.0 grammar, how many items hide inside collapsed or wrapped bullets, and which files carry
+a pointer with no number. Where new-format files exist it also **checks** the carry invariant
+and exits 1 when items left without a `Done:` line. Its own correctness is covered by the
+fixture chains in `fixtures/carry-ok` and `fixtures/carry-bad`, which the static suite runs.
+
+## Focused sub-test: format boundary (`behavioral/format-boundary/`)
+
+The first new-format handoff written on top of an old-format predecessor — the case that
+decides whether existing chains survive v0.4.0. The fixture is shaped like the hardest real
+file (old heading, nothing to inherit, a bullet wrapping over four lines with middot
+separators on the continuation lines, a group header with numbered children, a prose pointer
+with no number, `→ Pick up here` still at the bottom). `setup.ps1` prints the expected item
+count, `verify.ps1` asserts 25 properties including that the predecessor stays byte-identical.
+
+## Compatibility gate G1 (`behavioral/old-format-resume/`)
+
+Five **real** pre-v0.4.0 handoffs, one per structural deviation, resumed for real. Copies the
+files from the local source chain at run time into a gitignored sandbox and **skips loudly**
+when that chain is absent — real private handoffs are never committed here. `verify.ps1`
+asserts 43 properties, including a SHA256 of every file before and after, because the
+read-only promise is the one that must never break.
+
+Coverage limit worth knowing: the linked targets in those real files lie outside the sandbox,
+so G1 proves the *reading* of awkward files, not tagged-link loading. That is `depth-recovery/`.

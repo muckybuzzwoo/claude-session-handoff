@@ -202,7 +202,9 @@
             <li>Ensure <code>.claude/session-handoffs/</code> is in <code>.gitignore</code> (once).</li>
             <li>Write <code>{topic}_{NN}.md</code> — for a <em>big</em> linked file, write its short
                 essence into the handoff and link the file lazily (so the next resume stays cheap),
-                or tag just the one section that matters.</li>
+                or tag just the one section that matters. The file opens with what the next session
+                needs in order to <em>act</em>: a two-line <strong>Status</strong>, then the single
+                next action, then <strong>Open work</strong>. The retrospective follows.</li>
             <li><strong>Closing reflection</strong> (propose-only): surface durable facts worth saving to
                 memory, plan drift, or a stale doc — show, ask, write only on confirm.</li>
             <li>Confirm + <strong>hard stop</strong> — closing with a fixed reminder that
@@ -220,9 +222,11 @@
             <li>Load the latest file and <strong>follow its links, but only load what's needed</strong>:
                 a link tagged to one heading pulls just that section; a plain link to a big file is
                 <em>not</em> slurped in — you get its table of contents and an offer to open it; a
-                fully-tagged file is read whole. Then summarize: where it left off + key files +
-                running state + the full decisions and rejected options. (This is what keeps a resume
-                cheap — big linked files no longer cost tokens on every resume.)</li>
+                fully-tagged file is read whole. A <code>Carried unchanged:</code> line is followed
+                <em>one</em> hop and no further. Then summarize, in this order: where the topic
+                stands, what the last session changed, the next action, the open work — and only
+                then the depth, with the full decisions and rejected options. (This is what keeps a
+                resume cheap — big linked files no longer cost tokens on every resume.)</li>
             <li>Cross-check the briefing against your Claude memory (flag any contradiction,
                 resolve nothing silently) and surface a cross-project <code>Continue first in:</code>
                 pointer if the handoff left one, then propose the single next action — but
@@ -230,6 +234,36 @@
           </ol>
         </div>
       </div>
+
+      <h2>Why open work stops disappearing</h2>
+      <p class="lead">The oldest failure of a handoff chain is quiet: an item stays open for twenty
+      files, gets squeezed into a run-on line, and then is simply gone — never done, never dropped
+      on purpose. A scan of one real 176-file chain counted <b>2570 open items</b>, of which
+      <b>1436 were invisible</b> inside collapsed or wrapped lines. An item nobody can point at is
+      an item nobody can close.</p>
+      <div class="cols">
+        <div class="panel card save">
+          <h3 style="margin:0 0 8px">One item, one line</h3>
+          <p><b>Open work</b> holds one item per line, each with its own label — <code>Open:</code>,
+          <code>Deferred:</code>, <code>Question:</code>. Closing one is an act you can see: it
+          becomes a <code>Done:</code> line in the file that closed it, and only then leaves the
+          chain. <b>Nothing may leave by simply being omitted.</b></p>
+        </div>
+        <div class="panel card resume">
+          <h3 style="margin:0 0 8px">Carried, and counted</h3>
+          <p>Unchanged items are not copied forward. One line does it:
+          <code>Carried unchanged: 14 items — see …_01.md</code>, pointing only at the file right
+          before. The number has to add up — carried plus closed plus written-out can never fall
+          short of what the previous file held, and the shortfall <em>is</em> the number of items
+          that went missing. So the check is arithmetic, not judgement, and it needs one hop rather
+          than a walk back through the whole chain.</p>
+        </div>
+      </div>
+      <p><code>tests/compat-old-chain.ps1</code> runs that arithmetic over any existing chain
+      without an AI in the loop: point it at a handoff folder before and after a change and it tells
+      you whether anything slipped. Older handoffs keep working untouched — a missing
+      <code>Format:</code> header simply means the older layout, nothing is migrated, and no
+      existing file is ever rewritten.</p>
 
       <h2>What the closing reflection touches</h2>
       <p class="muted" style="margin-top:0">The handoff holds <em>what you were doing</em>. Three neighbouring

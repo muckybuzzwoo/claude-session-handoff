@@ -127,3 +127,149 @@ project file stays small. Entries below are in the original order.
   place, the Windows-chaining convention was removed as a duplicate of the global `CLAUDE.md`
   and the `buzzwoo-windows` skill, and this decision log was split out. Nothing about the
   commands themselves changed; the static suite stayed green.
+- **2026-08-21 (v0.4.0 Track A, commit 1 — 1B + 1E):** renamed the template's
+  `## Deferred & open questions` to **`## Open work`** and gave it per-item identity. The
+  driver was measured, not felt: a scan of all 175 real handoffs in the apex-roadtrip chain
+  (`tests/compat-old-chain.ps1`, added in the same work) counts **1644 open items in 1104
+  bullets**, of which **533 are invisible** inside 170 run-on bullets separated by ` · `. An
+  item that cannot be referenced cannot be closed, and the survey had already documented one
+  open item tracked across twenty files and then silently dropped.
+  **The carry rule (plan V4, decided the same day).** The obvious rule — carry every item
+  forward verbatim — was rejected: the chain has avoided exactly that by hand for 75 sessions,
+  and enforcing it would re-inflate every file by 2.5–3.5 KB, trading the length complaint
+  against itself. Instead, items that are new, changed or closed are written out in full, and
+  the rest are carried by **one** line, `Carried unchanged: {N} items — see {file}`, pointing
+  only at the immediately previous file. `N` is an arithmetic invariant checkable from two
+  adjacent files, so resolution is one hop and never a walk back through the chain. Closing an
+  item is a written `Done:` act — an item may never leave by being omitted. `/session-resume`
+  resolves exactly one hop and refuses to walk further. Rejected alternatives, recorded so they
+  are not re-proposed: **(a)** verbatim carry (length), **(c)** carry `Open:` verbatim and the
+  rest by pointer (mixed rule, more text to get wrong).
+  **Two counting rules exist only because the scanner found them.** A bullet ending in `:` is a
+  group header whose indented children are the items — two such headers hold 7 items that the
+  naive "nested never counts" rule would have dropped silently. And a `{label}: a · b · c`
+  bullet must re-attach its label to every item split out of it. Both were found before any
+  command file was touched, which is the entire argument for building the scanner first.
+  **A `grep`-based count in an earlier draft was wrong** and is corrected in the plan: `grep`
+  matches bytes, so the pattern `unver.ndert` missed every "unverändert" because the umlaut is
+  two bytes. The claimed "7 files with a numberless carry pointer" is really 38 bullets in 36
+  files. German handoffs and byte-based search do not mix — the scanner reads UTF-8 explicitly.
+  **1E folded in:** a `**Format:** 2` header field. A missing field means format 1 and stays
+  valid forever. Included here rather than later because Track A changes the format anyway, so
+  adding the marker afterwards would have meant a second format change for the same benefit.
+  **Backward compatibility.** All 175 existing files use the old heading, so Step 3 accepts
+  either. No old file is ever read-modified-written: the command only ever creates `_NN+1`, and
+  the only touch on an existing handoff is `--done`, which moves it with `git mv`. The two
+  behavioural sub-test fixtures were deliberately **left** in the old format so they keep
+  working as free backward-compatibility coverage. Static suite **107 → 141/141**. Redeployed.
+  Not yet proven behaviourally: no real `/session-resume` run against an old chain has been
+  made under the new text.
+- **2026-08-21 (the carry guard, and three bugs it found in itself):** `tests/compat-old-chain.ps1`
+  had never seen a new-format file — it reported "nothing to check" and passed. A guard that has
+  never caught anything is not a guard, so two fixture chains were added and wired into the static
+  suite as section S: `tests/fixtures/carry-ok` (old to new to new, one item closed and one
+  reworded) must exit 0, and `tests/fixtures/carry-bad` (three carried where five were open, with
+  nothing marked done) must exit 1 and name the two lost items. Writing them found three real
+  defects in the guard, none of which reading had caught: it did not subtract closed items at the
+  format boundary, it omitted group-header children from the previous file's total, and it counted
+  `Done:` bullets as open items, which inflated the total the next file had to carry.
+  **The invariant itself was wrong and is now a conservation law.** The first formula,
+  `N_carry(NN) = full_items(NN-1) + N_carry(NN-1) - closed_in(NN)`, ignored the items a file writes
+  out in full, so a handoff that merely reworded one item failed the check. Replaced by
+  `implied_new = carried + closed + written_out_still_open - previous_total`, which must be `>= 0`.
+  Every previous item lands in exactly one of three places — carried, rewritten, or closed — and a
+  negative result is the count of items that left without being closed. Deriving the new-item count
+  instead of demanding equality means a session that adds work never false-alarms. Static suite
+  **141 to 147/147**.
+- **2026-08-21 (the wrapped-bullet bug — the most consequential find of the day):** the counting
+  grammar and the scanner both read the Open-work section line by line. Real bullets wrap, and
+  every middot separator on a continuation line was invisible. Chain-wide that hid roughly **900
+  open items**: the apex-roadtrip total went from 1654 to **2570** once continuation lines were
+  joined. `apex-roadtrip_176` alone counted 11 items instead of **44**, because one wrapped bullet
+  carries more than thirty items behind separators on its second and later lines. Had the first
+  new-format handoff established its count from that number, **33 items would have been dropped at
+  the format crossing** — the exact failure the invariant exists to prevent. Fixed in both places:
+  the scanner builds logical bullets before counting, and the command's grammar now states that a
+  bullet wraps and that numbered `1.` children count like `- ` children. Found by pointing the
+  scanner at a real file and disbelieving the number, not by reading either file.
+  **Also observed, worth knowing operationally:** `_176` was written at 16:54, ten minutes *after*
+  the new commands were deployed at 16:44, and it is in the **old** format. A session that is
+  already running does not pick up a redeployed command — most likely because it loaded the file
+  at session start. Not verified beyond the timestamps, so treat the mechanism as inference. The
+  practical consequence is real either way: after a deploy, sessions already open keep writing the
+  old format, which is exactly why Step 3 must accept both headings.
+- **2026-08-21 (v0.4.0 Track A, commit 2 — 1A):** reordered the template into a
+  forward-looking block and a retrospective block. The file now opens with `## Status` (two
+  one-sentence bullets, where the topic stands and what this session changed), then
+  `## → Pick up here`, then `## Open work`. Everything the next session needs in order to *act*
+  comes before everything it needs in order to *understand*. `→ Pick up here` **moved** from the
+  bottom rather than being duplicated: the next action exists exactly once in the file, which is
+  why the Status block deliberately has no `Next:` line and Open work is barred from repeating
+  it. 43 of 130 surveyed files had been writing that action twice by habit, and with the two
+  sections now a few lines apart the duplication would have stopped being harmless.
+  `/session-resume` gets the same order: the briefing opens with where it stands, what changed,
+  and the next action, then open work, and only then the depth. **The completeness requirement
+  was not weakened** — the "carry the full decisions, explicitly list rejected options, do not
+  compress those away" sentence stays verbatim, because reversing it would resurrect the depth
+  loss that the 2026-06-30 deep-link fix cured. This change is about order, not content.
+  The new static checks are **index comparisons**, not `Contains`, since position is the whole
+  point. Writing them caught a trap immediately: an unscoped `IndexOf('## Open work')` matches
+  the prose mention inside Step 3 rather than the template, so the order assertions are scoped
+  to the document-template block. Suite **149 to 166/166**. Redeployed.
+- **2026-08-21 (behavioural proof of the format boundary, and the two rule holes it found):**
+  added `tests/behavioral/format-boundary/` — a self-contained sub-test for the case that decides
+  whether existing chains survive v0.4.0: the first new-format handoff written on top of an
+  old-format predecessor. The fixture is shaped like the hardest real file in the field: old
+  heading, no `Format:` field, nothing to inherit, one carry bullet wrapping over four lines with
+  middot separators on the continuation lines, one group header whose items are a numbered child
+  list, one prose pointer with no number, and `→ Pick up here` still at the bottom. 16 open items,
+  a figure verified with the scanner rather than derived by hand — the hand-derived number was 17,
+  off by one.
+  **The run passed.** A subagent read the real command file and wrote the boundary handoff. It
+  found the old heading, joined the wrapped bullet before counting, re-attached the label to each
+  split item, treated the colon-ending bullet as a label with four numbered children, kept the
+  unnumbered pointer as exactly one item without inventing a count, arrived at 16, closed the two
+  items the session actually settled, and wrote `Carried unchanged: 14`. `verify.ps1` asserts 25
+  properties including that `_01` was left byte-intact. All green.
+  **Two real holes surfaced that no amount of reading had found, both now fixed.**
+  First: the rule "Open work never repeats the next action" let a *new* next action live only in
+  `→ Pick up here`, with no `- Open:` bullet — so the next handoff's count would never see it and
+  the item would be lost, which is the exact defect the invariant exists to prevent. Reworded:
+  `→ Pick up here` is a **spotlight, not a container**. It names which item is next and the detail
+  to start it, while the item itself stays in Open work to be counted and closed. What stays
+  forbidden is restating the whole next-action paragraph a second time.
+  Second: Step 3 demanded that an unnumbered prose carry be "labelled and said so", but the
+  template had no slot for it — a bullet would be counted by the next writer and nothing may
+  follow the `Carried unchanged:` line. The agent put it in loose paragraphs, which the scanner
+  correctly does not count, so the item was preserved in prose and lost to the ledger. Fixed with
+  a real label, `- Unresolved carry: … — count unknown, see {file}`, plus an explicit statement
+  that prose under the list is not an item.
+  Rewording those two rules broke two existing static checks, which is the suite doing its job.
+  Suite **166 to 171/171**, plus 25 behavioural assertions and 4 guard-fixture assertions.
+- **2026-08-21 (Gate G1 passed, and five clarifications it forced):** copied five *real*
+  pre-v0.4.0 handoffs from the apex-roadtrip chain into a gitignored sandbox — one per
+  structural deviation the 2026-08-06 survey named (bare `## Reference` plus a German-renamed
+  Decisions heading, bold-wrapped tags, no `---` and no `Resume:` footer at all, an extra
+  out-of-order section, and one file with no tag anywhere) — and had a subagent run the real
+  `/session-resume` against each. **All five produced a usable briefing and all five are
+  byte-identical afterwards** (SHA256 snapshot taken before the run, 43 assertions in
+  `tests/behavioral/old-format-resume/verify.ps1`). Real files are never committed, per the
+  test-data rule.
+  The gate also produced findings no reading had: an explicit `[READ-AT-RESUME]` tag and the
+  "skip anything outside the project" rule contradict each other with no ranking, and the tag
+  now wins when the path is readable. A size stated in a handoff's own prose must never stand in
+  for a file that was not opened. A `Tree:` field written as prose — real files use it to
+  correct their predecessor — now skips the staleness comparison instead of inventing a
+  difference. A section the template does not know is carried rather than dropped, and surfaced
+  *with* the open work when it flags doubt, because `_119`'s "Low-confidence decisions, CHECK
+  THESE" block is arguably the most important content in that file and the mandated briefing
+  order had no slot for it. And the memory reconcile now runs only when the index belongs to the
+  same project, since comparing a handoff from project A against project B's memory manufactures
+  contradictions.
+  **Honest coverage limit, recorded rather than glossed:** every linked target in those five
+  files lies outside the sandbox, so G1 exercised no tagged-link *loading* at all. Its briefings
+  rest entirely on text the handoffs inlined — a real result about inlining discipline, but the
+  Step 4 loading paths are proved by `depth-recovery/`, not by G1. Also observed: the five
+  fixture headers disagree with their fixture filenames because the copies were renamed into
+  slugs, which is a harness artifact and not a property of the real files.
+  Static suite **171 to 176/176. Released v0.4.0.**

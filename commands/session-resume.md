@@ -70,7 +70,9 @@ Surface a short note if ANY of these hold (never block):
   --porcelain` against the handoff header's `Tree:` snapshot. A handoff typically
   captures mid-work state, so a dirty tree alone means nothing — flag only a
   *difference* from the recorded snapshot. No `Tree:` field in the header (older
-  handoff) → skip this check.
+  handoff) → skip this check. **A `Tree:` field written as prose** rather than a porcelain
+  summary (real old files do this — some use it to correct the previous handoff) → treat it
+  as informational, skip the comparison, and do not manufacture a difference from it.
 
 Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now 'y') — treat state as possibly stale.`
 
@@ -97,19 +99,47 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      untagged, ~Yk — load it fully, or just a section?". This is a deliberate change from
      the older full-load-if-it-looks-like-a-plan behaviour: the depth is now carried by the
      essence the handoff inlined, so a blind load is no longer needed.
-   - Skip shallow pointers (MR/issue URLs, anything outside the project).
-3. Summarize from the handoff AND what you loaded: where it left off, key files to open
-   first, running state, and the "→ Pick up here" next action. Carry the full decisions
-   and roadmap — and **explicitly list rejected options / deliberate no-decisions**; do
-   not compress those away. For anything you did not fully load, point to the exact file +
-   section (and the skeleton you printed) rather than dropping it.
+   - Skip **shallow** pointers: MR/issue URLs, and paths in another repo that merely need
+     opening later. **An explicit `[READ-AT-RESUME]` tag outranks this skip** — if the tagged
+     path exists and is readable, load it per the rules above even when it sits outside the
+     current project, because the handoff's author tagged it deliberately. Tagged but
+     unreadable or outside your reach → say so and carry on. Never substitute a size or a
+     summary that the handoff's own prose claims for a file you did not open.
+   - **`Carried unchanged: {N} items — see {file}` in Open work → resolve exactly ONE hop.**
+     Read that file's Open-work section only (the same targeted read as a section anchor) and
+     fold its items into the briefing. If that file carries a carry line of its own, do **not**
+     walk further: report "{N} items carried, the older ones live in {file}" and stop. Say how
+     many items you resolved. Count mismatch, or the file is missing → name both numbers, or
+     say the file is gone, and do not guess. Old handoffs have no carry line — then there is
+     nothing to resolve and this bullet does not apply.
+3. Summarize from the handoff AND what you loaded.
+
+   **Open the briefing with exactly three things, in this order:** where the topic stands
+   (one sentence), what the last session changed (one sentence), and the next action. Then
+   the open work. **Only after that** the depth: decisions, rejected options, constraints,
+   key files, running state, and what you loaded or deliberately did not load.
+
+   **A section the template does not know is not noise.** Real handoffs grow their own
+   headings, and one of them may hold the most important content in the file — a
+   "low-confidence decisions, CHECK THESE" block, a rejected-options section under a
+   different name. Carry such a section, and if it flags doubt or asks to be re-checked,
+   surface it **with the open work**, not buried in the depth.
+
+   Carry the full decisions and roadmap — and **explicitly list rejected options /
+   deliberate no-decisions**; do not compress those away. This is about *order*, not about
+   dropping content: the completeness requirement is unchanged. For anything you did not
+   fully load, point to the exact file + section (and the skeleton you printed) rather than
+   dropping it.
    - If the handoff carries a **`Continue first in:` cross-chain pointer**, surface it
      prominently at the **TOP** of the briefing, before your own next-action suggestion —
      the real next step lives in another chain/repo. **Print it only; never open or load
      that other project or chain** (that would be a separate, explicit `/session-resume`
      the user runs there).
 4. **Reconcile against the memory index.** If a Claude memory index (`MEMORY.md`) is
-   already in context (it auto-loads each session), compare your briefing against it. On
+   already in context (it auto-loads each session), compare your briefing against it.
+   **Only when that memory belongs to THIS project** — the index is per project, so
+   reconciling a handoff from project A against project B's memory manufactures
+   contradictions out of unrelated facts. Different project → skip this step and say so. On
    any contradiction between memory and the handoff — a next step, status, or decision
    that differs — **name BOTH states** with their dates, flag the contradiction, and note
    the newer as the likelier truth (a handoff reflects only its write time; memory may be

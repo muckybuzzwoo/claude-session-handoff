@@ -3,6 +3,88 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.0] — 2026-08-21
+
+Readability. A handoff now opens with what the next session needs in order to **act**, and
+every open item is individually addressable so it can be closed instead of quietly
+disappearing. Driven by measurement, not taste: a scan of a real 176-file chain found **2570
+open items**, of which **1436 were invisible** inside collapsed bullets.
+
+### Added
+
+- **`## Status` head.** Two one-sentence bullets — where the topic stands, what this session
+  changed. First thing in the file.
+- **`→ Pick up here` moved to the top**, not duplicated. The next action exists exactly once
+  in the file, which is why the Status block has no `Next:` line. It is a *spotlight, not a
+  container*: the item it names still lives in Open work so it stays countable.
+- **`## Open work`** replaces `## Deferred & open questions`, with labels `Open:`,
+  `Deferred:`, `Question:`, `Done:`, `Unresolved carry:` and `Carried unchanged:`. Step 1's
+  open TodoWrite items finally have a documented home.
+- **The counted carry rule.** Items that are new, changed or closed are written out in full,
+  one per bullet. The rest are carried by a single `Carried unchanged: {N} items — see {file}`
+  line pointing only at the immediately previous file. `N` is a conservation law —
+  `carried + closed + written-out` may never fall short of the previous total, and the
+  shortfall is the number of items that vanished. Verification needs **one hop**, never a walk
+  back through the chain. Closing an item is a written `Done:` act; **an item may never leave
+  by being omitted.**
+- **Counting grammar**, because "count the items" was undefined: split only on ` · `, join
+  wrapped continuation lines first, a bullet ending in `:` is a label whose children (`- ` or
+  numbered) are the items, and a label before a colon re-attaches to every item split out of
+  it.
+- **`**Format:** 2` header field.** A missing field means format 1 and stays valid forever.
+- **`tests/compat-old-chain.ps1`** — a standalone, LLM-free scanner for any existing chain.
+  Reports the format census and item counts, and fails when the carry arithmetic does not add
+  up. Run it before and after a format change to make "nothing was lost" a measurement.
+
+### Changed
+
+- **Resume briefing order.** Opens with where it stands, what changed, and the next action,
+  then the open work, and only then the depth. **The completeness requirement is unchanged** —
+  "carry the full decisions, explicitly list rejected options, do not compress those away"
+  stays verbatim. This release reorders, it does not drop.
+- Resume resolves a carry line **exactly one hop** and refuses to walk further.
+- Five clarifications surfaced by the G1 gate run: an explicit `[READ-AT-RESUME]` tag outranks
+  the outside-project skip; a size claimed in prose is never substituted for a file that was
+  not opened; a `Tree:` field written as prose skips the staleness comparison instead of
+  faking a difference; a section the template does not know is carried, and surfaced with the
+  open work when it flags doubt; the memory reconcile runs only when the index belongs to the
+  same project.
+
+### Compatibility
+
+- **No migration, and no old file is ever rewritten.** The command only ever creates
+  `_NN+1`; the sole touch on an existing handoff is `--done`, which moves it with `git mv`.
+- Step 3 **accepts both headings**. Every one of the 176 files in the reference chain uses the
+  old one.
+- At the format boundary the carry count is **established** from the old file, not inherited.
+  A prose pointer with no number stays one `Unresolved carry:` item — no count is ever
+  invented.
+- A running session does not pick up a redeployed command file, so sessions already open keep
+  writing format 1 until they restart. Harmless by design.
+
+### Tests
+
+- Static suite **107 → 176 checks**, including index-based *order* assertions and a
+  self-test that the carry guard actually fires (a correct fixture chain must pass, a chain
+  with dropped items must fail and name them).
+- New behavioural sub-test `tests/behavioral/format-boundary/` — a subagent writes the first
+  new-format handoff onto an old-format predecessor shaped like the hardest real file. 25
+  assertions, including that the predecessor stays byte-identical. **Passed.**
+- **Gate G1 passed** (`tests/behavioral/old-format-resume/`): five *real* old handoffs, each
+  with a different structural deviation (bare `## Reference`, a renamed Decisions heading,
+  bold-wrapped tags, no footer at all, an extra section, no tags), all still resume, and all
+  five are byte-identical afterwards. 43 assertions. Real files are copied into a gitignored
+  sandbox at run time and never committed.
+- **Known coverage limit:** in G1 every linked target lay outside the sandbox, so that run
+  exercised no tagged-link *loading*. That path is covered by the existing
+  `tests/behavioral/depth-recovery/` sub-test, not by G1.
+
+### Not in this release
+
+- Track B (v0.5.0): pre-flight obligations and moving the closing reflection before the write.
+- Deferred: hard length budgets per item (1D), and a non-interactive fallback for the
+  untagged-plan load offer.
+
 ## [0.3.0] — 2026-07-29
 
 First real-project `/session-resume` run (addendum 8e) confirmed the token-aware **loading**
