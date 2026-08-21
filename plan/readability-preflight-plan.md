@@ -11,9 +11,9 @@
 > the revert-order rule, the counting grammar for G2, the corrected G3 wording, the split
 > baseline spec and the test-data rule.
 >
-> **What is still open, and none of it blocks the first commit:** V1 is Track B's problem, V2
-> and V3 are measurement questions before a release, and 1E (§11) is a one-line extra that
-> Marcus can add to Track A or leave out.
+> **What is still open, and none of it blocks the first commit:** V1 is Track B's problem, and V2
+> and V3 are measurement questions before a release. (1E was folded into Track A and shipped in
+> v0.4.0 — see §11.)
 
 Two separate pieces of work, deliberately kept independently revertible: **Track A —
 readability (v0.4.0)** and **Track B — workflow (v0.5.0)**. Own branch, own release, own test
@@ -588,8 +588,9 @@ which defeats the split in §7.
   the collapse rule duplicated an existing habit. **The one piece worth reviving — making the
   "Alles aus _101…_129 gilt weiter" pointer resolvable — is now live as option (b) of V4
   (§13), because §14.8 found the same habit inside Open work.**
-- **1E — a `Format:` field in the header** (proposed 2026-08-21 by the architect review, not yet
-  decided). One more header field next to `Date/Branch/Previous/Tree`, e.g. `**Format:** 2`.
+- **1E — a `Format:` field in the header** — **SHIPPED in v0.4.0**, folded into Track A as
+  recommended below. Kept in this section only as the record of where it was proposed and why.
+  One more header field next to `Date/Branch/Previous/Tree`, e.g. `**Format:** 2`.
   Today the format is inferred from which headings are present, which is exactly the brittle
   detection G1 and G2 exist to cover, and it gets worse with every future variant. Cost is one
   template line plus one static check. **Recommendation: fold it into Track A**, because Track A
