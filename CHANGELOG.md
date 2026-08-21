@@ -3,6 +3,31 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.1] — 2026-08-21
+
+Bug fix. v0.4.0 shipped two rules that contradicted each other, and the contradiction let an
+open item disappear — the exact defect v0.4.0 was written to prevent. Found by a subagent
+review (`reviews/subagent-review-2026-08-21.md`), reproduced against this repo's own
+`format-boundary` artifact.
+
+### Fixed
+
+- **Hard rules no longer forbid what Step 3 requires.** The "next action exists exactly once"
+  rule said Open work never repeats it. Step 3 said the item must be there or it is lost. The
+  Hard rule now scopes "exactly once" to the *prose* and points at the item rule.
+- **The per-item, explicit-closing and next-action-is-also-an-item rules moved to Hard rules.**
+  They sat inside Step 3, which only runs from `_02` on, so the first handoff of every new chain
+  never read them.
+- **The carry formula was the one the project had already retracted.** `N` dropped the
+  `written_out_still_open` term, so it contradicted the carry-line rule three lines above it
+  and the conservation law the compat scanner enforces. Both statements now agree.
+- **`tests/behavioral/format-boundary/verify.ps1`** matched the new item anywhere in the file,
+  so the Status sentence satisfied it. It is now scoped to the `## Open work` block and requires
+  a labelled bullet. It correctly fails against the pre-fix artifact.
+
+Static suite unchanged at 176/176. No template change, no format change — `Format: 2` files
+written under v0.4.0 stay valid.
+
 ## [0.4.0] — 2026-08-21
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.0).

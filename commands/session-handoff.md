@@ -95,26 +95,21 @@ Running state, Verification, Suggested skills, Open work, "→ Pick up here". Ke
 "Decisions & what shipped" **additive** (append this session's; don't drop prior
 decisions). Set the header `Previous:` to the prior filename.
 
-**Open work — one item per bullet, and closing is a written act.** The previous file's
-Open-work section is headed `## Open work`, or `## Deferred & open questions` in files
-written before this format. **Accept either** — every pre-existing chain uses the old one.
+**Carrying Open work forward.** The per-item and explicit-closing rules live in Hard rules
+and apply here unchanged. The previous file's Open-work section is headed `## Open work`,
+or `## Deferred & open questions` in files written before this format. **Accept either** —
+every pre-existing chain uses the old one.
 
 - Items that are **new, changed, or closed** this session are written out in full, one item
   per bullet, with their own text. A reworded or re-framed item counts as changed.
 - Everything else is carried by **one** line, last in the section:
   `- Carried unchanged: {N} items — see {slug}_{NN-1}.md`. Only the immediately previous
   file, never an older one, never two such lines. `N = 0` → omit the line entirely.
-- **`N` must add up:** `N` = the previous file's total item count minus what you closed this
-  session. If it does not add up, say so in the handoff — never adjust the number to fit.
-- **Closing is explicit.** A closed item gets a `- Done: {item}` bullet in *this* file, and
-  only then disappears from later ones. **An item may never leave by being omitted.**
-- **Open work must not restate the next action as prose — but the item itself must be
-  there.** "→ Pick up here" is a spotlight, not a container: it names *which* item is next
-  and the detail needed to start it, while the item stays in Open work so it can be counted
-  and closed. Written out as `- Open:` if it is new or changed, otherwise inside the carried
-  count. What this rule forbids is the old habit of repeating the whole next-action paragraph
-  a second time under Open work. **An item that exists ONLY in "→ Pick up here" is invisible
-  to the next handoff's count and will be lost** — that is what this rule prevents.
+- **`N` must add up:** `N` = the previous file's total item count, minus what you closed this
+  session, minus what you wrote out in full and left open. The conservation law the compat
+  scanner checks states the same thing: `carried + closed + written_out_still_open -
+  previous_total` must be `>= 0`, and anything above 0 is new work this session. If it does
+  not add up, say so in the handoff — never adjust the number to fit.
 
 **Counting the items of an old-format section** (you need this for `N` at the boundary):
 
@@ -337,8 +332,22 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 
 - **Forward-looking block first.** The file opens with Status, then "→ Pick up here", then
   Open work. Everything the next session needs to *act* comes before everything it needs to
-  *understand*. The next action exists **exactly once**, in "→ Pick up here" — the Status
-  block deliberately has no `Next:` line, and Open work never repeats it either.
+  *understand*. The next action is stated as prose **exactly once**, in "→ Pick up here" — the
+  Status block deliberately has no `Next:` line, and Open work does not repeat that prose. The
+  item itself still belongs in Open work as a countable bullet — see the next rule.
+- **Open work — one item per bullet, and closing is a written act.** Applies to **every**
+  handoff, including the `_01` of a new chain, where Step 3 does not run.
+  - Each item is its own `- ` bullet with its own text. Never merge several items into one
+    run-on bullet.
+  - **Closing is explicit.** A closed item gets a `- Done: {item}` bullet in *this* file, and
+    only then disappears from later ones. **An item may never leave by being omitted.**
+  - **Open work must not restate the next action as prose — but the item itself must be
+    there.** "→ Pick up here" is a spotlight, not a container: it names *which* item is next
+    and the detail needed to start it, while the item stays in Open work so it can be counted
+    and closed. Written out as `- Open:` if it is new or changed, otherwise inside the carried
+    count. What this rule forbids is the old habit of repeating the whole next-action paragraph
+    a second time under Open work. **An item that exists ONLY in "→ Pick up here" is invisible
+    to the next handoff's count and will be lost** — that is what this rule prevents.
 - **`Format:` header field.** `2` is this template. A handoff **without** the field is
   format 1 (everything written before this version) and stays valid forever — nothing is
   migrated and no old file is ever rewritten. Write the literal value from the template. Do

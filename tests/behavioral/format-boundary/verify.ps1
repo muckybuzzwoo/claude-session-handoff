@@ -91,7 +91,12 @@ Check 'the numberless prose pointer is preserved, not turned into a number' (
     $t -match '(?i)komplette Liste aus _00' -or $t -match '(?i)unresolved')
 
 Section 'The new item from this session'
-Check 'noisy retry logging is recorded as open' ($t -match '(?i)(logging|log level|noisy)')
+# Scoped to the Open-work block on purpose. The item is also named in Status and in
+# Pick-up-here, so an unscoped match is satisfied without it ever becoming a countable item —
+# which is exactly how the 2026-08-21 artifact passed this check while dropping the item.
+$openBlock = [regex]::Match($t, '(?ms)^## Open work\r?\n(.*?)(?=^## )').Groups[1].Value
+Check 'noisy retry logging is a labelled item inside Open work' (
+    $openBlock -match '(?im)^\s*-\s+\*{0,2}(Open|Deferred|Question):.*(logging|log level|noisy)')
 
 Section 'Nothing escaped the sandbox'
 Check 'no memory directory was created in the sandbox' (

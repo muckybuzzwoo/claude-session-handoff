@@ -142,6 +142,11 @@ value — it is the volatile section and the site of the measured failure mode.*
   "Next…" bullet that duplicates "→ Pick up here" (§14.3). With Pick-up-here moved to the top
   the two now sit a few lines apart, so the duplication stops being harmless. Open work holds
   what comes *after* the next action, never the next action itself.
+  **Superseded 2026-08-21 (v0.4.1).** The last sentence overshot: it bans the *item*, not just
+  the duplicated prose, and a behavioural run then lost an item that lived only in
+  "→ Pick up here". The shipped rule bans repeating the next-action **paragraph** while
+  requiring the item to stay in Open work as a countable bullet. Do not re-implement from the
+  sentence above.
 
 ### 4.2 Resume: same order in the briefing
 
@@ -988,6 +993,8 @@ finding in the survey and it lands squarely in Track A.
 **Consequence for 1A/1B:** moving "→ Pick up here" to the top puts the two within a few lines
 of each other, so the duplication becomes obvious instead of harmless. Add an explicit rule:
 Open work holds only items that are **not** the next action.
+**Superseded 2026-08-21 (v0.4.1)** — see §4.1. The rule as phrased here loses the item; the
+shipped rule bans the repeated paragraph and keeps the item.
 
 ### 14.4 Structural variance — low, but the specifics matter for G1
 
