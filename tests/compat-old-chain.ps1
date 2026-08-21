@@ -205,6 +205,7 @@ foreach ($f in $files) {
 
     $rows += [pscustomobject]@{
         Seq          = $seq
+        Slug         = ($f.BaseName -replace '_\d+$', '')
         Name         = $f.Name
         Heading      = $heading
         Items        = $items
@@ -282,10 +283,22 @@ if ($Detail) {
 # --- Invariant checks (new-format files only) -------------------------------
 Section 'V4 count invariant (new-format files only)'
 
+# Compare WITHIN a topic chain, never across. A store can hold several topics, and their
+# sequence numbers run in parallel — comparing a global sort would pit _02 of one topic
+# against _02 of another. That produced a meaningless (and silently passing) check until
+# 2026-08-21, when running this against a multi-topic store exposed it.
 $checked = 0
-for ($i = 1; $i -lt $rows.Count; $i++) {
-    $cur  = $rows[$i]
-    $prev = $rows[$i - 1]
+$pairs = @()
+foreach ($g in ($rows | Group-Object Slug)) {
+    $chain = @($g.Group | Sort-Object Seq)
+    for ($i = 1; $i -lt $chain.Count; $i++) {
+        $pairs += [pscustomobject]@{ Cur = $chain[$i]; Prev = $chain[$i - 1] }
+    }
+}
+
+foreach ($p in $pairs) {
+    $cur  = $p.Cur
+    $prev = $p.Prev
 
     if ($cur.Heading -ne 'new') { continue }
     if ($null -eq $cur.CarryN)  { continue }   # no carry line: everything written in full
@@ -309,7 +322,7 @@ for ($i = 1; $i -lt $rows.Count; $i++) {
     $impliedNew  = $accounted - $prevTotal
     $where = if ($prev.Heading -eq 'new') { 'carried from' } else { 'established from old' }
 
-    Check ("_$($cur.Seq): nothing lost — carry $($cur.CarryN) + closed $($cur.Done) + written $($cur.Items) = $accounted, " +
+    Check ("$($cur.Slug)_$($cur.Seq): nothing lost — carry $($cur.CarryN) + closed $($cur.Done) + written $($cur.Items) = $accounted, " +
            "$where _$($prev.Seq) total $prevTotal, so $impliedNew new") `
           ($impliedNew -ge 0)
 

@@ -273,3 +273,12 @@ project file stays small. Entries below are in the original order.
   fixture headers disagree with their fixture filenames because the copies were renamed into
   slugs, which is a harness artifact and not a property of the real files.
   Static suite **171 to 176/176. Released v0.4.0.**
+- **2026-08-21 (scanner bug, found by dogfooding v0.4.0 in this repo):** writing this repo's own
+  first new-format handoff and then running `tests/compat-old-chain.ps1` over the store exposed a
+  real defect in the guard: it sorted every file by sequence number across the whole directory and
+  compared adjacent rows, so in a multi-topic store it pitted `_02` of one topic against `_02` of
+  another. The check passed by luck (9 >= 3) and could equally have produced a false failure or a
+  false pass. Fixed by grouping rows per topic slug and comparing only within a chain, and the
+  message now names the slug rather than a bare sequence. It never showed against apex-roadtrip
+  because that store holds exactly one topic — the bug needed a store with several. Sixth defect
+  of the day found by running rather than reading.
