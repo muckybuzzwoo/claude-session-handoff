@@ -282,3 +282,60 @@ project file stays small. Entries below are in the original order.
   message now names the slug rather than a bare sequence. It never showed against apex-roadtrip
   because that store holds exactly one topic — the bug needed a store with several. Sixth defect
   of the day found by running rather than reading.
+- **2026-08-21 (v0.4.1/v0.4.2, subagent review — two rules that cancelled out):** a five-subagent
+  review found that v0.4.0 had shipped its central guarantee twice, in opposite directions. Hard
+  rules said the next action exists exactly once and **Open work never repeats it**; Step 3 said
+  the item **must** be in Open work or the next handoff cannot count it and it is lost. Both
+  readings were licensed, and this repo's own `format-boundary` artifact had already taken the
+  first one: its single new item sat in Status and in "→ Pick up here", and `## Open work` held
+  two `Done:` bullets plus the carry line. **The scenario's verifier scored 25/25 on it**, because
+  the check grepped the whole file for `logging|noisy` and the Status sentence satisfied it.
+  Fixed by scoping "exactly once" to the *prose* (v0.4.1) and scoping the check to the Open-work
+  block. Two rules that had nothing to do with carry-forward — per-item identity and explicit
+  closing — were also sitting inside Step 3, which only runs from `_02` on, so the `_01` of every
+  new chain never read the rules that prevent item loss. They moved to Hard rules.
+- **2026-08-21 (v0.4.2 — the reader never read what the writer wrote):** the same review checked
+  the pair field by field. `/session-handoff` emitted a `Format:` field, accepted two Open-work
+  headings and used `Done:` bullets to close items; `/session-resume` read none of the three. It
+  inferred the format from a `[READ-AT-RESUME]` tag's shape, which is false both ways — section
+  anchors shipped in v0.2.0, the `Format:` field in v0.4.0, three weeks apart. Its one-hop carry
+  read looked for `## Open work`, the one heading a boundary predecessor never has. And it folded
+  `Done:` bullets into the briefing as open work, so closed items were presented as open. The
+  count check was also undefined ("name both numbers" named nothing to compare) and its only
+  computable reading fires on every correct chain; it now runs the same conservation law as the
+  scanner.
+- **2026-08-21 (a subagent's severity grade is a claim, not a finding):** the component reviewer
+  graded a missing `Grep` entry in `session-resume.md`'s `allowed-tools` as Critical, citing a
+  plugin's criteria file. The official docs disprove it —
+  `code.claude.com/docs/en/slash-commands`: "It does not restrict which tools are available: every
+  tool remains callable." `allowed-tools` is a pre-approval, so the gap costs one permission
+  prompt and breaks nothing. Every heavy finding in that review was re-verified by hand before
+  being acted on, and this is the one that did not survive.
+- **2026-08-21 (the boundary re-run — one check asserted the opposite of the rule it guarded):**
+  re-running `format-boundary` with the fixed command confirmed v0.4.1 at runtime: the new item
+  came out as `- Open:` inside Open work, the numberless pointer became a real
+  `- Unresolved carry:` bullet instead of loose prose, and the carry count fell from the pre-fix
+  14 to the correct 13. The run then failed a *different* check. Under the heading "the two things
+  that must survive verbatim", the verifier demanded the word `locale` appear somewhere in the
+  file — but that item was untouched, so under the carry rule it belongs **inside** the count, and
+  verbatim carry-forward is precisely the option V4 rejected. The check asserted the opposite of
+  the rule it existed to protect, and had passed only because the pre-fix artifact happened to
+  name `locale` in its Status sentence: the same unscoped whole-file grep, one section above the
+  one just fixed. Replaced by two scoped checks (not closed · count still large enough), and the
+  Open-work block is now extracted once and shared. Boundary suite 25 to 26.
+- **2026-08-21 (the rule is right and I still broke it — writing `_03` by hand):** with the fixed
+  command deployed, this repo's own `readability-preflight-plan_03` handoff put its next action
+  (the boundary re-run) in "→ Pick up here" with **no** matching bullet in Open work — the exact
+  defect fixed hours earlier. Its arithmetic paragraph was wrong too: it claimed 17 items written
+  and 15 new, where `compat-old-chain.ps1` measures 19 and 17. Nothing was lost (the conservation
+  law holds either way) and no handoff is ever rewritten, so `_04` carries the correction. Two
+  things follow. A prose rule in the command did not prevent the mistake, which argues for a
+  *check* rather than more wording. And the arithmetic should be measured with the scanner rather
+  than counted by hand, which is the same lesson as the wrapped-bullet bug.
+- **2026-08-21 (a false positive in the guard, found by the same run):** `compat-old-chain.ps1:332`
+  fires `shrinking carry count has matching Done: lines` whenever `CarryN < prevTotal`, and only
+  asserts `Done > 0`. A session that closes nothing but writes two unchanged items out as
+  *changed* shrinks the carry legitimately, so the check fails on a correct chain — it does now,
+  against this repo's own store. The conservation law above it already catches real loss, so this
+  second check adds a false-failure mode and no coverage. Not fixed yet; recorded here and carried
+  as open work.

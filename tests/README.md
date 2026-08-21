@@ -78,7 +78,10 @@ decides whether existing chains survive v0.4.0. The fixture is shaped like the h
 file (old heading, nothing to inherit, a bullet wrapping over four lines with middot
 separators on the continuation lines, a group header with numbered children, a prose pointer
 with no number, `→ Pick up here` still at the bottom). `setup.ps1` prints the expected item
-count, `verify.ps1` asserts 25 properties including that the predecessor stays byte-identical.
+count, `verify.ps1` asserts 26 properties, scoped to the Open-work block where the rule under
+test lives. It checks that the predecessor keeps its old heading and gains no `Format:` field,
+but it does not hash it — byte-identity is asserted in `old-format-resume/` and
+`depth-recovery/`.
 
 ## Compatibility gate G1 (`behavioral/old-format-resume/`)
 
