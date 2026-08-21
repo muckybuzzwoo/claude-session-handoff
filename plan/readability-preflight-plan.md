@@ -1,7 +1,7 @@
 # Plan — handoff readability + pre-flight obligations (v0.4.0)
 
-**Status:** planned, **not implemented**. Decided 2026-08-06 (Marcus), implementation in a
-later session. Nothing in this plan has been applied to `commands/` yet.
+**Status:** Track A **shipped as v0.4.0** (2026-08-21) — merged, tagged, released. Track B
+(§5, §6, §7) is **not started**. Decided 2026-08-06 (Marcus), Track A executed 2026-08-21.
 
 > **Re-review done 2026-08-21, and the plan is cleared to start.** Every file-and-line claim in
 > §8, §9 and §14 was re-checked against the working tree and still holds. The field survey was
