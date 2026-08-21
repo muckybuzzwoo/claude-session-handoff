@@ -55,7 +55,8 @@ no broad filesystem sweep. The read-only status/branch calls below are fine:
 - Background processes started via `run_in_background` — record what outlives this
   session: the command, PID/port, and how to kill or restart it (shell IDs alone die with
   the session).
-- Open TodoWrite items (in-progress / pending).
+- Open TodoWrite items (in-progress / pending) — these land in the template's **Open work**
+  section, each as its own bullet with the `Open:` label.
 - Files you created or modified this session (you know them — don't grep to rediscover);
   record them as **absolute paths**. Exception: if this session was compacted and you are
   not certain the list is complete, cross-check it against the `git status --porcelain`
@@ -90,9 +91,37 @@ no broad filesystem sweep. The read-only status/branch calls below are fine:
 
 Read the previous file `.claude/session-handoffs/{slug}_{NN-1}.md`. Carry forward and
 **update** the forward-looking sections so the new file is self-sufficient: Key files,
-Running state, Verification, Suggested skills, Deferred & open questions, "→ Pick up
-here". Keep "Decisions & what shipped" **additive** (append this session's; don't drop
-prior decisions). Set the header `Previous:` to the prior filename.
+Running state, Verification, Suggested skills, Open work, "→ Pick up here". Keep
+"Decisions & what shipped" **additive** (append this session's; don't drop prior
+decisions). Set the header `Previous:` to the prior filename.
+
+**Open work — one item per bullet, and closing is a written act.** The previous file's
+Open-work section is headed `## Open work`, or `## Deferred & open questions` in files
+written before this format. **Accept either** — every pre-existing chain uses the old one.
+
+- Items that are **new, changed, or closed** this session are written out in full, one item
+  per bullet, with their own text. A reworded or re-framed item counts as changed.
+- Everything else is carried by **one** line, last in the section:
+  `- Carried unchanged: {N} items — see {slug}_{NN-1}.md`. Only the immediately previous
+  file, never an older one, never two such lines. `N = 0` → omit the line entirely.
+- **`N` must add up:** `N` = the previous file's total item count minus what you closed this
+  session. If it does not add up, say so in the handoff — never adjust the number to fit.
+- **Closing is explicit.** A closed item gets a `- Done: {item}` bullet in *this* file, and
+  only then disappears from later ones. **An item may never leave by being omitted.**
+- Open work holds what comes *after* the next action. It never repeats "→ Pick up here".
+
+**Counting the items of an old-format section** (you need this for `N` at the boundary):
+
+- An item is a top-level `- ` bullet. Split one further **only** on ` · ` (space, middot,
+  space) — never on commas, "and"/"und", or line wraps.
+- A bullet whose text ends in `:` is a **group header**: it is not an item, its indented
+  child bullets are. Everywhere else an indented bullet belongs to its parent item.
+- Where a bullet reads `{label}: {item} · {item}`, re-attach `{label}` to every item you
+  split out of it, or the second and third lose their classification.
+- At the boundary the count is **established, not inherited** — no old file has a
+  `Carried unchanged:` line. Compute `N` from the previous file and write it down.
+- A prose pointer carrying no number ("the whole list from `_152` still applies") stays
+  **one** item, labelled as an unresolved carry, and you say so. Never invent a count.
 
 ### Step 4 — Secrets (convention + warn, never auto-rewrite)
 
@@ -245,6 +274,7 @@ Then **STOP**.
 
 **Date:** {YYYY-MM-DD}  **Branch:** {branch or "—"}  **Previous:** {slug}_{NN-1}.md | "—"
 **Tree:** {`git status --porcelain` summary at handoff time, e.g. "3 dirty: src/a.ts, src/b.css, README.md" | "clean" | "—" if not a repo}
+**Format:** 2
 
 ## What this is about / where it started
 {2–3 sentences}
@@ -266,9 +296,12 @@ Then **STOP**.
 ## Suggested skills for the next session
 - {skill name} — {why}
 
-## Deferred & open questions
+## Open work
+- Open: {item} — {context}
 - Deferred: {item} — {why}
-- Open: {question} — {context}
+- Question: {open question} — {context}
+- Done: {item} — {closed this session; it does not appear in later handoffs}
+- Carried unchanged: {N} items — see {slug}_{NN-1}.md
 
 ## Reference (do NOT duplicate — inline the essence above; link by path/URL; tag per the Hard-rules ladder)
 - Plan: `{path}` [READ-AT-RESUME] (or `[READ-AT-RESUME: <heading>]` for one section, or a plain lazy link when the essence above already covers it) (e.g. `docs/superpowers/plans/…`) · Spec/PRD: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/specs/…`) · MR/issue: {url}
@@ -283,6 +316,11 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 
 ## Hard rules
 
+- **`Format:` header field.** `2` is this template. A handoff **without** the field is
+  format 1 (everything written before this version) and stays valid forever — nothing is
+  migrated and no old file is ever rewritten. Write the literal value from the template. Do
+  not invent a new number when a section changes: the field marks the released format, not an
+  edit.
 - `[READ-AT-RESUME]` tag: controls what `/session-resume` auto-loads — the single biggest
   driver of resume token cost. Before tagging any substantial Reference- or Key-files link,
   measure the target's **size in bytes** (`bytes/4` ~ tokens — robust and format-neutral;
@@ -291,7 +329,7 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
   session already has the files in context — it costs a size-stat and a little judgement,
   not content loads:
   - **(a) Redundancy — is the essence already in this handoff?** If you already wrote the
-    file's decision-relevant substance into this handoff (Decisions / Deferred /
+    file's decision-relevant substance into this handoff (Decisions / Open work /
     Pick-up-here), do **NOT** tag it — a plain lazy link suffices. This is empirically the
     most frequent win: re-loading a file whose essence the handoff already carries is pure
     waste.

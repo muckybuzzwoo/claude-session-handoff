@@ -98,6 +98,13 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      the older full-load-if-it-looks-like-a-plan behaviour: the depth is now carried by the
      essence the handoff inlined, so a blind load is no longer needed.
    - Skip shallow pointers (MR/issue URLs, anything outside the project).
+   - **`Carried unchanged: {N} items — see {file}` in Open work → resolve exactly ONE hop.**
+     Read that file's Open-work section only (the same targeted read as a section anchor) and
+     fold its items into the briefing. If that file carries a carry line of its own, do **not**
+     walk further: report "{N} items carried, the older ones live in {file}" and stop. Say how
+     many items you resolved. Count mismatch, or the file is missing → name both numbers, or
+     say the file is gone, and do not guess. Old handoffs have no carry line — then there is
+     nothing to resolve and this bullet does not apply.
 3. Summarize from the handoff AND what you loaded: where it left off, key files to open
    first, running state, and the "→ Pick up here" next action. Carry the full decisions
    and roadmap — and **explicitly list rejected options / deliberate no-decisions**; do

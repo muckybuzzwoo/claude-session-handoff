@@ -127,3 +127,40 @@ project file stays small. Entries below are in the original order.
   place, the Windows-chaining convention was removed as a duplicate of the global `CLAUDE.md`
   and the `buzzwoo-windows` skill, and this decision log was split out. Nothing about the
   commands themselves changed; the static suite stayed green.
+- **2026-08-21 (v0.4.0 Track A, commit 1 — 1B + 1E):** renamed the template's
+  `## Deferred & open questions` to **`## Open work`** and gave it per-item identity. The
+  driver was measured, not felt: a scan of all 175 real handoffs in the apex-roadtrip chain
+  (`tests/compat-old-chain.ps1`, added in the same work) counts **1644 open items in 1104
+  bullets**, of which **533 are invisible** inside 170 run-on bullets separated by ` · `. An
+  item that cannot be referenced cannot be closed, and the survey had already documented one
+  open item tracked across twenty files and then silently dropped.
+  **The carry rule (plan V4, decided the same day).** The obvious rule — carry every item
+  forward verbatim — was rejected: the chain has avoided exactly that by hand for 75 sessions,
+  and enforcing it would re-inflate every file by 2.5–3.5 KB, trading the length complaint
+  against itself. Instead, items that are new, changed or closed are written out in full, and
+  the rest are carried by **one** line, `Carried unchanged: {N} items — see {file}`, pointing
+  only at the immediately previous file. `N` is an arithmetic invariant checkable from two
+  adjacent files, so resolution is one hop and never a walk back through the chain. Closing an
+  item is a written `Done:` act — an item may never leave by being omitted. `/session-resume`
+  resolves exactly one hop and refuses to walk further. Rejected alternatives, recorded so they
+  are not re-proposed: **(a)** verbatim carry (length), **(c)** carry `Open:` verbatim and the
+  rest by pointer (mixed rule, more text to get wrong).
+  **Two counting rules exist only because the scanner found them.** A bullet ending in `:` is a
+  group header whose indented children are the items — two such headers hold 7 items that the
+  naive "nested never counts" rule would have dropped silently. And a `{label}: a · b · c`
+  bullet must re-attach its label to every item split out of it. Both were found before any
+  command file was touched, which is the entire argument for building the scanner first.
+  **A `grep`-based count in an earlier draft was wrong** and is corrected in the plan: `grep`
+  matches bytes, so the pattern `unver.ndert` missed every "unverändert" because the umlaut is
+  two bytes. The claimed "7 files with a numberless carry pointer" is really 38 bullets in 36
+  files. German handoffs and byte-based search do not mix — the scanner reads UTF-8 explicitly.
+  **1E folded in:** a `**Format:** 2` header field. A missing field means format 1 and stays
+  valid forever. Included here rather than later because Track A changes the format anyway, so
+  adding the marker afterwards would have meant a second format change for the same benefit.
+  **Backward compatibility.** All 175 existing files use the old heading, so Step 3 accepts
+  either. No old file is ever read-modified-written: the command only ever creates `_NN+1`, and
+  the only touch on an existing handoff is `--done`, which moves it with `git mv`. The two
+  behavioural sub-test fixtures were deliberately **left** in the old format so they keep
+  working as free backward-compatibility coverage. Static suite **107 → 141/141**. Redeployed.
+  Not yet proven behaviourally: no real `/session-resume` run against an old chain has been
+  made under the new text.

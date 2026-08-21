@@ -128,11 +128,65 @@ foreach ($s in @(
     'Running state',
     'Verification',
     'Suggested skills',
-    'Deferred & open questions',
+    '## Open work',
     '## Reference',
     'Pick up here')) {
     Check "template has section: $s" ($h.Contains($s))
 }
+
+# =============================================================================
+Section 'R. Handoff — Open work section + carry rule (v0.4.0, 1B)'
+
+# --- the template's labels ---
+foreach ($lbl in @('- Open:', '- Deferred:', '- Question:', '- Done:', '- Carried unchanged:')) {
+    Check "Open-work template has label: $lbl" ($h.Contains($lbl))
+}
+Check 'old section name is gone from the template' (-not ($h -match '(?m)^## Deferred & open questions'))
+
+# --- both places that name the sections agree ---
+$step3 = ($h -split "`n") | Where-Object { $_ -match 'Running state, Verification, Suggested skills' } |
+         Select-Object -First 1
+Check 'Step 3 section list names Open work'            ($step3 -and $step3.Contains('Open work'))
+Check 'Step 3 section list no longer names the old one' ($step3 -and -not $step3.Contains('Deferred & open questions'))
+
+# --- backward compatibility, the whole point of 1B not breaking anything ---
+Check 'Step 3 accepts the OLD heading too'  ($h.Contains('## Deferred & open questions') -and $h.Contains('Accept either'))
+Check 'says every pre-existing chain uses the old heading' ($h.Contains('before this format'))
+
+# --- the carry rule ---
+Check 'one item per bullet'                       ($h.Contains('one item') -and $h.Contains('per bullet'))
+Check 'carry line: only the immediately previous file' ($h.Contains('immediately previous'))
+Check 'carry line: never two such lines'          ($h.Contains('never two such lines'))
+Check 'N must add up'                             ($h.Contains('must add up'))
+Check 'never adjust the number to fit'            ($h.Contains('never adjust the number'))
+Check 'closing is explicit, via a Done bullet'    ($h.Contains('Closing is explicit'))
+Check 'an item may never leave by being omitted'  ($h.Contains('never leave by being omitted'))
+Check 'Open work never repeats Pick up here'      ($h -match 'never repeats "→ Pick up here"')
+
+# --- the counting grammar ---
+Check 'splits only on the middot separator'       ($h.Contains('space, middot'))
+Check 'never splits on commas or and'             ($h.Contains('never on commas'))
+Check 'bullet ending in a colon is a group header' ($h.Contains('group header'))
+Check 'label is re-attached to every split item'  ($h.Contains('re-attach'))
+Check 'boundary count is established, not inherited' ($h.Contains('established, not inherited'))
+Check 'numberless prose pointer stays one item'   ($h.Contains('unresolved carry'))
+Check 'never invent a count'                      ($h.Contains('Never invent a count'))
+
+# --- Step 1 says where the TodoWrite items go ---
+Check 'Step 1 routes TodoWrite items to Open work' (
+    $h -match "(?s)Open TodoWrite items.{0,160}Open work")
+
+# --- 1E: the Format header field ---
+Check 'template header has a Format field'   ($h.Contains('**Format:** 2'))
+Check 'absent Format means format 1'         ($h.Contains('format 1 (everything written before'))
+Check 'no old file is ever rewritten'        ($h.Contains('no old file is ever rewritten'))
+
+# --- resume resolves the carry line, one hop only ---
+Check 'resume resolves the carry line'       ($r.Contains('Carried unchanged'))
+Check 'resume resolves exactly ONE hop'      ($r.Contains('ONE hop'))
+Check 'resume does not walk further'         ($r.Contains('do **not**') -and $r.Contains('walk further'))
+Check 'resume reports how many it resolved'  ($r.Contains('items you resolved'))
+Check 'resume tolerates old files with no carry line' ($r.Contains('Old handoffs have no carry line'))
 
 # =============================================================================
 Section 'H. Handoff — gitignore + Windows safety invariants'
