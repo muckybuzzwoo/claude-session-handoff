@@ -40,6 +40,8 @@ maintenance repo.
   `win32` hosts that hard-block chained Bash, plain chained Bash elsewhere). This looks like
   redundancy but is deliberate — the verified reasoning is plan Decision 18. Do not collapse
   it into one branch.
+- Apparent redundancy in the command files is mostly hardened. Before simplifying either,
+  read the do-not-touch list in `reviews/subagent-review-2026-08-21.md` (safe ceiling ~3%).
 
 ## Testing
 
@@ -49,6 +51,11 @@ static structure, frontmatter, step numbering, cross-references, and source==dep
 Claude dispatches subagents that execute the commands in a sandbox and `verify-artifacts.ps1`
 asserts on the output. Suite contents, check counts and how to re-run: `tests/README.md` +
 `tests/behavioral/README.md`.
+
+- Rewrapping prose in a command file can fail a check: most are literal `Contains()`, and a
+  phrase split across a line break no longer matches.
+- A new check goes **scoped** to the block that must hold the content — `$tpl` (Section T),
+  `$hop` (Section U). An unscoped one passes on text found anywhere in the file.
 
 ## Where to look
 
