@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.2] — 2026-08-21
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.2).
+
 Reader side of the v0.4.1 fix. `/session-handoff` wrote three things `/session-resume` never
 read. Same subagent review (`reviews/subagent-review-2026-08-21.md` §3).
 
