@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.1] — 2026-08-21
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.1).
+
 Bug fix. v0.4.0 shipped two rules that contradicted each other, and the contradiction let an
 open item disappear — the exact defect v0.4.0 was written to prevent. Found by a subagent
 review (`reviews/subagent-review-2026-08-21.md`), reproduced against this repo's own
