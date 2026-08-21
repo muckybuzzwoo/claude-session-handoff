@@ -198,3 +198,21 @@ project file stays small. Entries below are in the original order.
   at session start. Not verified beyond the timestamps, so treat the mechanism as inference. The
   practical consequence is real either way: after a deploy, sessions already open keep writing the
   old format, which is exactly why Step 3 must accept both headings.
+- **2026-08-21 (v0.4.0 Track A, commit 2 — 1A):** reordered the template into a
+  forward-looking block and a retrospective block. The file now opens with `## Status` (two
+  one-sentence bullets, where the topic stands and what this session changed), then
+  `## → Pick up here`, then `## Open work`. Everything the next session needs in order to *act*
+  comes before everything it needs in order to *understand*. `→ Pick up here` **moved** from the
+  bottom rather than being duplicated: the next action exists exactly once in the file, which is
+  why the Status block deliberately has no `Next:` line and Open work is barred from repeating
+  it. 43 of 130 surveyed files had been writing that action twice by habit, and with the two
+  sections now a few lines apart the duplication would have stopped being harmless.
+  `/session-resume` gets the same order: the briefing opens with where it stands, what changed,
+  and the next action, then open work, and only then the depth. **The completeness requirement
+  was not weakened** — the "carry the full decisions, explicitly list rejected options, do not
+  compress those away" sentence stays verbatim, because reversing it would resurrect the depth
+  loss that the 2026-06-30 deep-link fix cured. This change is about order, not content.
+  The new static checks are **index comparisons**, not `Contains`, since position is the whole
+  point. Writing them caught a trap immediately: an unscoped `IndexOf('## Open work')` matches
+  the prose mention inside Step 3 rather than the template, so the order assertions are scoped
+  to the document-template block. Suite **149 to 166/166**. Redeployed.

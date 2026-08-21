@@ -105,11 +105,18 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      many items you resolved. Count mismatch, or the file is missing → name both numbers, or
      say the file is gone, and do not guess. Old handoffs have no carry line — then there is
      nothing to resolve and this bullet does not apply.
-3. Summarize from the handoff AND what you loaded: where it left off, key files to open
-   first, running state, and the "→ Pick up here" next action. Carry the full decisions
-   and roadmap — and **explicitly list rejected options / deliberate no-decisions**; do
-   not compress those away. For anything you did not fully load, point to the exact file +
-   section (and the skeleton you printed) rather than dropping it.
+3. Summarize from the handoff AND what you loaded.
+
+   **Open the briefing with exactly three things, in this order:** where the topic stands
+   (one sentence), what the last session changed (one sentence), and the next action. Then
+   the open work. **Only after that** the depth: decisions, rejected options, constraints,
+   key files, running state, and what you loaded or deliberately did not load.
+
+   Carry the full decisions and roadmap — and **explicitly list rejected options /
+   deliberate no-decisions**; do not compress those away. This is about *order*, not about
+   dropping content: the completeness requirement is unchanged. For anything you did not
+   fully load, point to the exact file + section (and the skeleton you printed) rather than
+   dropping it.
    - If the handoff carries a **`Continue first in:` cross-chain pointer**, surface it
      prominently at the **TOP** of the briefing, before your own next-action suggestion —
      the real next step lives in another chain/repo. **Print it only; never open or load

@@ -281,6 +281,21 @@ Then **STOP**.
 **Tree:** {`git status --porcelain` summary at handoff time, e.g. "3 dirty: src/a.ts, src/b.css, README.md" | "clean" | "—" if not a repo}
 **Format:** 2
 
+## Status
+- **Where it stands:** {one sentence — the state of the TOPIC, not a recap of the session}
+- **This session:** {one sentence — what changed}
+
+## → Pick up here
+{Continue first in: <chain/topic> @ <absolute project path> — include this line ONLY when the very next step actually lives in ANOTHER handoff chain or repo; omit it entirely otherwise}
+{exactly one next action, with the concrete detail needed to start it}
+
+## Open work
+- Open: {item} — {context}
+- Deferred: {item} — {why}
+- Question: {open question} — {context}
+- Done: {item} — {closed this session; it does not appear in later handoffs}
+- Carried unchanged: {N} items — see {slug}_{NN-1}.md
+
 ## What this is about / where it started
 {2–3 sentences}
 
@@ -301,19 +316,8 @@ Then **STOP**.
 ## Suggested skills for the next session
 - {skill name} — {why}
 
-## Open work
-- Open: {item} — {context}
-- Deferred: {item} — {why}
-- Question: {open question} — {context}
-- Done: {item} — {closed this session; it does not appear in later handoffs}
-- Carried unchanged: {N} items — see {slug}_{NN-1}.md
-
 ## Reference (do NOT duplicate — inline the essence above; link by path/URL; tag per the Hard-rules ladder)
 - Plan: `{path}` [READ-AT-RESUME] (or `[READ-AT-RESUME: <heading>]` for one section, or a plain lazy link when the essence above already covers it) (e.g. `docs/superpowers/plans/…`) · Spec/PRD: `{path}` [READ-AT-RESUME] (e.g. `docs/superpowers/specs/…`) · MR/issue: {url}
-
-## → Pick up here
-{Continue first in: <chain/topic> @ <absolute project path> — include this line ONLY when the very next step actually lives in ANOTHER handoff chain or repo; omit it entirely otherwise}
-{exactly one next action}
 
 ---
 Resume: `/session-resume {slug}`  —  or read {absolute path}
@@ -321,6 +325,10 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
 
 ## Hard rules
 
+- **Forward-looking block first.** The file opens with Status, then "→ Pick up here", then
+  Open work. Everything the next session needs to *act* comes before everything it needs to
+  *understand*. The next action exists **exactly once**, in "→ Pick up here" — the Status
+  block deliberately has no `Next:` line, and Open work never repeats it either.
 - **`Format:` header field.** `2` is this template. A handoff **without** the field is
   format 1 (everything written before this version) and stays valid forever — nothing is
   migrated and no old file is ever rewritten. Write the literal value from the template. Do

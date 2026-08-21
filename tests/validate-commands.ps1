@@ -198,6 +198,44 @@ Check 'Windows rule: chained Bash may be blocked, batch via PowerShell or split'
     $h.Contains('block chained Bash calls') -and $h.Contains('PowerShell'))
 
 # =============================================================================
+Section 'T. Handoff — forward-looking block first (v0.4.0, 1A)'
+
+Check 'template has ## Status'                 ($h.Contains('## Status'))
+Check 'Status has the Where it stands bullet'  ($h.Contains('**Where it stands:**'))
+Check 'Status has the This session bullet'     ($h.Contains('**This session:**'))
+Check 'Status has NO Next: line'               (-not ($h -match '(?m)^\s*-\s+\*\*Next:\*\*'))
+
+# Order assertions. Index comparison, not Contains — the whole point of 1A is position.
+# Scoped to the template block: the step texts mention `## Open work` in prose earlier in
+# the file, and an unscoped IndexOf would compare the wrong occurrences.
+$tplAt = $h.IndexOf('## Document template')
+Check 'document template block found' ($tplAt -ge 0)
+$tpl = if ($tplAt -ge 0) { $h.Substring($tplAt) } else { '' }
+
+$iStatus = $tpl.IndexOf('## Status')
+$iPick   = $tpl.IndexOf('## → Pick up here')
+$iOpen   = $tpl.IndexOf('## Open work')
+$iAbout  = $tpl.IndexOf('## What this is about')
+$iDec    = $tpl.IndexOf('## Decisions & what shipped')
+$iRef    = $tpl.IndexOf('## Reference')
+
+Check 'all six template anchors found' (@($iStatus,$iPick,$iOpen,$iAbout,$iDec,$iRef) -notcontains -1)
+Check 'Status comes before Pick up here'          ($iStatus -lt $iPick)
+Check 'Pick up here comes before Open work'       ($iPick   -lt $iOpen)
+Check 'Open work comes before What this is about' ($iOpen   -lt $iAbout)
+Check 'Status comes before Decisions'             ($iStatus -lt $iDec)
+Check 'Reference stays last of the sections'      ($iRef    -gt $iDec)
+Check 'Pick up here appears exactly once' (
+    ([regex]::Matches($h, [regex]::Escape('## → Pick up here'))).Count -eq 1)
+
+# --- resume briefing order, without weakening completeness ---
+Check 'resume opens with exactly three things'   ($r.Contains('exactly three things, in this order'))
+Check 'resume puts open work after those three'  ($r.Contains('Then'))
+Check 'resume defers the depth'                  ($r.Contains('Only after that'))
+Check 'resume KEEPS the do-not-compress rule'    ($r.Contains('do not compress those away'))
+Check 'resume says it is order, not content'     ($r.Contains('about *order*'))
+
+# =============================================================================
 Section 'S. Carry-invariant guard actually fires (fixture chains)'
 # The rest of this suite proves the INSTRUCTION text is present. This section proves the
 # safety net around it works: compat-old-chain.ps1 must accept a correct chain and reject a
