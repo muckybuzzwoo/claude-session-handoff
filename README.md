@@ -180,7 +180,7 @@ decision/plan files a handoff links and folds their depth (full roadmap, rejecte
 into the summary — instead of parroting the compressed handoff text; and
 `tests/behavioral/load-discipline/` (21 checks) proves the token-aware loading — a
 section-anchored link pulls only that section, and an untagged big file is peeked + offered,
-never read whole. Two more cover v0.4.0: `tests/behavioral/format-boundary/` (25 checks)
+never read whole. Two more cover v0.4.0: `tests/behavioral/format-boundary/` (26 checks)
 writes the first new-format handoff on top of an old-format predecessor shaped like the
 hardest real file, and `tests/behavioral/old-format-resume/` (gate G1, 43 checks) resumes
 five *real* pre-v0.4.0 handoffs, one per structural deviation, and proves every one of them

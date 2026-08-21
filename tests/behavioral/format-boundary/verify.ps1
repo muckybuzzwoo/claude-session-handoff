@@ -45,6 +45,12 @@ if ($null -eq $new) {
 $t = Get-Content -LiteralPath $new.FullName -Raw -Encoding UTF8
 $mid = [char]0x00B7
 
+# Scoped to the Open-work block, and used by every item assertion below. An item is also
+# named in Status and in Pick-up-here, so an unscoped whole-file match is satisfied without
+# the item ever becoming countable — which is how the pre-v0.4.1 artifact passed two of
+# these checks while dropping one item and never mentioning another.
+$openBlock = [regex]::Match($t, '(?ms)^## Open work\r?\n(.*?)(?=^## )').Groups[1].Value
+
 Section 'The old file was left alone (the promise that must never break)'
 $old = Get-Content -LiteralPath (Join-Path $Store 'legacy-chain_01.md') -Raw -Encoding UTF8
 Check '_01 still carries the OLD heading'      ($old -match '(?m)^## Deferred & open questions')
@@ -85,16 +91,21 @@ Check 'the retry budget is recorded as decided/closed' ($t -match '(?i)retry' -a
 Check 'the settled export question is not left open as a question' (
     -not ($t -match '(?i)-\s+\*{0,2}Question:.*export'))
 
-Section 'The two things that must survive verbatim'
-Check 'the unreproduced locale cache-key item is still present' ($t -match '(?i)locale')
+Section 'The untouched item is accounted for, never dropped'
+# NOT "must survive verbatim". The locale cache-key item was not touched this session, so
+# under the carry rule (V4) it belongs INSIDE the count — verbatim carry-forward is the
+# option V4 rejected, so demanding the word appear asserts the opposite of the rule under
+# test. The old check grepped the whole file for 'locale' and passed only because a Status
+# sentence happened to mention it. What must hold: it was not closed, and the count is still
+# large enough to hold it (16 previous - 2 closed - 1 re-framed = 13).
+Check 'the untouched locale item was NOT closed' (
+    -not ($openBlock -match '(?im)^\s*-\s+\*{0,2}Done:.*locale'))
+Check 'the carry count still has room for the untouched item' (
+    $n -ge 13 -or $openBlock -match '(?im)^\s*-\s+\*{0,2}(Open|Deferred|Question):.*locale')
 Check 'the numberless prose pointer is preserved, not turned into a number' (
     $t -match '(?i)komplette Liste aus _00' -or $t -match '(?i)unresolved')
 
 Section 'The new item from this session'
-# Scoped to the Open-work block on purpose. The item is also named in Status and in
-# Pick-up-here, so an unscoped match is satisfied without it ever becoming a countable item —
-# which is exactly how the 2026-08-21 artifact passed this check while dropping the item.
-$openBlock = [regex]::Match($t, '(?ms)^## Open work\r?\n(.*?)(?=^## )').Groups[1].Value
 Check 'noisy retry logging is a labelled item inside Open work' (
     $openBlock -match '(?im)^\s*-\s+\*{0,2}(Open|Deferred|Question):.*(logging|log level|noisy)')
 
