@@ -34,7 +34,7 @@
   Also print one line per file instead of totals only.
 
 .EXAMPLE
-  pwsh -File .\tests\compat-old-chain.ps1 -Path 'C:\p\apex-roadtrip\.claude\session-handoffs'
+  pwsh -File .\tests\compat-old-chain.ps1 -Path 'C:\path\to\project\.claude\session-handoffs'
 
 .EXAMPLE
   pwsh -File .\tests\compat-old-chain.ps1 -Path .\.claude\session-handoffs -Detail
@@ -118,8 +118,8 @@ foreach ($f in $files) {
     if ($null -eq $sec) { $sec = @() }
 
     # Build LOGICAL bullets. A real bullet often wraps over several lines, and counting
-    # line by line loses every separator on a continuation line — in apex-roadtrip_176 that
-    # is 30+ items hidden in one wrapped bullet. So: join continuation lines into their
+    # line by line loses every separator on a continuation line — in one real file that was
+    # 30+ items hidden in a single wrapped bullet. So: join continuation lines into their
     # bullet, and count nested children (either "- " or "1." style) separately.
     #
     # A nested child normally belongs to its parent item — EXCEPT under a group header

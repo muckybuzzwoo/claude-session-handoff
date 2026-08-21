@@ -27,13 +27,21 @@
     + 1 question bullet       -> 1
     = 16
 
-  PREFERRED MODE: if the real apex-roadtrip chain is present, its two newest files are
-  copied in as well, under a second topic slug, so the agent faces genuine field data.
-  Those copies live only in the gitignored sandbox and are never committed — see the
-  test-data rule in plan/readability-preflight-plan.md section 9.
+  OPTIONAL: pass -Chain (or set SESSION_HANDOFF_TEST_CHAIN) to a real handoff chain and its
+  newest file is copied in as well, under a second topic slug, so the agent also faces
+  genuine field data. That copy lives only in the gitignored sandbox and is never committed —
+  see the test-data rule in plan/readability-preflight-plan.md section 9. Without it the
+  synthetic fixture above is enough to run the test.
 
   Prints SANDBOX_PROJ / SANDBOX_OUT / EXPECTED_ITEMS for the orchestrator.
 #>
+param(
+    # Optional real chain to borrow one field-data file from. Falls back to the
+    # SESSION_HANDOFF_TEST_CHAIN environment variable. Omit it and the test still runs on
+    # the synthetic fixture alone.
+    [string]$Chain = $env:SESSION_HANDOFF_TEST_CHAIN
+)
+
 $ErrorActionPreference = 'Stop'
 
 $Sandbox = Join-Path $PSScriptRoot '.sandbox'
@@ -102,10 +110,9 @@ Resume: ``/session-resume legacy-chain``
 Set-Content -LiteralPath (Join-Path $Store 'legacy-chain_01.md') -Value $prev -Encoding UTF8
 
 # --- Optional: real field data, sandbox-only, never committed -----------------------------
-$apex = 'C:\Users\marcu\claude-projects\privat\projects\apex-roadtrip\.claude\session-handoffs'
 $realCopied = 0
-if (Test-Path -LiteralPath $apex) {
-    $newest = Get-ChildItem -LiteralPath $apex -Filter 'apex-roadtrip_*.md' -File |
+if (-not [string]::IsNullOrWhiteSpace($Chain) -and (Test-Path -LiteralPath $Chain)) {
+    $newest = Get-ChildItem -LiteralPath $Chain -Filter '*_*.md' -File |
               Where-Object { $_.BaseName -match '_(\d+)$' } |
               Sort-Object { [int]([regex]::Match($_.BaseName, '_(\d+)$').Groups[1].Value) } |
               Select-Object -Last 1

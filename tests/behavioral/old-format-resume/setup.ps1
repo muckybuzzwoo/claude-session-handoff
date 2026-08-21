@@ -6,10 +6,13 @@
   the awkward shapes that actually exist on disk. Synthetic fixtures cannot do that job — the
   whole point is that these files were never written to a spec.
 
-  TEST-DATA RULE (plan section 9): the real files are copied from the local project at run
-  time into a gitignored sandbox and are NEVER committed. If that project is not present the
-  gate SKIPS loudly rather than silently passing. A sanitised copy is not a substitute,
-  because unedited structure is the property under test.
+  TEST-DATA RULE (plan section 9): the real files are copied from a local chain at run time
+  into a gitignored sandbox and are NEVER committed. If no chain is given the gate SKIPS
+  loudly rather than silently passing. A sanitised copy is not a substitute, because unedited
+  structure is the property under test.
+
+  Point it at your own chain with -Chain, or set SESSION_HANDOFF_TEST_CHAIN once. Nothing
+  about one person's directory layout is baked into this file.
 
   Five deviations, each in its own single-file topic so `/session-resume` has to handle it
   alone:
@@ -21,17 +24,31 @@
 
   Records a SHA256 of every copied file so the read-only promise can be checked afterwards.
 #>
+param(
+    # A real, long, pre-v0.4.0 handoff chain to borrow files from. Falls back to the
+    # SESSION_HANDOFF_TEST_CHAIN environment variable.
+    [string]$Chain = $env:SESSION_HANDOFF_TEST_CHAIN,
+
+    # Filenames to use for the four named deviations. Override when your own chain's
+    # awkward files sit at different sequence numbers.
+    [string[]]$Files = @('_70', '_50', '_104', '_119')
+)
+
 $ErrorActionPreference = 'Stop'
 
-$Apex = 'C:\Users\marcu\claude-projects\privat\projects\apex-roadtrip\.claude\session-handoffs'
-
-if (-not (Test-Path -LiteralPath $Apex)) {
+if ([string]::IsNullOrWhiteSpace($Chain) -or -not (Test-Path -LiteralPath $Chain)) {
     Write-Host "SKIP=1" -ForegroundColor Yellow
-    Write-Host "Gate G1 needs the real chain at:" -ForegroundColor Yellow
-    Write-Host "  $Apex"
-    Write-Host "It is not present, so this gate cannot run. It is SKIPPED, not passed."
+    Write-Host "Gate G1 needs a real pre-v0.4.0 handoff chain to borrow files from." -ForegroundColor Yellow
+    Write-Host "Give it one:"
+    Write-Host "  pwsh -File .\setup.ps1 -Chain 'C:\path\to\project\.claude\session-handoffs'"
+    Write-Host "or set it once:"
+    Write-Host "  `$env:SESSION_HANDOFF_TEST_CHAIN = 'C:\path\to\project\.claude\session-handoffs'"
+    if (-not [string]::IsNullOrWhiteSpace($Chain)) { Write-Host "Given path does not exist: $Chain" -ForegroundColor Yellow }
+    Write-Host "This gate is SKIPPED, not passed."
     exit 0
 }
+
+$Apex = $Chain
 
 $Sandbox = Join-Path $PSScriptRoot '.sandbox'
 $Proj    = Join-Path $Sandbox 'proj'
@@ -42,16 +59,25 @@ if (Test-Path $Sandbox) { Remove-Item $Sandbox -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $Store | Out-Null
 New-Item -ItemType Directory -Force -Path $Out   | Out-Null
 
-# a..d are the files the 2026-08-06 survey named. e is found at run time rather than
-# hard-coded, so a chain that has moved on still yields a valid no-tag case.
-$map = [ordered]@{
-    'oldfmt-a' = 'apex-roadtrip_70.md'
-    'oldfmt-b' = 'apex-roadtrip_50.md'
-    'oldfmt-c' = 'apex-roadtrip_104.md'
-    'oldfmt-d' = 'apex-roadtrip_119.md'
+# The chain's own topic slug, whatever it is — derived, never assumed.
+$all = @(Get-ChildItem -LiteralPath $Apex -Filter '*_*.md' -File |
+         Where-Object { $_.BaseName -match '_\d+$' })
+if ($all.Count -eq 0) {
+    Write-Host "SKIP=1" -ForegroundColor Yellow
+    Write-Host "No handoff files (name_NN.md) in: $Apex"
+    exit 0
+}
+$slugPrefix = ($all[0].BaseName -replace '_\d+$', '')
+
+# a..d are the four deviations, addressed by sequence so the same script works on any chain.
+# e is found at run time, so a chain that has moved on still yields a valid no-tag case.
+$map = [ordered]@{}
+$letters = @('a','b','c','d')
+for ($i = 0; $i -lt $Files.Count -and $i -lt 4; $i++) {
+    $map["oldfmt-$($letters[$i])"] = "$slugPrefix$($Files[$i]).md"
 }
 
-$noTag = Get-ChildItem -LiteralPath $Apex -Filter 'apex-roadtrip_*.md' -File |
+$noTag = $all |
          Where-Object { (Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8) -notmatch 'READ-AT-RESUME' } |
          Select-Object -First 1
 if ($null -ne $noTag) { $map['oldfmt-e'] = $noTag.Name }
