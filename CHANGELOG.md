@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.3] — 2026-08-22
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.3).
+
 The review backlog: the two cheap hard fixes, the test-quality drift and the doc drift from
 `reviews/subagent-review-2026-08-21.md` §4–§6. How a handoff is written and how a resume reads
 it are unchanged.
