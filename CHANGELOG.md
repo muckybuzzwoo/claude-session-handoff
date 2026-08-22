@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.4] — 2026-08-22
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.4).
+
 Test-quality release. **No command file changed**, so handoff and resume behave exactly as in
 v0.4.3. This closes the rest of `reviews/subagent-review-2026-08-21.md` §4: the parts about the
 tests measuring the wrong thing.
