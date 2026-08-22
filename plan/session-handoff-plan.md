@@ -176,10 +176,12 @@ Made after the original 12 grilled decisions:
 
 ## Test strategy — automated layers (2026-06-30)
 On top of the 5 manual steps above:
-- **Static:** `tests/validate-commands.ps1` — 85 checks (structure, frontmatter, step
-  numbering, cross-refs, source==deployed parity), mutation-verified, exit 0/1, no deps.
+- **Static:** `tests/validate-commands.ps1` — 85 checks when this plan was written
+  (structure, frontmatter, step numbering, cross-refs, source==deployed parity), exit 0/1,
+  no deps. The current count lives in `README.md` → Testing and nowhere else.
 - **Behavioral:** `tests/behavioral/` — subagent-driven; 3 scenarios (fresh handoff /
   carry-forward / resume) run the real commands in an isolated sandbox, then
-  `verify-artifacts.ps1` asserts 26 checks. Claude-driven (needs a session), not pure pwsh.
+  `verify-artifacts.ps1` asserted 26 checks when this plan was written. Claude-driven (needs
+  a session), not pure pwsh. Current count: `README.md` → Testing.
   Plus a focused `behavioral/depth-recovery/` sub-test (15 checks) for the
   `[READ-AT-RESUME]` contract.

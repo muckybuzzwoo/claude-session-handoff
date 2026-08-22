@@ -76,6 +76,22 @@ $r  = Load $Resume
 $hL = Load $HandoffLive
 $rL = Load $ResumeLive
 
+# --- Shared scoped slices -----------------------------------------------------
+# An unscoped Contains() passes on text found ANYWHERE in the file, which is the defect
+# review section 4 named: seven of nine template checks used to pass even with the template
+# deleted. Every check that must hold for one specific block reads from a slice below
+# instead of from the whole file. Same pattern as $openBlock in format-boundary/verify.ps1.
+# \r? so the slice survives either line ending: the working tree is CRLF here, the index LF.
+$hFm = if ($h -match '(?s)^---\r?\n(.*?)\r?\n---') { $Matches[1] } else { '' }
+$rFm = if ($r -match '(?s)^---\r?\n(.*?)\r?\n---') { $Matches[1] } else { '' }
+
+$tplAt = $h.IndexOf('## Document template')
+$tpl   = if ($tplAt -ge 0) { $h.Substring($tplAt) } else { '' }
+
+$gitAt    = $h.IndexOf('### Step 5 — Ensure .gitignore')
+$gitEnd   = if ($gitAt -ge 0) { $h.IndexOf('### Step 6', $gitAt) } else { -1 }
+$gitBlock = if ($gitAt -ge 0 -and $gitEnd -gt $gitAt) { $h.Substring($gitAt, $gitEnd - $gitAt) } else { '' }
+
 # =============================================================================
 Section 'B. Deploy parity (source == ~/.claude/commands, no drift)'
 Check 'session-handoff: source content == deployed' ($h -ne '' -and $h -eq $hL)
@@ -88,6 +104,10 @@ Check 'argument-hint = [topic-slug] [--done]' ($h.Contains('[topic-slug] [--done
 foreach ($t in 'Bash','PowerShell','Read','Write','Edit','Glob','AskUserQuestion') {
     Check "allowed-tools lists $t" ($h.Contains("- $t"))
 }
+Check 'frontmatter block parsed'  ($hFm -ne '')
+# The never-unasked promise used to rest on prose alone. This is the documented hard stop:
+# it blocks Claude from auto-loading the command and still leaves /session-handoff working.
+Check 'disable-model-invocation: true' ($hFm -match '(?m)^disable-model-invocation:\s*true\s*$')
 
 # =============================================================================
 Section 'D. Handoff — step structure (1..9 contiguous, no gaps/dupes)'
@@ -131,7 +151,7 @@ foreach ($s in @(
     '## Open work',
     '## Reference',
     'Pick up here')) {
-    Check "template has section: $s" ($h.Contains($s))
+    Check "template has section: $s" ($tpl.Contains($s))
 }
 
 # =============================================================================
@@ -206,8 +226,9 @@ Check 'memory reconcile only for the same project'        ($r.Contains('belongs 
 
 # =============================================================================
 Section 'H. Handoff — gitignore + Windows safety invariants'
-Check 'ignores .claude/session-handoffs/'        ($h.Contains('.claude/session-handoffs/'))
-Check 'warns: never ignore all of .claude/'      ($h.Contains('never all of'))
+Check 'gitignore step block found'               ($gitBlock -ne '')
+Check 'ignores .claude/session-handoffs/'        ($gitBlock.Contains('.claude/session-handoffs/'))
+Check 'warns: never ignore all of .claude/'      ($gitBlock.Contains('never all of'))
 Check 'Windows rule: chained Bash may be blocked, batch via PowerShell or split' (
     $h.Contains('block chained Bash calls') -and $h.Contains('PowerShell'))
 
@@ -222,9 +243,7 @@ Check 'Status has NO Next: line'               (-not ($h -match '(?m)^\s*-\s+\*\
 # Order assertions. Index comparison, not Contains — the whole point of 1A is position.
 # Scoped to the template block: the step texts mention `## Open work` in prose earlier in
 # the file, and an unscoped IndexOf would compare the wrong occurrences.
-$tplAt = $h.IndexOf('## Document template')
 Check 'document template block found' ($tplAt -ge 0)
-$tpl = if ($tplAt -ge 0) { $h.Substring($tplAt) } else { '' }
 
 $iStatus = $tpl.IndexOf('## Status')
 $iPick   = $tpl.IndexOf('## → Pick up here')
@@ -244,7 +263,7 @@ Check 'Pick up here appears exactly once' (
 
 # --- resume briefing order, without weakening completeness ---
 Check 'resume opens with exactly three things'   ($r.Contains('exactly three things, in this order'))
-Check 'resume puts open work after those three'  ($r.Contains('Then'))
+Check 'resume puts open work after those three'  ($r -match 'and the next action\.\s+Then\s+the open work\.')
 Check 'resume defers the depth'                  ($r.Contains('Only after that'))
 Check 'resume KEEPS the do-not-compress rule'    ($r.Contains('do not compress those away'))
 Check 'resume says it is order, not content'     ($r.Contains('about *order*'))
@@ -276,18 +295,21 @@ Check 'and it names how many items were lost'   (($badOut | Out-String) -match '
 Section 'I. Resume — frontmatter + read-only posture'
 Check 'has description:'        ($r -match '(?m)^description:\s+\S')
 Check 'argument-hint = [topic-slug] [--all]' ($r.Contains('[topic-slug] [--all]'))
-foreach ($t in 'Bash','PowerShell','Read','Glob','AskUserQuestion') {
+foreach ($t in 'Bash','PowerShell','Read','Grep','Glob','AskUserQuestion') {
     Check "allowed-tools lists $t" ($r.Contains("- $t"))
 }
 Check 'read-only: does NOT grant Write' (-not $r.Contains('- Write'))
 Check 'read-only: does NOT grant Edit'  (-not $r.Contains('- Edit'))
+Check 'resume frontmatter block parsed' ($rFm -ne '')
+Check 'resume disable-model-invocation: true' ($rFm -match '(?m)^disable-model-invocation:\s*true\s*$')
+Check 'resume states an Invocation policy'    ($r.Contains('**Invocation policy:**'))
 
 # =============================================================================
 Section 'J. Resume — workflow structure + behaviour anchors'
 $rSteps = @(Get-StepNumbers $r)
 Check 'exactly 5 step headers'             ($rSteps.Count -eq 5)
 Check 'steps unique + contiguous 1..5'     ((($rSteps | Sort-Object -Unique) -join ',') -eq ((1..5) -join ','))
-Check '--all includes done/ archive'       ($r.Contains('done/'))
+Check '--all includes done/ archive'       ($r -match '(?m)^- `--all` — also include archived \(`done/`\) topics')
 Check 'staleness threshold = 7 days'       ($r.Contains('7 days'))
 Check 'never modifies/deletes handoffs'    ($r.Contains('never modify or delete'))
 

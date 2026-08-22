@@ -21,7 +21,7 @@ assert on the artifacts it produces.
    - **S3** — resume: latest handoff back-dated to 29 days old, asserts staleness note +
      read-only.
    Each agent's final response is captured to `.sandbox/out/S{1,2,3}.txt`.
-3. `verify-artifacts.ps1` runs deterministic assertions on the artifacts (26 checks) and
+3. `verify-artifacts.ps1` runs deterministic assertions on the artifacts and
    exits 0/1.
 
 ## Running it

@@ -353,3 +353,39 @@ project file stays small. Entries below are in the original order.
   this repo has now hit three times. A second, weaker check standing next to a correct one is not
   redundancy insurance, it is a false-failure generator, and the cost lands on whoever next has to
   read a red suite.
+- **2026-08-22 (the hard stop for never-unasked, against plan addition 20):** addition 20 put the
+  never-unasked rule in each command's `description` plus an "Invocation policy" section, on the
+  reading that the commands-to-skills merge made them model-invocable at the harness level and the
+  file format had nothing to offer. The official frontmatter table says otherwise:
+  `disable-model-invocation` prevents Claude from auto-loading a skill and is documented for
+  exactly this case, while `user-invocable` is the separate field that would have hidden `/name`.
+  So the prose was never the only lever, it was the only lever anyone had checked. Both commands
+  now carry the field and keep the prose, because the files must stand alone for anyone who gets
+  them without this repo. Two side findings. `/session-resume` never had the Invocation-policy
+  section at all, though `CLAUDE.md` claimed both commands did. And the same docs row confirms the
+  field also blocks preloading into subagents, which is harmless here only because the behavioural
+  tests hand the subagent the command file to read rather than relying on a preload.
+- **2026-08-22 (four copies of a number, three of them wrong):** the behavioural check count sat in
+  `README.md` and `tests/behavioral/README.md`, the static count in two plans. Three had gone stale.
+  Correcting all four would have restored exactly the arrangement that produced the drift, so the
+  count now lives only in `README.md` under Testing and the other files point at it. The plans are
+  the deliberate exception: a dated design record may state its own moment, so they keep 85 and 99
+  marked as of their own date. This is the same move `CLAUDE.md` made on 2026-08-06 and the reason
+  it was made then is the reason it holds now.
+- **2026-08-22 (why the tests got scoped instead of counted):** review section 4 said the static
+  suite mostly asserts that sentences still exist. The measurement that settled it: delete the
+  document-template section and 7 of the 9 template checks still passed. Fixing that is not about
+  adding checks, it is about what a check reads from. Four checks now read from a shared slice
+  (`$hFm`, `$rFm`, `$tpl`, `$gitBlock`) instead of the whole file, and with the block deleted 0 of
+  the 9 pass. The two single-word assertions became wrap-tolerant sentence regexes, which also
+  retires the standing gotcha that re-wrapping prose breaks a check. The remaining substring checks
+  are not fixed, and `tests/README.md` now says so instead of promising byte-sensitivity.
+- **2026-08-22 (the Pick-up-here check was NOT built, and that is the decision):** the rule that the
+  next action must also exist as a countable Open-work item is in the command, and `_03` still broke
+  it by hand. The tempting move was a static check asserting the rule's text is present, which is
+  precisely the defect review section 4 names. The honest deterministic check available, "Pick up
+  here is non-empty and Open work has no items at all", would not have caught `_03`, which had 19
+  items and simply none matching. A check that cannot catch the known instance is the same mistake
+  as the shrinking-carry guard deleted the same day. Real detection needs to match an item by
+  identity, not by text, which is the stable-item-ID design the carried-twice problem needs too.
+  Both are therefore one open design question, not two, and neither is half-built.

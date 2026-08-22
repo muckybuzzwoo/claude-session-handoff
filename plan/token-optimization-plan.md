@@ -1,7 +1,7 @@
 # Plan (IMPLEMENTED 2026-07-29): token-optimize `/session-handoff` + `/session-resume`
 
 **Status:** **Implemented 2026-07-29** in `commands/session-handoff.md` +
-`commands/session-resume.md` (deployed; static suite 99/99). The design below is kept as
+`commands/session-resume.md` (deployed; static suite 99/99 on that date — current count in `README.md` → Testing). The design below is kept as
 the decision record. What shipped vs. what this plan described (the plan predates addenda
 8c/8d in the briefing, which resolved the open branches empirically):
 
@@ -167,8 +167,8 @@ suggestion-only keeps its risk bounded. Original parked text kept below for the 
   deliberate revision (addition #16 / resume Step 4) is recorded in §4 and needs explicit
   sign-off.
 - After any change: **edit here, then deploy** to `~/.claude/commands/`, then run
-  `pwsh -File tests/validate-commands.ps1` (now **99/99** green — static Section P added for
-  this rebuild). Behavioral-test coverage for the new load paths (anchor read, big-file
+  `pwsh -File tests/validate-commands.ps1` (**99/99** green when this plan shipped — static
+  Section P added for this rebuild; the current count lives in `README.md` → Testing). Behavioral-test coverage for the new load paths (anchor read, big-file
   safeguard, untagged-not-loaded, 7d split proposal) is **still outstanding**.
 
 ## 9. Test plan (carried from briefing §8 — to flesh out at build time)

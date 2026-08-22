@@ -1,6 +1,7 @@
 ---
 description: Save the current session as a structured, resumable handoff. Run only on the user's explicit request — slash command or plain-text ask both count; you may SUGGEST a handoff when a session winds down, but never run it unasked. Writes to .claude/session-handoffs/, then stops. Resume later with /session-resume.
 argument-hint: "[topic-slug] [--done]"
+disable-model-invocation: true
 allowed-tools:
   - Bash
   - PowerShell
@@ -21,7 +22,9 @@ Pick it up later with `/session-resume`.
 
 **Invocation policy:** run this only when the user asks for it — the slash command or an
 explicit plain-text request ("save a handoff") both count. When a session is clearly
-winding down you may *suggest* running it; never execute it unasked.
+winding down you may *suggest* running it; never execute it unasked. The frontmatter backs
+this with `disable-model-invocation: true`, which stops Claude from loading the command on
+its own and leaves `/session-handoff` working.
 
 ## Arguments
 

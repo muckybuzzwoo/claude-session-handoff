@@ -207,6 +207,8 @@
                 next action, then <strong>Open work</strong>. The retrospective follows.</li>
             <li><strong>Closing reflection</strong> (propose-only): surface durable facts worth saving to
                 memory, plan drift, or a stale doc — show, ask, write only on confirm.</li>
+            <li><code>--done</code> handling — close a topic: optionally write one final handoff, then
+                move the whole chain into <code>done/</code> so it drops out of the picker.</li>
             <li>Confirm + <strong>hard stop</strong> — closing with a fixed reminder that
                 anything done <em>after</em> this handoff won't reach the next resume unless you run it again.</li>
           </ol>
@@ -424,7 +426,7 @@
          and the <code>git mv</code> that archives a finished topic.</p>
 
       <h2>Tested, not just written</h2>
-      <p>Both commands ship with two layers of tests so changes don't quietly break them:</p>
+      <p>Both commands ship with three layers of tests so changes don't quietly break them:</p>
       <ul class="fields">
         <li><b>Static checks</b> — a script validates each file's structure, its header fields, the step
             numbering, and that the deployed copy matches the source.</li>
@@ -433,9 +435,14 @@
             confirm they behaved: propose-only, read-only on resume, correct chaining, and that resume
             loads only what's needed (a section-anchored link pulls just that section; an untagged big
             file is not read whole).</li>
+        <li><b>Compatibility scan</b> — a standalone script (no AI in the loop) reads a real handoff
+            chain and checks that it still adds up: every open item is either carried, written out, or
+            explicitly closed. Run it before and after a format change so "nothing was lost" is a
+            measurement rather than a hope.</li>
       </ul>
-      <p class="muted" style="font-size:13px">The full decision log and test details live in the repo
-         (<code>plan/</code> and <code>tests/</code>) — this page is just the overview.</p>
+      <p class="muted" style="font-size:13px">Why things are the way they are lives in
+         <code>docs/decision-log.md</code>, the design records in <code>plan/</code>, the test detail in
+         <code>tests/</code>. This page is just the overview.</p>
 
     </section>
   </div>
@@ -443,7 +450,8 @@
   <footer>
     Design synthesizes Nate Herk (schema &amp; rules), Matt Pocock (suggested-skills, reference-don't-duplicate,
     secret convention), REMvisual (sequence chain-linking) and buzzwoo <code>/park</code> (file persistence).
-    Full decision log: <code>plan/session-handoff-plan.md</code>.
+    Full decision log: <code>docs/decision-log.md</code>.
+    <br>Describes v0.4.3. For the current version and what changed since, see <code>CHANGELOG.md</code>.
   </footer>
 
 </div>

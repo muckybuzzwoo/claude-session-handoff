@@ -105,9 +105,10 @@ work as the next `_NN`.
 ```
 /session-resume
 ```
-Lists your topics (most recent first), you pick one, it loads the latest handoff and reads any
-decision/plan/spec files it links (so full roadmaps and rejected options come back, not just the
-handoff's summary), warns if it looks stale (older than 7 days, branch changed, or the
+Lists your topics (most recent first), you pick one, it loads the latest handoff and pulls the
+depth out of the files it links (full roadmaps and rejected options come back, not just the
+handoff's summary) under the loading rules described just below, warns if it looks stale
+(older than 7 days, branch changed, or the
 working tree moved compared to the snapshot recorded in the handoff), and proposes the
 single next action.
 Pass a topic to skip the picker: `/session-resume checkout-bug`.
@@ -168,11 +169,11 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (196 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (203 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →
-resume), then `verify-artifacts.ps1` asserts on the produced artifacts (26 checks). It
+resume), then `verify-artifacts.ps1` asserts on the produced artifacts (30 checks). It
 proves the runtime properties — Step 7 propose-only, carry-forward, staleness, read-only —
 that a static test can't. Two focused sub-tests add runtime proof of the deep-link
 behaviour: `tests/behavioral/depth-recovery/` (15 checks) proves resume actually opens the
@@ -202,7 +203,11 @@ before and after a format change so "nothing was lost" is a measurement.
 
 ## Design rationale
 
-Full decision log (12 grilled decisions) lives in `plan/session-handoff-plan.md`.
+Why things are the way they are, including rejected alternatives, lives in
+`docs/decision-log.md`. The three design records behind it are `plan/session-handoff-plan.md`
+(the original 12 grilled decisions), `plan/token-optimization-plan.md` (token-aware loading)
+and `plan/readability-preflight-plan.md` (the v0.4.x readability work). A plan states the
+design as designed, not as it ended up, so prefer the decision log when the two differ.
 Windows-safe throughout: Write tool for files, Read+Edit for `.gitignore`. On Windows,
 Step 1's read-only checks batch via the PowerShell tool (or fall back to one Bash call at
 a time if that's unavailable); on macOS/Linux a single chained Bash call is fine — see

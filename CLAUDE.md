@@ -33,9 +33,10 @@ maintenance repo.
 
 ## What the layout does not show
 
-- `plan/` holds **two** design documents, not one: `session-handoff-plan.md` (the original
-  grilled design, 12 decisions + post-design additions 13–20) and
-  `token-optimization-plan.md` (the v0.2.0 token-aware loading design).
+- `plan/` holds **three** design documents, not one: `session-handoff-plan.md` (the original
+  grilled design, 12 decisions + post-design additions 13–20), `token-optimization-plan.md`
+  (the v0.2.0 token-aware loading design) and `readability-preflight-plan.md` (the v0.4.x
+  readability work, and Track B for v0.5.0).
 - The commands contain **platform-conditional** execution paths (PowerShell batching on
   `win32` hosts that hard-block chained Bash, plain chained Bash elsewhere). This looks like
   redundancy but is deliberate — the verified reasoning is plan Decision 18. Do not collapse
@@ -49,24 +50,25 @@ Run `pwsh -File .\tests\validate-commands.ps1` after changing and deploying a co
 static structure, frontmatter, step numbering, cross-references, and source==deployed parity
 (exit 0/1, no dependencies). Runtime behaviour is covered by `tests/behavioral/`, where
 Claude dispatches subagents that execute the commands in a sandbox and `verify-artifacts.ps1`
-asserts on the output. Suite contents, check counts and how to re-run: `tests/README.md` +
-`tests/behavioral/README.md`.
+asserts on the output. Suite contents and how to re-run: `tests/README.md` +
+`tests/behavioral/README.md`. Check counts live in `README.md` → Testing and nowhere else.
 
 - Rewrapping prose in a command file can fail a check: most are literal `Contains()`, and a
   phrase split across a line break no longer matches.
-- A new check goes **scoped** to the block that must hold the content — `$tpl` (Section T),
-  `$hop` (Section U). An unscoped one passes on text found anywhere in the file.
+- A new check goes **scoped** to the block that must hold the content: use a shared slice
+  (`$hFm`, `$rFm`, `$tpl`, `$gitBlock`, `$hop`). Unscoped passes on text found anywhere.
 
 ## Where to look
 
 - Current state and open work: this project's Claude memory (`MEMORY.md` + fact files)
 - Released versions and their contents: `CHANGELOG.md`
 - Why things are the way they are, incl. rejected alternatives: `docs/decision-log.md`
+- The design as designed (three records, incl. Track B): `plan/`
 - Visual explainer (open in a browser): `docs/how-it-works.html`
 
 ## Invocation policy
 
-Since the commands→skills merge they are model-invocable at the harness level — the
-never-unasked rule therefore lives in each command's `description` and "Invocation policy"
-section, not in the file format (see plan addition 20). Both stay: the command files must be
-self-contained for anyone who gets them without this repo.
+`disable-model-invocation: true` in each command's frontmatter is the hard stop: it blocks
+Claude from auto-loading the command and leaves `/session-handoff` and `/session-resume`
+working. The `description` and "Invocation policy" prose stay next to it, because the command
+files must be self-contained for anyone who gets them without this repo.

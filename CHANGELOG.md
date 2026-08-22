@@ -3,6 +3,59 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.3] — 2026-08-22
+
+The review backlog: the two cheap hard fixes, the test-quality drift and the doc drift from
+`reviews/subagent-review-2026-08-21.md` §4–§6. How a handoff is written and how a resume reads
+it are unchanged.
+
+### Changed
+
+- **`disable-model-invocation: true` in both commands.** The never-unasked promise rested on
+  prose alone, in `description` and the Invocation-policy section. This is the documented hard
+  stop: it blocks Claude from auto-loading the command and leaves `/session-handoff` and
+  `/session-resume` working when you type them. `/session-resume` also gained the
+  Invocation-policy paragraph it never had, so both files now say the same thing.
+- **`Grep` added to `/session-resume`'s `allowed-tools`.** Step 4 instructs a Grep for the
+  section anchor. `allowed-tools` is a pre-approval and not a restriction, so the gap cost one
+  permission prompt rather than breaking anything.
+
+### Tests
+
+- **Static suite 196 → 203.** Four checks that passed on text found anywhere in the file are
+  now scoped to the block that has to hold it, through shared slices defined once near the top
+  (`$hFm`, `$rFm`, `$tpl`, `$gitBlock`). Measured against a mutation: with the document-template
+  section deleted, 7 of the 9 template checks used to pass and now 0 do. Two more assert a whole
+  sentence instead of a single word (`Then` and `done/` each occur five times in the file), and
+  do it wrap-tolerantly, so re-wrapping the prose no longer breaks a check.
+- **Six new checks** cover the frontmatter facts above.
+- **The false-positive carry check is gone.** It fired whenever the carry count shrank and only
+  asserted that something was closed, so it failed on correct chains. The conservation law it
+  stood next to already catches real item loss.
+
+### Docs
+
+- **Check counts live in one place now, `README.md` → Testing.** Four files carried their own
+  copy and three had gone stale: the behavioural suite is 30 and was written as 26, the plans
+  said 85 and 99 against 203. The plans keep their historical number, marked as of their own
+  date, because a design record is allowed to describe its own moment.
+- **`tests/README.md` no longer claims the suite is byte-sensitive throughout.** It names the
+  mutations that are verified and says plainly that the remaining checks are substring matches.
+- **`README.md` no longer contradicts itself on resume loading.** One paragraph described the
+  pre-v0.2.0 blind loading that the next paragraph then corrected.
+- **`docs/how-it-works.html`**: Step 8 (`--done`) had no list item, so the page showed 8 of the
+  9 handoff steps. The compatibility scanner was missing from the test layers ("two" → three).
+  Both this page and `README.md` pointed at a plan as the full decision log instead of
+  `docs/decision-log.md`. The page now also carries a version stamp.
+- **`CLAUDE.md`**: `plan/` holds three design records, not two. `readability-preflight-plan.md`
+  was invisible from the always-loaded file that is supposed to point at it.
+
+### Not in this release
+
+- **A check that the "→ Pick up here" item also exists in Open work.** The rule is in the
+  command and was still broken by hand once. Catching it needs matching an item by identity
+  rather than by text, which is the same stable-item-ID design the carried-twice problem needs.
+  Recorded as one open design question rather than half-built.
 ## [0.4.2] — 2026-08-21
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.2).

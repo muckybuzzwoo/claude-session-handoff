@@ -38,8 +38,16 @@ break on an edit:
 - **Safety invariants** — gitignore scoping (`.claude/session-handoffs/` only, never all of
   `.claude/`), Windows "never chain shell commands" rule, resume "never modify or delete".
 
-The assertions are mutation-checked: corrupting a cross-reference, removing a step header,
-or changing one byte flips the relevant check to FAIL — the harness is not a rubber stamp.
+Some assertions are mutation-verified, and it is worth knowing which. Deleting the document
+template section fails all nine template checks, and deleting Step 5 fails both gitignore
+checks (measured 2026-08-22; before the scoped slices landed, 7 of those 9 still passed with
+the template gone). Others are still plain substring matches against the same file they
+validate, so they do not move when a byte changes elsewhere. Do not read this harness as
+byte-sensitive throughout.
+
+The lever is the shared scoped slices near the top of the script (`$hFm`, `$rFm`, `$tpl`,
+`$gitBlock`). A check reading from a slice fails when its block is gone. A check reading from
+the whole file does not. Put a new check on the slice for the block that must hold it.
 
 ## What it does NOT prove (behavioural — verify manually)
 
