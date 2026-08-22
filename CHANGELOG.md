@@ -5,6 +5,8 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions
 
 ## [0.4.5] — 2026-08-22
 
+[GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.5).
+
 **No command file changed.** This release corrects a claim shipped in v0.4.3, makes the
 behavioural suite runnable from a clean checkout, and costs out the one design decision that
 four open items turned out to share.
