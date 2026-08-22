@@ -36,7 +36,7 @@ maintenance repo.
 - `plan/` holds **three** design documents, not one: `session-handoff-plan.md` (the original
   grilled design, 12 decisions + post-design additions 13–20), `token-optimization-plan.md`
   (the v0.2.0 token-aware loading design) and `readability-preflight-plan.md` (the v0.4.x
-  readability work, and Track B for v0.5.0).
+  readability work, Track B for v0.5.0, and §16 the output-volume and briefing-order redesign).
 - The commands contain **platform-conditional** execution paths (PowerShell batching on
   `win32` hosts that hard-block chained Bash, plain chained Bash elsewhere). This looks like
   redundancy but is deliberate — the verified reasoning is plan Decision 18. Do not collapse
@@ -57,6 +57,8 @@ asserts on the output. Suite contents and how to re-run: `tests/README.md` +
   phrase split across a line break no longer matches.
 - A new check goes **scoped** to the block that must hold the content: use a shared slice
   (`$hFm`, `$rFm`, `$tpl`, `$gitBlock`, `$hop`). Unscoped passes on text found anywhere.
+- `compat-old-chain.ps1` counts `Done:` **bullets**, not a number stated in prose. Collapsing
+  several closed items into one summarising bullet makes it report phantom loss.
 
 ## Where to look
 

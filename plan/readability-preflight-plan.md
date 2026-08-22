@@ -1245,3 +1245,194 @@ text, which is the actual defect. Do not expect it to remove the one-hop read li
 
 Not mine to take. **(a) cheap and partial, the slug design full but with a third format path, or
 (c) do nothing and keep the documented limitation.** Everything needed to choose is above.
+
+## 16. Output volume and briefing order (added 2026-08-22, DECIDED)
+
+Track A was meant to make the briefing shorter and clearer. It reordered and left the volume
+alone, and it said so in as many words: `commands/session-resume.md:146-150` reads *"This is
+about order, not about dropping content: the completeness requirement is unchanged."* Nothing in
+either command has ever capped output length. This section records the measurement that started
+on 2026-08-22, the criterion Marcus set, and the seven decisions taken.
+
+### 16.1 What was measured
+
+**The instructions grew.** Both files are loaded on every run, so this is fixed cost per session.
+
+| File | v0.3.0 | v0.4.2 | Change |
+|---|---|---|---|
+| `commands/session-resume.md` | 8,979 B | 12,902 B | +44 % |
+| `commands/session-handoff.md` | 19,732 B | 24,936 B | +26 % |
+
+**The handoff files grew about 2.3x.** Pre-v0.4.0 files run 3.7 to 8.1 KB. Post-Track-A files run
+7.8 to 19.0 KB.
+
+**One resume run costs about 11,600 input tokens**, before any work begins. Measured on `_06`:
+resume command 3,255, handoff 4,528, plan §15 1,531, plan §7 1,708, review do-not-touch list 370,
+one-hop read of `_05` 217.
+
+**More than half the handoff is one section.** `_06` splits into ten sections. `## Open work` is
+9,643 B, or 54.8 %. Next largest is Decisions-and-shipped at 2,194 B.
+
+**Inside that section, the largest single item is finished work.** `Done:` bullets are 4,058 B, or
+42.1 % of Open work. `Open:` is 3,142 B, the arithmetic prose 1,302 B.
+
+**And the `Done:` prose is provably recorded elsewhere.** Six of the fifteen were probed against
+`CHANGELOG.md`, `docs/decision-log.md` and `git log`. All six appear in at least two of the three.
+None is unique to the handoff. Separately, the two reusable lessons under Decisions-and-shipped
+already exist as memory files (`publish-the-uncertainty`, `deletion-needs-evidence`).
+
+### 16.2 The criterion
+
+Marcus, 2026-08-22: **only what cannot be re-derived from code, git, `CHANGELOG.md`,
+`docs/decision-log.md`, the plans or the Claude memory belongs in a handoff.** This is the
+project-level rule "No Competing Sources of Truth" applied to the handoff body. It was already
+half-present: the Reference heading says *"do NOT duplicate"*, and the writer's Hard rules ladder
+case (a) says not to tag a file whose essence the handoff already carries. Both apply to **links
+only**. The mirror rule, do not write into the handoff what already lives in a file, did not
+exist.
+
+**Refinement found while building, and it is load-bearing.** "Derivable" alone is too coarse. It
+needs two levels:
+
+- **Explanation** is derivable and may be cut to a pointer.
+- **Structure** — a count, a position, a chain reference — carries automated checks and must stay.
+
+### 16.3 The counted-Done finding
+
+A first shortened `_06` collapsed the fifteen `Done:` bullets into one summarising bullet.
+`tests/compat-old-chain.ps1` rejected it: `carry 8 + closed 1 + written 11 = 20` against
+`prev_total = 26`, so **−6, six items reported as lost.** The scanner counts `Done:` **bullets**,
+not a number stated in prose.
+
+So the `Done:` block is load-bearing for the loss guard. Its text is derivable, its count is not.
+The fix was to keep fifteen bullets and cut each to one line. The result:
+
+| | `_06` as written | shortened |
+|---|---|---|
+| Size | 18,111 B | 8,790 B |
+| Lines | 225 | 131 |
+| Scanner | exit 0 | exit 0 |
+| Arithmetic | `8 + 15 + 11 − 26 = 8 new` | identical |
+
+Measured saving **51.5 %**, about 2,330 tokens, with the loss guard intact. Within Open work,
+`Done:` went 4,058 to 1,336 and `Open:` 3,142 to 1,632.
+
+**Two consequences worth keeping.** First, this is a **writer** constraint. The reader may
+collapse the closed items to a single line in its output, because the scanner reads the file and
+not the briefing. Second, this is independent evidence for §15: a slug list is countable **without
+prose**, so the slug design would let those fifteen lines become one without breaking the guard.
+§15 was costed as an identity fix. It is also a volume fix.
+
+### 16.4 The seven decisions (2026-08-22, Marcus)
+
+| # | Question | Decision |
+|---|---|---|
+| 1 | Where is the rule enforced? | **Both commands, writer first.** |
+| 2 | How is the rule expressed? | **Principle plus a fixed list** of the known-derivable blocks. |
+| 3 | How much text does an open item keep? | **One standalone sentence plus a pointer.** |
+| 4 | How is the output language fixed? | **A `--de` / `--en` flag.** |
+| 5 | What is checked? | **A measurement over real handoff files**, added to `compat-old-chain.ps1`. |
+| 6 | Briefing order | **Six blocks, context first, action last.** See §16.5. |
+| 7 | How far is the depth cut? | **Rejected options always print**, name plus a few words of reason. The rest is on request. |
+
+On **2**, the fixed list is: `Done:` explanations, the shipped-versions narrative, git facts
+(branch, tags, commit, tree), and test counts. Test counts in particular must never be copied into
+a handoff — four stale copies were the defect v0.4.3 fixed by moving them to `README.md` →
+Testing, and `_06` reintroduced them.
+
+On **3**, the guard is that the sentence must be understandable on its own. The pointer is an
+addition, never a substitute. A side effect worth keeping: an open item that cannot be stated in
+one standalone sentence is in truth several items.
+
+On **4**, the default is unchanged — the project `CLAUDE.md`, otherwise the language of the
+handoff file. This is why the same command answered German in apex-roadtrip
+(`CLAUDE.md:22` states the documentation language) and English here, where no language line
+exists. Neither command file mentions language at all. The flag overrides the default. **When no
+flag is given and the project `CLAUDE.md` is silent, the briefing states in one line which
+language it chose and why**, and is silent otherwise. Three places change:
+`commands/session-resume.md:3` (`argument-hint`), the Arguments section, and the Step 2 parse
+rule. Free text after the command name already arrives intact, so no new mechanism is needed, and
+`--all` is the existing flag precedent.
+
+On **7**, the compact form is what the existing test already demands. See §16.7.
+
+### 16.5 The briefing order
+
+Six blocks. Context first, the action last.
+
+```
+[1] Geladen              what was read, and what was deliberately not read
+[2] Verworfen            rejected options — name plus a few words of reason
+[3] Tiefe auf Abruf      what is held back and available on request
+[4] Wo wir stehen        Stand · Letzte Sitzung · Offene Arbeit (numbered) · Nachprüfen
+[5] Warnungen            HEAD moved · branch differs · handoff old · memory contradicts
+                         omitted entirely when there are none
+[6] Was jetzt            the next step, naming its item number from [4], plus the options
+```
+
+**The rationale is terminal-shaped, and it is the better one.** Track A applied document logic:
+a reader starts at the top, so the next action goes first. But a terminal shows the **end**. What
+was printed first has scrolled away, and the cursor sits at the bottom. The order above is read
+from the bottom upwards, which is why block [2] being unintelligible cold is not a defect — it is
+read last, after the question in [6] has given it a premise.
+
+**Two structural rules inside the blocks.** Block [6]'s next step and the first item in block [4]
+are **the same item**, once as a pointer and once as a countable numbered entry. That mirrors the
+writer's Hard rule *"'→ Pick up here' is a spotlight, not a container"*, which the reader never
+had. It is also the reader half of the open item "nothing checks that the Pick-up-here item also
+exists in Open work". And the doubt or re-check content belongs in block [4] beside the open work,
+never in the depth.
+
+### 16.6 Formatting
+
+- Every block heading sits on **its own line**. No label inline with its content.
+- Fixed heading levels: `##` for the six blocks, `###` for anything below. This makes the output
+  **checkable** — a script can assert that all six blocks are present and in order, which it
+  cannot do for free-text bold.
+- A horizontal rule between blocks.
+- Every open-work item leads with a **bold short form**, with the explanation on the following
+  line. This is not only presentation: applying it to `_06` exposed two items that were each two
+  thoughts in one sentence.
+
+### 16.7 What this reverses, and what it does not
+
+- **It reverses the reader's briefing order**, `commands/session-resume.md:135-138`, which is
+  Track A's second commit. Record it in `docs/decision-log.md` at build time, with the
+  terminal rationale above rather than as a preference.
+- **The writer is untouched by the reversal.** Its Hard rule *"Forward-looking block first"*
+  governs the **file**, not the briefing, so the file keeps Status, then Pick-up-here, then
+  Open work.
+- **No conflict with the do-not-touch list.** Item 6 protects *"do not compress those away"*
+  (now `:146-150`). It stays valid, because decision 7 keeps rejected options in the output.
+- **`tests/behavioral/depth-recovery/` stays green.** `verify.ps1:56-58` asserts the output
+  carries the rejected option's name, one word of its rationale, and that it reads as rejected.
+  It does not require a paragraph and does not care where in the briefing it appears. Note that
+  the fixture handoff already states *"rejected alternatives live in the plan — not duplicated
+  here"* (`setup.ps1:66`), so the test was built on the criterion in §16.2 before it was named.
+- **A second load disappears.** Because the rejected options now live in the handoff instead of
+  only in the linked plan, resume no longer needs to open the plan to satisfy the 2026-06-30
+  deep-link fix. Projected input cost falls from about 11,600 tokens to about 5,672, roughly
+  −51 %, on top of the output getting shorter. This is the part that fills the context window,
+  and it was not the part Track A tried to fix.
+
+### 16.8 Consequences recorded, not decided here
+
+- **A new command patch resets the seven quiet days** proposed as the Track B bar in §7. Accepting
+  that bar and shipping this section are in tension, and the sequencing is Marcus's call.
+- **This is Track A, v0.4.7.** §7 already assigns `session-handoff.md` (Step 3 carry-forward rule,
+  Document template) and `session-resume.md` (Step 4.3 briefing order) to Track A, which is
+  exactly where these changes land. Track B is untouched, so the revert-order rule holds.
+- **`docs/decision-log.md` gets two entries at build time:** the briefing-order reversal and the
+  language flag.
+
+### 16.9 Effort and sequencing
+
+**Writer first**, because the file is the ceiling for everything after it and because the writer
+is testable with no subagent — the static suite plus `compat-old-chain.ps1`, which is how the
+counted-Done defect in §16.3 was caught. **Reader second**, because verifying the briefing order
+and the on-request depth needs a behavioural run, and no scenario has been executed since the
+de-leaking.
+
+**Effort, in Claude-Code terms:** one session for the writer plus its checks, one for the reader
+plus the language flag. The new checks belong in `compat-old-chain.ps1`, which already reads these
+files, rather than in a new script.
