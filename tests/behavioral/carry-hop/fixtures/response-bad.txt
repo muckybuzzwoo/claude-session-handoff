@@ -1,0 +1,26 @@
+Loaded the mig chain. Latest file is mig_02.md (seq 02), Format 2, dated 2026-08-21.
+
+Where it stands: the schema migration runs end to end on a copy of production.
+What the last session changed: it set the retry cap and found a deploy-ordering problem.
+Next action: raise the connection-pool ceiling before the next dry-run.
+
+Open work, as written in mig_02.md:
+
+- Open: SENTINEL_CLOSED_DELTA — the retry cap.
+- Open: SENTINEL_NEW_EPSILON — the deploy step runs the migration before the feature flag
+  flips, so the new code path is briefly live against the old schema.
+- Carried unchanged: 3 items — see mig_01.md
+
+Staleness: the handoff is 1 day old and the branch matches. Nothing to flag.
+
+1. Handoff loaded: <SANDBOX>/.claude/session-handoffs/mig_02.md (seq 02)
+2. Other files read: none.
+
+Suggested next action: raise the connection-pool ceiling. Say the word and I will start there.
+
+--
+This fixture reproduces the two historical defects on purpose, so the verifier can be shown
+to catch them:
+  * the carry pointer was printed instead of resolved, so the three older items never made it
+    into the briefing and the next session cannot see them
+  * the Done: bullet was folded in as open work, so a closed item came back as open

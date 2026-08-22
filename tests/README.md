@@ -62,6 +62,29 @@ prints these as **NOT COVERED** reminders; verify them by hand per `README.md â†
 - `--done` archives to `done/` and resume hides it without `--all`.
 - Secret-pattern warning triggers before writing.
 
+## Mutation harness (`mutation-check.ps1`, standalone, no LLM)
+
+The question this answers: **which parts of a command file can be deleted without any check
+noticing?** It deletes one block at a time (each `## H2`, each `### Step N`, fenced regions
+respected so the document template counts as one block), runs the whole static suite against
+the mutant, and reports how many checks the deletion broke.
+
+```powershell
+pwsh -File .\tests\mutation-check.ps1
+pwsh -File .\tests\mutation-check.ps1 -Detail   # also lists covered blocks + their failure counts
+```
+
+A block with zero failures has no coverage. Exit 1 when such a block appears and is not in the
+`$Allowed` list inside the script, so it works as a ratchet: adding a block to `$Allowed` is a
+recorded decision to leave it untested, not a fix. As of 2026-08-22 the list is empty and all 26
+blocks are covered, the thinnest at one check each (both `## Workflow` headings, the handoff
+`## Customizing`, the resume `## Arguments`).
+
+This exists because "how many checks are substring matches" is the wrong question. What matters
+is whether a check fails when its subject is gone, and only a mutation can answer that. It is
+also how `-SrcDir` / `-LiveDir` got onto `validate-commands.ps1`: the suite had to be pointable
+at a mutated copy, with `LiveDir` aimed at the same copy so parity is not the thing under test.
+
 ## Compatibility scanner (standalone, no LLM)
 
 `compat-old-chain.ps1 -Path <handoff-dir>` scans any existing chain and answers one question

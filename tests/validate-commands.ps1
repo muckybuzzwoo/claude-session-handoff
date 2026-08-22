@@ -11,16 +11,29 @@
 
   Exit code 0 = all static checks passed, 1 = at least one failed.
 
+.PARAMETER SrcDir
+  Command source directory. Defaults to <repo>/commands. Override only to run the suite
+  against a mutated copy — see mutation-check.ps1.
+
+.PARAMETER LiveDir
+  Deployed command directory for the parity check. Defaults to ~/.claude/commands. Point it
+  at the same place as SrcDir when testing a mutant, so parity is not the thing under test.
+
 .EXAMPLE
   pwsh -File .\tests\validate-commands.ps1
 #>
+
+param(
+    [string]$SrcDir,
+    [string]$LiveDir
+)
 
 $ErrorActionPreference = 'Stop'
 
 # --- Paths (portable: derived from this script's location) -------------------
 $RepoRoot    = Split-Path $PSScriptRoot -Parent
-$SrcDir      = Join-Path $RepoRoot 'commands'
-$LiveDir     = Join-Path $HOME '.claude/commands'
+if (-not $SrcDir)  { $SrcDir  = Join-Path $RepoRoot 'commands' }
+if (-not $LiveDir) { $LiveDir = Join-Path $HOME '.claude/commands' }
 
 $Handoff     = Join-Path $SrcDir  'session-handoff.md'
 $Resume      = Join-Path $SrcDir  'session-resume.md'
@@ -436,6 +449,38 @@ Check 'hop requires the law to be >= 0'               ($hop.Contains('must be `>
 Check 'hop reads a negative result as a shortfall'    ($hop.Contains('shortfall'))
 Check 'hop forbids flagging a plain N difference'     ($hop.Contains('not** treat a plain difference'))
 Check 'hop still refuses to guess lost items'         ($hop.Contains('never guess which items'))
+
+# =============================================================================
+Section 'V. Blocks that mutation-check.ps1 found uncovered (2026-08-22)'
+# mutation-check.ps1 deletes one block at a time and reports which deletions break no
+# check at all. Four blocks could be deleted whole with this suite staying green: both
+# Workflow headings, the handoff Arguments list, the handoff error table, and the resume
+# Customizing list. Every check here reads from the block it is about, so deleting the
+# block now fails the check rather than passing on a stray match elsewhere.
+Check 'handoff has a Workflow heading' ($h -match '(?m)^## Workflow\s*$')
+Check 'resume has a Workflow heading'  ($r -match '(?m)^## Workflow\s*$')
+
+$hArgsAt  = $h.IndexOf('## Arguments')
+$hArgsEnd = if ($hArgsAt -ge 0) { $h.IndexOf('## HARD STOP', $hArgsAt) } else { -1 }
+$hArgs    = if ($hArgsAt -ge 0 -and $hArgsEnd -gt $hArgsAt) { $h.Substring($hArgsAt, $hArgsEnd - $hArgsAt) } else { '' }
+Check 'handoff Arguments block delimited'      ($hArgs -ne '')
+Check 'Arguments documents the topic slug'     ($hArgs -match '(?m)^- `\[topic\]`')
+Check 'Arguments documents --done + archive'   ($hArgs -match '(?m)^- `--done`' -and $hArgs.Contains('done/'))
+
+# The error table is the last block in the handoff file, so it runs to the end.
+$hErrAt = $h.IndexOf('## Error handling')
+$hErr   = if ($hErrAt -ge 0) { $h.Substring($hErrAt) } else { '' }
+Check 'handoff Error handling block delimited' ($hErr -ne '')
+foreach ($case in 'Empty session','Not a git repository','topic not found','Secret pattern detected') {
+    Check "error table covers: $case" ($hErr.Contains($case))
+}
+
+$rCustAt  = $r.IndexOf('## Customizing')
+$rCustEnd = if ($rCustAt -ge 0) { $r.IndexOf('## Error handling', $rCustAt) } else { -1 }
+$rCust    = if ($rCustAt -ge 0 -and $rCustEnd -gt $rCustAt) { $r.Substring($rCustAt, $rCustEnd - $rCustAt) } else { '' }
+Check 'resume Customizing block delimited'     ($rCust -ne '')
+Check 'Customizing names the store path'       ($rCust.Contains('Store path'))
+Check 'Customizing names the 7-day threshold'  ($rCust.Contains('7-day'))
 
 # =============================================================================
 Write-Host ''

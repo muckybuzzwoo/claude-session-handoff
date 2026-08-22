@@ -389,3 +389,45 @@ project file stays small. Entries below are in the original order.
   as the shrinking-carry guard deleted the same day. Real detection needs to match an item by
   identity, not by text, which is the stable-item-ID design the carried-twice problem needs too.
   Both are therefore one open design question, not two, and neither is half-built.
+- **2026-08-22 (counting call sites was the wrong instrument):** review section 4 put a number on
+  the weak static checks, "roughly 154", by counting `Contains()` call sites. The number is not
+  wrong so much as unusable: how a check is written says nothing about whether it fails when its
+  subject is gone, which is the only property that matters. So the estimate was replaced with a
+  measurement. `tests/mutation-check.ps1` deletes one block of a command file at a time and
+  re-runs the whole suite. First result: 26 blocks, 21 covered, 5 uncovered. Both `## Workflow`
+  headings, the handoff `## Arguments` list, the handoff error table and the resume
+  `## Customizing` list could each be deleted whole with the suite green. That is five concrete
+  gaps to close instead of 154 call sites to audit, and it is a standing ratchet rather than a
+  one-off audit. Getting there needed `-SrcDir`/`-LiveDir` on the suite, both optional, with
+  `LiveDir` pointed at the same mutant so deploy parity is not the thing under test.
+- **2026-08-22 (the scenarios were grading their own prompt):** three of the four behavioural
+  scenarios restated the rule under test. `depth-recovery` instructed "explicitly list the
+  rejected options" while its verifier greps for reject/discard wording. `load-discipline`
+  repeated the entire Step 4 link rule and then said outright not to load the roadmap, which is
+  the exact behaviour asserted. `s3-resume` announced the file had been back-dated and asked for a
+  staleness assessment, and the check greps for "stale" or "days". Each therefore measured whether
+  the subagent obeyed the prompt. The prompts now carry harness facts only. What is deliberately
+  kept: cwd and absolute paths, non-interactive topic selection, the no-human-available fact, the
+  Windows chaining rule, and a sandbox-hygiene line. What is deliberately gone: every statement of
+  what the answer should contain, and also "this command is READ-ONLY" and "honor do not
+  auto-implement", because both are rules the command states and the verifier checks. The
+  consequence is stated in the changelog rather than hidden: the first run may fail where the
+  leaked version passed, and that would be a finding about the command.
+- **2026-08-22 (a behavioural verifier that can be tested without an LLM):** the new `carry-hop`
+  sub-test covers the read half of the carry rule, which had no runtime coverage at all even
+  though v0.4.2 rewrote those reader rules. The part worth copying is not the scenario, it is
+  `selftest.ps1`: two committed response fixtures, one correct and one reproducing the two
+  historical defects, and an assertion that the verifier accepts the first and rejects the second
+  on all five named checks. Measured 20/20 exit 0 and 15/20 exit 1. Every other behavioural
+  sub-test here can only be exercised by spending a subagent run, so none of them has ever been
+  shown to reject a wrong answer. This one has, for the price of one script. The same reasoning
+  produced `fixtures/carry-ok` and `fixtures/carry-bad` for the compat scanner.
+- **2026-08-22 (a wording check deleted before it ever shipped):** the carry-hop verifier first
+  asserted that the briefing "says how many items it resolved", by looking for a 3 near
+  carry/resolved wording. It failed on the correct fixture, because the window forbade the period
+  in `mig_01.md`, and the bad fixture would have passed it, because the literal
+  `Carried unchanged: 3 items` line contains both tokens. So it was a check that failed on right
+  answers and passed on wrong ones. Deleted rather than repaired: the three sentinel checks
+  already prove the hop was resolved, so a wording check adds a false-failure mode and no
+  coverage. That is the third time in two days the same shape has come up, after the
+  shrinking-carry guard and the gated version of it that was rejected.

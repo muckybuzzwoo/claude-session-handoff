@@ -49,6 +49,50 @@ the artifacts of the most recent run.
 - Resume: detects the 29-day staleness, suggests the next action, modifies nothing
   (SHA256 of every handoff stable across the resume run).
 
+## The scenario prompts were de-leaked on 2026-08-22 — read this before trusting a green run
+
+Three of the four scenarios used to restate the rule under test inside the prompt.
+`depth-recovery` told the agent to "explicitly list the rejected options", `load-discipline`
+repeated the whole Step 4 link-resolution rule and even said which file not to load, and
+`s3-resume` said the file had been back-dated and then asked for a staleness assessment. Each
+of those is the exact thing its verifier greps for, so a green run measured whether the
+subagent followed the prompt, not whether the command works. `format-boundary` was the
+exception, and it is also the only scenario that ever produced a real defect.
+
+The prompts now say what the harness is (paths, non-interactive, no human available, Windows
+chaining) and nothing about what the answer should look like. **The first run after this change
+is the first honest measurement of these three, and it may fail where the leaked version
+passed.** A failure there is a finding about the command, not a regression in the test.
+
+## Focused sub-test: carry-hop resolution (`carry-hop/`)
+
+The READ half of the carry rule, and the last part of v0.4.0's headline feature with no
+runtime coverage. `format-boundary` proves the `Carried unchanged: {N} items` line is
+**written**. Nothing proved it is **resolved** — and v0.4.2 rewrote exactly those reader rules.
+
+The sandbox is shaped so a wrong resolution is visible. `mig_01.md` is old-format on purpose
+(no `Format:` field, the old `## Deferred & open questions` heading, which is the only case that
+exists in the field) and holds four items. Three of them carry sentinels that appear **nowhere
+else**, so a briefing naming them proves the hop was taken. `mig_02.md` closes the fourth with a
+`- Done:` bullet, so a briefing that lists it as open work reproduces the v0.4.2 defect.
+
+```powershell
+pwsh -File .\tests\behavioral\carry-hop\setup.ps1      # build the sandbox
+# run the scenario agent, capture its final response to .sandbox/out/S6.txt
+pwsh -File .\tests\behavioral\carry-hop\verify.ps1     # 20 checks
+```
+
+**The verifier is self-tested without an LLM**, which no other sub-test here can claim:
+
+```powershell
+pwsh -File .\tests\behavioral\carry-hop\selftest.ps1
+```
+
+It feeds the verifier a known-good and a known-bad response from `fixtures/` and asserts the
+good one passes and the bad one fails on all five named defect checks. That is the same idea as
+`fixtures/carry-ok` and `fixtures/carry-bad` for the compat scanner: a verifier that has never
+rejected anything is not a verifier. The scenario itself still needs a real subagent run.
+
 ## Focused sub-test: deep-link depth recovery (`depth-recovery/`)
 
 Self-contained, separate from the S1/S2/S3 sandbox above — proves the `[READ-AT-RESUME]`

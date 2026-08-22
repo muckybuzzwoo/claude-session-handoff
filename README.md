@@ -169,7 +169,13 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (203 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (216 checks, exit 0/1, no dependencies). See `tests/README.md`.
+
+**Automated (mutation, no AI):** `pwsh -File .\tests\mutation-check.ps1` deletes one block of a
+command file at a time and re-runs the static suite, then reports which deletions broke no
+check at all. A block nothing fails on has no coverage. Currently 26 of 26 blocks are covered.
+This is the instrument that measures whether the static suite has teeth, instead of guessing
+from how its checks are written.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →
@@ -185,7 +191,17 @@ never read whole. Two more cover v0.4.0: `tests/behavioral/format-boundary/` (26
 writes the first new-format handoff on top of an old-format predecessor shaped like the
 hardest real file, and `tests/behavioral/old-format-resume/` (gate G1, 43 checks) resumes
 five *real* pre-v0.4.0 handoffs, one per structural deviation, and proves every one of them
-is byte-identical afterwards. See `tests/behavioral/README.md` to re-run.
+is byte-identical afterwards. And `tests/behavioral/carry-hop/` (20 checks) covers the READ
+half of the carry rule: three items reachable only through the `Carried unchanged:` pointer
+must show up in the briefing, and an item closed with a `- Done:` bullet must not come back as
+open work. Its verifier is self-tested without an LLM via `carry-hop/selftest.ps1`, which feeds
+it a known-good and a known-bad response and asserts it accepts one and rejects the other.
+See `tests/behavioral/README.md` to re-run.
+
+The scenario prompts were rewritten on 2026-08-22 to stop restating the rule under test. Three
+of them used to spell out the expected answer, so they measured whether the subagent followed
+the prompt rather than whether the command works. The first run after that change is the first
+honest measurement, and it may fail where the leaked version passed.
 
 **Automated (compatibility, no AI):** `pwsh -File .\tests\compat-old-chain.ps1 -Path <handoff-dir>`
 scans any existing chain and checks whether it still adds up — the format census, the open-item

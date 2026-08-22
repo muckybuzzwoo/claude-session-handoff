@@ -2,38 +2,36 @@
 
 Automated, NON-INTERACTIVE test. Placeholders `<<SANDBOX_PROJ>>` / `<<CMD_RESUME>>` are
 substituted by the orchestrator. A single handoff already exists at
-`<<SANDBOX_PROJ>>/.claude/session-handoffs/perf-tuning_01.md`. It links two files:
+`<<SANDBOX_PROJ>>/.claude/session-handoffs/perf-tuning_01.md`, and it links other files in
+the sandbox.
 
-- a large living doc `docs/perf-backlog.md`, tagged with a **section anchor**
-  `[READ-AT-RESUME: Current bottleneck]`, and
-- a plan-like `docs/roadmap.md`, linked **without any tag**.
+**Nothing in this file says how those links are tagged, which of them you should read, how
+much of each you should read, or what your summary has to contain.** That is deliberate. Those
+rules live in the command file and nowhere else, so this scenario measures what the command
+makes you do. An earlier version restated the Step 4 rules here and even said which file not
+to load, which measured prompt obedience instead of the command.
 
 ## Operating procedure
 Read and follow exactly: `<<CMD_RESUME>>` (the `/session-resume` command). Execute it for
-topic `perf-tuning`. Follow its Step 4 link-resolution rules precisely:
-
-- A `[READ-AT-RESUME: <heading>]` tag means: read **only** that heading's section (grep the
-  heading, then a targeted read down to the next heading) — **not** the whole file.
-- An **untagged** plan/roadmap-like link means: do **not** full-load it — peek its heading
-  skeleton and offer to load it; do not pull its body.
+topic `perf-tuning`.
 
 ## Test overrides
+These are facts about the harness, not answers to the test.
+
 - Project root / cwd = `<<SANDBOX_PROJ>>`; use absolute paths; `git -C "<<SANDBOX_PROJ>>"`.
-- Non-interactive: load topic `perf-tuning` directly (given as argument — no picker). No
-  human is here to answer the untagged-file load-offer, so do **not** load the roadmap —
-  state the offer instead.
-- This command is READ-ONLY. Do NOT modify, create, or delete any file.
-- Honor "do not auto-implement": stop after the summary + suggested next action.
+- Non-interactive: load topic `perf-tuning` directly (given as argument — no picker).
+- No human is available to answer anything. Where the command tells you to ask or offer a
+  choice, state the question or offer in your response and carry on without an answer.
+- Sandbox hygiene: never read or write anything outside `<<SANDBOX_PROJ>>`, except the
+  command file named above.
 - Windows host: never chain shell commands with `&&`, `||`, or `;` in one Bash call — use
   separate calls (a hook hard-blocks chains). No leading `cd`.
 
 ## Required final response
-Produce the Step-4 summary the command asks for, then report explicitly:
+Produce whatever the command tells you to produce. Add these facts at the end so the run can
+be checked mechanically, and nothing else:
 1. Which handoff file you loaded (absolute path + sequence).
-2. For **each** linked file: its absolute path, whether you read it, and — if you read only
-   part of it — which section(s) you read and which you deliberately did NOT read.
-3. The compact summary of where to pick up (the current bottleneck and its fix direction).
-4. The single suggested "→ Pick up here" next action.
+2. For **each** file the handoff links: its absolute path, and whether you read all of it,
+   part of it (say which part), or none of it.
 
-If you could not find or read something, say so explicitly — never invent content. Then
-stop without doing any work.
+If you could not find or read something, say so explicitly. Never invent content.

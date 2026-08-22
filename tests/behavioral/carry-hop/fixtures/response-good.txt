@@ -1,0 +1,34 @@
+Loaded the mig chain. Latest file is mig_02.md (seq 02), Format 2, dated 2026-08-21.
+
+Where it stands: the schema migration runs end to end on a copy of production, and the retry
+cap is now in place.
+What the last session changed: it set the retry cap and found a deploy-ordering problem.
+Next action: raise the connection-pool ceiling before the next dry-run. It is the oldest open
+item in the chain and the other items wait on a dry-run that does not saturate the pool.
+
+Open work — 4 items. I resolved the carry pointer one hop into mig_01.md and folded in its 3
+still-open items. mig_01.md uses the older "Deferred & open questions" heading and has no
+carry line of its own, so there was nowhere further to walk.
+
+- SENTINEL_CARRY_ALPHA — the connection-pool ceiling is still 20 and the migration saturates
+  it at about 14 parallel workers. Raise the ceiling or cap the workers, not both.
+- SENTINEL_CARRY_BETA — the dry-run has only ever run against the 2 percent sample, so the
+  timing numbers are not load-bearing.
+- SENTINEL_CARRY_GAMMA — the rollback script exists but has never been run, and it is written
+  against the pre-migration column names.
+- SENTINEL_NEW_EPSILON — the deploy step runs the migration before the feature flag flips, so
+  the new code path is briefly live against the old schema. New in mig_02.
+
+Closed, not open work: SENTINEL_CLOSED_DELTA is done. mig_02 records it as closed with a
+Done: bullet, the retry cap is set to 5 with exponential backoff.
+
+Count check: mig_01 holds 4 written-out items and no carry line, so prev_total = 4. mig_02
+carries 3, closed 1, wrote 1 new one out. 3 + 1 + 1 - 4 = 1 new, which is EPSILON. Nothing
+was lost.
+
+Staleness: the handoff is 1 day old and the branch matches. Nothing to flag.
+
+1. Handoff loaded: <SANDBOX>/.claude/session-handoffs/mig_02.md (seq 02)
+2. Other files read: <SANDBOX>/.claude/session-handoffs/mig_01.md (Open-work section only)
+
+Suggested next action: raise the connection-pool ceiling. Say the word and I will start there.

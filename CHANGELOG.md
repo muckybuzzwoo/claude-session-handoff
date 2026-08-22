@@ -3,6 +3,72 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.4] — 2026-08-22
+
+Test-quality release. **No command file changed**, so handoff and resume behave exactly as in
+v0.4.3. This closes the rest of `reviews/subagent-review-2026-08-21.md` §4: the parts about the
+tests measuring the wrong thing.
+
+### Added
+
+- **`tests/mutation-check.ps1`** — a standalone mutation harness. It deletes one block of a
+  command file at a time (each `## H2`, each `### Step N`, fences respected so the document
+  template stays one block), re-runs the whole static suite against the mutant, and reports
+  which deletions broke no check at all. A block nothing fails on has no coverage.
+  Review §4 estimated "roughly 154" weak checks by counting call sites. That is the wrong
+  instrument: what matters is not how a check is written but whether it fails when its subject
+  is gone. The harness answers that directly. First run: 26 blocks, 21 covered, **5 uncovered**
+  — both `## Workflow` headings, the handoff `## Arguments` list, the handoff error table, and
+  the resume `## Customizing` list could each be deleted whole with the suite staying green.
+  It exits 1 on any uncovered block not in its `$Allowed` list, so it works as a ratchet.
+- **`tests/behavioral/carry-hop/`** — runtime coverage for the READ half of the carry rule, the
+  last part of v0.4.0's headline feature with no behavioural test at all. `format-boundary`
+  proved the `Carried unchanged: {N} items` line is *written*. Nothing proved it is *resolved*,
+  and v0.4.2 rewrote precisely those reader rules. The hop target is old-format on purpose,
+  because that is the only case that exists in the field. Three items carry sentinels found
+  nowhere else, so naming them proves the hop was taken, and a fourth is closed with a `- Done:`
+  bullet, so listing it as open work reproduces the v0.4.2 defect.
+- **`tests/behavioral/carry-hop/selftest.ps1`** — proves that verifier has teeth without an LLM.
+  It feeds a known-good and a known-bad response from `fixtures/` and asserts the good one
+  passes and the bad one fails on all five named defect checks. Measured: good 20/20 exit 0, bad
+  15/20 exit 1, failing on exactly the two historical defects. Same idea as `fixtures/carry-ok`
+  and `fixtures/carry-bad` for the compat scanner. No other behavioural sub-test here can be
+  checked this way.
+- **`-SrcDir` / `-LiveDir` on `validate-commands.ps1`.** Both optional and defaulted, so the
+  plain invocation is unchanged. The suite had to be pointable at a mutated copy for the harness
+  above to exist, with `LiveDir` aimed at the same copy so parity is not the thing under test.
+
+### Changed
+
+- **Static suite 203 → 216.** New Section V covers the five blocks the harness found uncovered,
+  each check reading from the block it is about. Re-measured afterwards: 26 of 26 blocks covered,
+  `$Allowed` empty.
+- **The three scenario prompts that restated the rule under test were rewritten.**
+  `depth-recovery` told the agent to "explicitly list the rejected options", `load-discipline`
+  repeated the whole Step 4 link rule and said which file not to load, and `s3-resume` announced
+  that the file had been back-dated and then asked for a staleness assessment. Each of those is
+  the exact thing its own verifier greps for, so a green run measured prompt obedience rather
+  than the command. The prompts now carry harness facts only — paths, non-interactive, no human
+  available, the Windows chaining rule — and say nothing about the expected answer.
+  **The first run after this change is the first honest measurement of those three, and it may
+  fail where the leaked version passed.** A failure there is a finding about the command, not a
+  test regression. `format-boundary` was already clean and is untouched.
+
+### Not verified
+
+- The three de-leaked scenarios and the new `carry-hop` scenario have **not been executed by a
+  subagent**. That needs a Claude session to dispatch them, so it is a separate, deliberate run.
+  Everything that can be checked without an LLM was: the static suite, the mutation harness, and
+  the carry-hop verifier self-test.
+
+### Still open
+
+- **Stable item IDs.** An item carried unchanged twice cannot be closed, because the writer reads
+  only `{NN-1}` and the reader one hop, so its text is out of reach of both. The same missing
+  identity is why no check can confirm the "→ Pick up here" item also exists in Open work. One
+  design question, not two, and not costed out.
+- **Track B (v0.5.0)** and the **§12/V2/V3 A/B merge gate**, which was never recorded as run or
+  waived although v0.4.0 shipped.
 ## [0.4.3] — 2026-08-22
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.3).
