@@ -1,12 +1,10 @@
 ---
 description: Pick and load the right session-handoff to continue a topic in a fresh session. Run only on the user's explicit request (slash command or plain-text ask), never proactively. Falls back to a memory+git orientation briefing if none exist yet. Reads from .claude/session-handoffs/. Pairs with /session-handoff.
 argument-hint: "[topic-slug] [--all]"
-disable-model-invocation: true
 allowed-tools:
   - Bash
   - PowerShell
   - Read
-  - Grep
   - Glob
   - AskUserQuestion
 ---
@@ -15,12 +13,6 @@ allowed-tools:
 
 Re-orient to a previously saved session-handoff and continue the **same topic** in a
 fresh session. Pairs with `/session-handoff`. Read-only on the handoff store.
-
-**Invocation policy:** run this only when the user asks for it — the slash command or an
-explicit plain-text request ("load the handoff", "where were we on X") both count. Never run
-it proactively at the start of a session. The frontmatter backs this with
-`disable-model-invocation: true`, which stops Claude from loading the command on its own and
-leaves `/session-resume` working.
 
 ## Arguments
 

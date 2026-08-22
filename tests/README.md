@@ -105,10 +105,16 @@ and exits 1 when items left without a `Done:` line.
 because a session may add work, and nothing in the format declares how many of the written-out
 items were already open. So a file that carries 3 of a predecessor's 5, closes none, and writes
 3 new ones scores one new item and passes, although two vanished. Measured 2026-08-22 against a
-purpose-built fixture. No check closes this under the current format: a guard on a shrinking
-carry count fires on correct chains (it failed against this repo's own store, which is why it
-was removed), and gating it on carried + written does not fire on the masked case at all. The gap
-is structural. The costed fix is plan §15. Its own correctness is covered by the
+purpose-built fixture. No **pass/fail** check closes this under the current format: a guard on a
+shrinking carry count fires on correct chains (it failed against this repo's own store), and
+gating it on carried + written does not fire on the masked case at all. Both were measured.
+
+So the scanner measures the doubt instead of pretending to decide it. Per pair it prints how many
+of the predecessor's items are only accounted for if they are among the ones written out, and the
+summary totals it — which is why a clean run says "No DETECTABLE loss". `-Strict` turns that into
+a failure. Treat `-Strict` as a policy switch and not as better detection: it refuses to pass
+while any doubt exists, so it fails on correct chains too. The gap is structural and the costed
+fix is plan §15. Its own correctness is covered by the
 fixture chains in `fixtures/carry-ok` and `fixtures/carry-bad`, which the static suite runs.
 
 ## Focused sub-test: format boundary (`behavioral/format-boundary/`)

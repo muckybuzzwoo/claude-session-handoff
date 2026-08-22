@@ -3,6 +3,49 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.6] — 2026-08-22
+
+Reverts the command-file change from v0.4.3 and restores the loss guard that v0.4.3 removed.
+**The commands are byte-identical to v0.4.2 again.**
+
+### Reverted
+
+- **`disable-model-invocation: true`, the `Grep` entry, and the new Invocation-policy paragraph
+  are out of both command files.** The field is real and the official frontmatter table documents
+  it for this exact case, so this is not a correctness fix. It is a process fix: plan addition 20
+  and `CLAUDE.md` record the opposite decision, and a documented decision is not an oversight to
+  be corrected in passing. The deviation was noticed, written down, and then made anyway in the
+  same turn. Static suite 216 → 212, because the four checks that asserted those fields went with
+  it. The two frontmatter-block-parsed checks stayed — they assert the frontmatter exists and are
+  useful either way.
+
+### Fixed
+
+- **The masked-loss guard is back, as a measurement instead of a check.** v0.4.3 deleted the
+  shrinking-carry check and v0.4.5 admitted the stated reason was wrong, but documenting a hole is
+  not the same as guarding it, so the net effect was one protection fewer. The scanner now reports
+  **the size of the doubt** rather than pretending to decide it: per file pair it prints how many
+  of the predecessor's items are only accounted for if they sit among the ones written out, and
+  the summary totals it for the chain. A clean run ends with "No DETECTABLE loss" and a number
+  instead of "No invariant violated" and silence.
+  Why this shape and not the old one: a failing check on a shrinking carry fires on correct
+  chains, and the gated variant does not fire on the masked case at all. Both were measured. When
+  a check cannot decide a question, publishing the uncertainty beats picking a side or saying
+  nothing.
+- **New `-Strict` switch** on `compat-old-chain.ps1` turns that measurement into a failing check,
+  for anyone who wants a gate rather than a number. Its own help says to read it as a policy
+  switch and not as better detection, because it fails on correct chains too.
+
+### Verified
+
+- The purpose-built masking fixture (5 previous, 3 carried, 0 closed, 3 written — two items really
+  lost) now reports a blind spot of 2 and fails under `-Strict`. Before this release it passed
+  silently.
+- This repo's real chain: 5/5, exit 0, chain-wide blind spot of 7 reported.
+- Static 212/212, mutation harness 26/26 blocks, format-boundary 26/26, carry-hop selftest green,
+  deploy parity green.
+- Still not verified by anything here: runtime behaviour. No behavioural scenario has been run by
+  a subagent.
 ## [0.4.5] — 2026-08-22
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.5).

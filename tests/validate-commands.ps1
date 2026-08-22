@@ -118,9 +118,6 @@ foreach ($t in 'Bash','PowerShell','Read','Write','Edit','Glob','AskUserQuestion
     Check "allowed-tools lists $t" ($h.Contains("- $t"))
 }
 Check 'frontmatter block parsed'  ($hFm -ne '')
-# The never-unasked promise used to rest on prose alone. This is the documented hard stop:
-# it blocks Claude from auto-loading the command and still leaves /session-handoff working.
-Check 'disable-model-invocation: true' ($hFm -match '(?m)^disable-model-invocation:\s*true\s*$')
 
 # =============================================================================
 Section 'D. Handoff — step structure (1..9 contiguous, no gaps/dupes)'
@@ -308,14 +305,12 @@ Check 'and it names how many items were lost'   (($badOut | Out-String) -match '
 Section 'I. Resume — frontmatter + read-only posture'
 Check 'has description:'        ($r -match '(?m)^description:\s+\S')
 Check 'argument-hint = [topic-slug] [--all]' ($r.Contains('[topic-slug] [--all]'))
-foreach ($t in 'Bash','PowerShell','Read','Grep','Glob','AskUserQuestion') {
+foreach ($t in 'Bash','PowerShell','Read','Glob','AskUserQuestion') {
     Check "allowed-tools lists $t" ($r.Contains("- $t"))
 }
 Check 'read-only: does NOT grant Write' (-not $r.Contains('- Write'))
 Check 'read-only: does NOT grant Edit'  (-not $r.Contains('- Edit'))
 Check 'resume frontmatter block parsed' ($rFm -ne '')
-Check 'resume disable-model-invocation: true' ($rFm -match '(?m)^disable-model-invocation:\s*true\s*$')
-Check 'resume states an Invocation policy'    ($r.Contains('**Invocation policy:**'))
 
 # =============================================================================
 Section 'J. Resume — workflow structure + behaviour anchors'

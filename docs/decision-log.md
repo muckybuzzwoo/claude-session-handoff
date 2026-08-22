@@ -474,3 +474,33 @@ project file stays small. Entries below are in the original order.
   second, or the hash records a state the back-dating then changes and resume gets blamed for this
   script's edit. Gate G1 had no `scenario.md` at all, so the four-line output contract its verifier
   matches literally lived only in the verifier — now checked in.
+- **2026-08-22 (the command change was reverted, and the reason is process not content):**
+  v0.4.3 put `disable-model-invocation: true` into both command files, added `Grep` to
+  `/session-resume`'s `allowed-tools`, and gave that command the Invocation-policy paragraph it
+  never had. The field is real, the official frontmatter table documents it for exactly this case,
+  and the change was arguably an improvement. It was still wrong to make. Plan addition 20 and
+  `CLAUDE.md` record the opposite decision — the never-unasked rule lives in prose, not in the
+  file format — and a documented decision is not an oversight to be corrected in passing. The
+  deviation was noticed, written down, and then made anyway in the same turn, which is precisely
+  what the rule against flag-and-change forbids. These are the files Marcus uses daily. Reverted
+  to the v0.4.2 state with `git checkout v0.4.2 -- commands/`, redeployed, and the four static
+  checks that depended on it removed (static 216 to 212). The two frontmatter-block-parsed checks
+  stayed, because they assert the frontmatter exists and are useful either way. `Grep` went back
+  too, although nothing about it contradicted any decision — reverting the whole diff was what was
+  agreed, and cherry-picking one line out of it would have been the same mistake again in
+  miniature.
+- **2026-08-22 (the deleted guard came back as a measurement, not as a check):** removing the
+  shrinking-carry check left the masked-loss case unguarded, and documenting the hole was not the
+  same as restoring the protection. Three shapes were on the table and the third is the one that
+  works. A failing check on a shrinking carry fires on correct chains. A gated version does not
+  fire on the masked case at all. What the scanner can honestly do is **report the size of the
+  doubt**: per file pair it now prints how many of the predecessor's items are only accounted for
+  if they are among the ones written out here, and the summary totals it across the chain. A clean
+  run therefore ends with "No DETECTABLE loss" and a number, instead of "No invariant violated"
+  and silence. `-Strict` turns the measurement into a failure for anyone who wants a gate, and its
+  own help says to read it as a policy switch rather than better detection, because it fails on
+  correct chains too. Verified both ways: the purpose-built masking fixture now reports a blind
+  spot of 2 and fails under `-Strict`, and this repo's real chain stays green at 5/5 while
+  reporting a chain-wide blind spot of 7. The lesson that produced this shape: when a check cannot
+  decide a question, the useful move is to publish the uncertainty, not to pick a side or say
+  nothing.

@@ -68,7 +68,11 @@ asserts on the output. Suite contents and how to re-run: `tests/README.md` +
 
 ## Invocation policy
 
-`disable-model-invocation: true` in each command's frontmatter is the hard stop: it blocks
-Claude from auto-loading the command and leaves `/session-handoff` and `/session-resume`
-working. The `description` and "Invocation policy" prose stay next to it, because the command
-files must be self-contained for anyone who gets them without this repo.
+The never-unasked rule lives in each command's `description` and its "Invocation policy" section,
+not in the file format — plan addition 20. The command files must stay self-contained for anyone
+who gets them without this repo.
+
+`disable-model-invocation: true` would be a harder stop and the official frontmatter table
+documents it for exactly this case. It was added on 2026-08-22 and **reverted the same day**: it
+was never approved, and addition 20 is a decision, not an oversight. Do not re-add it without
+asking — the reasoning both ways is in `docs/decision-log.md`.

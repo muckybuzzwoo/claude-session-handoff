@@ -30,11 +30,18 @@
       already open in the predecessor. So 5 previous / 3 carried / 0 closed / 3 written
       scores implied_new = 1 and PASSES, although 2 items vanished. Measured 2026-08-22
       against a purpose-built fixture. Exit 0 means "no DETECTABLE loss".
-    * Under the current format no check closes this. A guard on a shrinking carry count
-      fires on correct chains, because a session may legitimately rewrite carried items —
-      it failed against this repo's own store, which is why it was removed on 2026-08-22.
-      Gating it on carried + written < previous does not fire on the masked case at all.
-      Both variants were measured. The gap is structural, and the fix is a format change:
+    * No pass/fail check can close this under the current format. A guard on a shrinking
+      carry count fires on correct chains, because a session may legitimately rewrite
+      carried items — it failed against this repo's own store. Gating it on
+      carried + written < previous does not fire on the masked case at all. Both variants
+      were measured.
+      So instead of deciding, the scanner MEASURES the doubt: per pair it prints how many of
+      the predecessor's items are only accounted for if they sit among the ones written out
+      here, and the summary totals it for the chain. That is the number a reader needs, and
+      it is why the green line says "No DETECTABLE loss" rather than "nothing was lost".
+    * -Strict turns that measurement into a failing check. Read it as a policy switch, not
+      as better detection: it refuses to pass while any doubt exists, and it will fail on
+      correct chains too. The gap itself is structural, and the fix is a format change —
       see the carry-slug design in plan/readability-preflight-plan.md.
 
   An all-old-format chain has nothing to check, so it reports the baseline and exits 0.
@@ -59,7 +66,12 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$Path,
 
-    [switch]$Detail
+    [switch]$Detail,
+
+    # Turn the blind-spot measurement below into a failing check. Off by default, because the
+    # format genuinely cannot prove a rewrite from a new item and a chain can be correct with a
+    # large blind spot. Use it when you want a gate rather than a number.
+    [switch]$Strict
 )
 
 $ErrorActionPreference = 'Stop'
@@ -303,6 +315,7 @@ Section 'V4 count invariant (new-format files only)'
 # against _02 of another. That produced a meaningless (and silently passing) check until
 # 2026-08-21, when running this against a multi-topic store exposed it.
 $checked = 0
+$script:blindTotal = 0
 $pairs = @()
 foreach ($g in ($rows | Group-Object Slug)) {
     $chain = @($g.Group | Sort-Object Seq)
@@ -344,6 +357,24 @@ foreach ($p in $pairs) {
     if ($impliedNew -lt 0) {
         Write-Host "         $([Math]::Abs($impliedNew)) item(s) left _$($prev.Seq) without a Done: line." -ForegroundColor Red
     }
+
+    # --- The blind spot, measured per pair -----------------------------------------------
+    # The law above is an inequality, so new work can hide a lost item: 5 previous, 3 carried,
+    # 0 closed, 3 written scores +1 and passes although 2 vanished. This does not try to
+    # decide that case, because the format cannot — nothing declares how many of the written
+    # items are rewrites of previous ones. It reports the SIZE of the doubt instead, which is
+    # the number a reader actually needs and which no pass/fail check can express.
+    $unaccounted = $prevTotal - $cur.CarryN - $cur.Done
+    if ($unaccounted -gt 0) {
+        $script:blindTotal += $unaccounted
+        $msg = "         blind spot: $unaccounted of _$($prev.Seq)'s items are only accounted for if they are among the $($cur.Items) written out here. If they are not, they are lost and the law above cannot tell."
+        if ($Strict) {
+            Check "_$($cur.Seq): no blind spot (strict)" $false
+            Write-Host $msg -ForegroundColor Red
+        } else {
+            Write-Host $msg -ForegroundColor Yellow
+        }
+    }
 }
 
 if ($checked -eq 0) {
@@ -364,5 +395,13 @@ if ($script:fail -gt 0) {
 }
 
 Write-Host ''
-Write-Host "No invariant violated." -ForegroundColor Green
+if ($script:blindTotal -gt 0) {
+    Write-Host "Blind spot across this chain: up to $script:blindTotal item(s) could have been lost" -ForegroundColor Yellow
+    Write-Host "without this scanner being able to tell, because a rewrite and a new item look the" -ForegroundColor Yellow
+    Write-Host "same in this format. Re-run with -Strict to treat that as a failure." -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host "No DETECTABLE loss." -ForegroundColor Green
+} else {
+    Write-Host "No invariant violated, and no blind spot in this chain." -ForegroundColor Green
+}
 exit 0

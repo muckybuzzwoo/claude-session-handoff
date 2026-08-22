@@ -207,8 +207,10 @@ honest measurement, and it may fail where the leaked version passed.
 scans any existing chain and checks whether it still adds up — the format census, the open-item
 count, how many items hide inside collapsed or wrapped lines, and the carry arithmetic. Run it
 before and after a format change so "nothing was lost" is a measurement. One limit worth knowing:
-exit 0 means *no detectable* loss. New work can mask a lost item, the gap is structural rather
-than a bug, and `tests/README.md` plus plan §15 explain it and cost the fix.
+exit 0 means *no detectable* loss, because new work can mask a lost item. The scanner does not
+hide that — it prints how big the doubt is, per file pair and for the whole chain, and `-Strict`
+refuses to pass while any doubt exists. The gap is structural rather than a bug. `tests/README.md`
+plus plan §15 explain it and cost the fix.
 
 **Manual spot-check (behavioural):**
 
