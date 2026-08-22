@@ -159,6 +159,11 @@ Made after the original 12 grilled decisions:
     descriptions + an "Invocation policy" section in the handoff body; README, CLAUDE.md
     and lifecycle.html corrected. `disable-model-invocation: true` was considered and
     rejected — it would also kill the wanted plain-text invocation.
+    **Nachtrag 2026-08-22:** the field was set anyway in v0.4.3 and reverted the same day in
+    v0.4.6. This note was not unclear, it was overridden. The rejection reason above still
+    holds and is the substantive point, not the process one: with the field set, "save a
+    handoff" typed as prose no longer triggers the command, only `/session-handoff` does.
+    Do not set it again without explicit approval.
 21. **2026-07-03 review fixes:** (a) staleness trigger 3 measured "dirty now", not
     "moved since" — a systematic false positive because handoffs typically capture
     mid-work state; the handoff header now records a `Tree:` porcelain snapshot and
