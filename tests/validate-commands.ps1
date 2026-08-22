@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
 .SYNOPSIS
   Static validation harness for the session-handoff / session-resume slash-commands.
@@ -369,7 +369,7 @@ Check 'Resume description: never proactively'        ($r.Contains('never proacti
 Check 'Handoff template header has Tree: field'      ($h.Contains('**Tree:**'))
 Check 'Handoff Step 1 keeps porcelain for Tree:'     ($h.Contains('fills') -and $h.Contains('`Tree:` header field'))
 Check 'Resume staleness compares the Tree: snapshot' ($r.Contains('`Tree:` snapshot'))
-Check 'Resume skips tree check on older handoffs'    ($r.Contains('older') -and $r.Contains('skip this check'))
+Check 'Resume skips tree check on older handoffs'    ($r -match 'No `Tree:` field in the header\s+\(older\s+handoff\)\s*→\s*skip this check')
 # Compaction-uncertainty cross-check in Step 1.
 Check 'Handoff Step 1 has compaction cross-check'    ($h.Contains('compacted'))
 # Archived-chain fork guard (handoff Step 2 + resume picker marking).

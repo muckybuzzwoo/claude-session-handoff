@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Deterministic verifier for the carry-hop sub-test. Run AFTER the scenario agent has been
   executed and its final response captured to .sandbox/out/S6.txt. Exit 0 = pass, 1 = fail.

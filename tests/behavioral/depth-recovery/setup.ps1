@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Focused behavioral sub-test for the deep-link depth-recovery fix
   (the [READ-AT-RESUME] contract). Self-contained: builds its own tiny isolated

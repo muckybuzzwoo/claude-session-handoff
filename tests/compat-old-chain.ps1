@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
 .SYNOPSIS
   Compatibility scanner for an existing session-handoff chain.
@@ -18,7 +18,24 @@
       v0.4.0 count invariant has nothing to start from
 
   What it CHECKS (and can fail on), for new-format files only:
-    * the V4 count invariant: N_carry(NN) = full_items(NN-1) + N_carry(NN-1) - closed_in(NN)
+    * the conservation law: carried + closed + written_out - previous_total >= 0. A negative
+      result means that many items left the chain without a 'Done:' line.
+      (The equality formula this header used to quote, N_carry(NN) = full_items(NN-1) +
+      N_carry(NN-1) - closed_in(NN), was withdrawn in v0.4.1: it fires on every session that
+      adds work. The inequality above is what the code has done since.)
+
+  What it CANNOT check — read this before treating exit 0 as "nothing was lost":
+    * Loss that new work masks. The law has to be an inequality, because a session may add
+      items, and nothing in the format declares how many of the written-out items were
+      already open in the predecessor. So 5 previous / 3 carried / 0 closed / 3 written
+      scores implied_new = 1 and PASSES, although 2 items vanished. Measured 2026-08-22
+      against a purpose-built fixture. Exit 0 means "no DETECTABLE loss".
+    * Under the current format no check closes this. A guard on a shrinking carry count
+      fires on correct chains, because a session may legitimately rewrite carried items —
+      it failed against this repo's own store, which is why it was removed on 2026-08-22.
+      Gating it on carried + written < previous does not fire on the masked case at all.
+      Both variants were measured. The gap is structural, and the fix is a format change:
+      see the carry-slug design in plan/readability-preflight-plan.md.
 
   An all-old-format chain has nothing to check, so it reports the baseline and exits 0.
 

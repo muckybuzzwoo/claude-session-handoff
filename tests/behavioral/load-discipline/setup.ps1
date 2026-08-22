@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Focused behavioral sub-test for the 2026-07-29 token-optimization rebuild
   (addendum 8d load paths). Self-contained: builds its own tiny isolated sandbox

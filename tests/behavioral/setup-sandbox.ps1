@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Creates a fresh, isolated sandbox project for the behavioral test run.
   Everything lives under tests/behavioral/.sandbox/ (gitignored) so the real

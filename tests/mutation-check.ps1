@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
 .SYNOPSIS
   Mutation harness for the static suite. Answers one question: which parts of a command

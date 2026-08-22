@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Deterministic verifier for the load-discipline sub-test. Run AFTER the orchestrator has
   executed the scenario agent and captured its final response to .sandbox/out/S5.txt.

@@ -3,6 +3,85 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.5] — 2026-08-22
+
+**No command file changed.** This release corrects a claim shipped in v0.4.3, makes the
+behavioural suite runnable from a clean checkout, and costs out the one design decision that
+four open items turned out to share.
+
+### Corrected
+
+- **v0.4.3 said the conservation law "already catches real loss". It does not.** That was the
+  stated reason for deleting the shrinking-carry check, and the reason was wrong. The law is an
+  inequality, because a session may add work, so new items can mask lost ones: 5 previous, 3
+  carried, 0 closed, 3 written scores one new item and PASSES while two have vanished. Measured
+  against a purpose-built fixture — exit 0, "No invariant violated".
+  Three things follow, all measured rather than argued. The deleted check **would** have caught
+  that case, so removing it removed the only guard for it. The deletion was still correct,
+  because the check fails on correct chains and did so against this repo's own store. And the
+  gated variant rejected the same morning does not fire on the masked case at all, so rejecting
+  it was right for a reason nobody had stated.
+  **No check closes this gap under the current format**, because nothing declares how many of the
+  written-out items were already open. `compat-old-chain.ps1`, `tests/README.md` and `README.md`
+  now say that exit 0 means *no detectable* loss. The fix is a format change, costed below.
+- **The scanner header still documented the equality formula withdrawn in v0.4.1.** It now
+  documents the inequality the code has actually used since, and says why the equality was
+  dropped.
+
+### Added
+
+- **plan §15 — item identity, costed and not decided.** Four backlog items were one problem: an
+  open item has no identity, only text, in one file. That is why an item carried unchanged twice
+  can never be closed, why no check can confirm the "→ Pick up here" item exists in Open work,
+  why the guard above is blindable, and why the arithmetic paragraph has no template slot. The
+  section works out slugs on the carry line, prices them (about 110 tokens per handoff at 26
+  items, and — the part that actually decides it — a third format path in reader and scanner),
+  states what they do *not* fix, and writes up the cheap alternative honestly: declaring how many
+  written-out items were already open fixes two of the four symptoms with no identity scheme at
+  all. Written up rather than built, because it is a format decision on top of a track that is
+  still settling.
+- **`tests/behavioral/backdate-and-snapshot.ps1`** — the `backdate+snapshot` step the README has
+  named in its run order all along while no script implemented it. Two things were therefore
+  impossible from a clean checkout: nothing made the chain stale for S3 to notice, and
+  `verify-artifacts.ps1` read a `pre-s3-hashes.json` that nothing wrote, so the read-only
+  assertion could only take its else branch and fail. The leaked S3 prompt had been covering for
+  the staleness half by announcing the back-dating, which is exactly what v0.4.4 removed, so the
+  step had to become real. Order is load-bearing: back-date first, hash second, or the hash
+  records a state the back-dating then changes and resume gets blamed for this script's edit.
+- **`tests/behavioral/old-format-resume/scenario.md`** — gate G1 had no scenario at all, so it
+  could not be re-run from the repo, and the four-line output contract its verifier matches
+  literally (`LOADED:`, `NEXT ACTION:`, `KEY FILES:`, `SOURCE-SHAPE:`) lived only inside
+  `verify.ps1`.
+
+### Fixed
+
+- **`#requires -Version 5` was a false promise in 16 scripts.** They do not run on PowerShell 5.
+  Verified by running the static suite under 5.1: the UTF-8 em-dash in a section title decodes as
+  ANSI and the parser dies on "Unerwartetes Token", which tells the reader nothing. All 16 now
+  declare 7, and 5.1 refuses with "requires Windows PowerShell 7.0" before executing a line.
+- **One more weak check scoped.** `Resume skips tree check on older handoffs` asserted the word
+  `older` (4 occurrences) plus an unanchored `skip this check`. Replace the rule with unrelated
+  prose containing both and the old check passed. It now matches the sentence, wrap-tolerantly.
+
+### Recorded, still open, and needing a decision
+
+- **The §12/V2/V3 A/B merge gate was never run and never waived**, although v0.4.0 through v0.4.4
+  shipped. `tests/ab/measure-run.ps1` does not exist and no record appears anywhere. Now stated at
+  §12.6 rather than left implicit, with the thing that changes the decision: v0.3.0 is five
+  releases back, so a comparison now measures the whole v0.4.x line, not Track A.
+- **Track B's start bar.** §7 said "long enough that reverting A is implausible" and left the bar
+  unset. A concrete bar is now proposed there, to be accepted or rejected: a real handoff and
+  resume in another project, on a chain crossing the format boundary, with no command patch for
+  seven days. Track A was patched four times within hours of release, so the observed settling
+  time is hours and one quiet day proves nothing.
+- **The archive-split baseline** is Track B work item 0 and stays unbuilt on purpose. Building it
+  now would start Track B, which the revert-order rule says not to do before the bar above is met.
+
+### Not verified
+
+- No behavioural scenario has been executed by a subagent. Everything checkable without an LLM
+  was: static 216/216, mutation 26/26 blocks, format-boundary 26/26, chain scanner 4/4, carry-hop
+  selftest green, and `backdate-and-snapshot.ps1` exercised against a hand-built store.
 ## [0.4.4] — 2026-08-22
 
 [GitHub release](https://github.com/muckybuzzwoo/claude-session-handoff/releases/tag/v0.4.4).

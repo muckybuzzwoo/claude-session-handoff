@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Focused behavioral sub-test for the v0.4.0 FORMAT BOUNDARY: the first new-format handoff
   written on top of an old-format chain. Self-contained — builds its own sandbox under

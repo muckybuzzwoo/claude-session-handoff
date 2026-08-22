@@ -99,7 +99,16 @@ pwsh -File .\tests\compat-old-chain.ps1 -Path .\.claude\session-handoffs -Detail
 It reports the format census (old heading / new heading / none), the open-item count under the
 v0.4.0 grammar, how many items hide inside collapsed or wrapped bullets, and which files carry
 a pointer with no number. Where new-format files exist it also **checks** the carry invariant
-and exits 1 when items left without a `Done:` line. Its own correctness is covered by the
+and exits 1 when items left without a `Done:` line.
+
+**Exit 0 means "no detectable loss", not "nothing was lost."** The invariant is an inequality,
+because a session may add work, and nothing in the format declares how many of the written-out
+items were already open. So a file that carries 3 of a predecessor's 5, closes none, and writes
+3 new ones scores one new item and passes, although two vanished. Measured 2026-08-22 against a
+purpose-built fixture. No check closes this under the current format: a guard on a shrinking
+carry count fires on correct chains (it failed against this repo's own store, which is why it
+was removed), and gating it on carried + written does not fire on the masked case at all. The gap
+is structural. The costed fix is plan §15. Its own correctness is covered by the
 fixture chains in `fixtures/carry-ok` and `fixtures/carry-bad`, which the static suite runs.
 
 ## Focused sub-test: format boundary (`behavioral/format-boundary/`)
@@ -115,6 +124,11 @@ but it does not hash it — byte-identity is asserted in `old-format-resume/` an
 `depth-recovery/`.
 
 ## Compatibility gate G1 (`behavioral/old-format-resume/`)
+
+Since 2026-08-22 this gate has a checked-in `scenario.md`, so it can be re-run from the repo. It
+had none, and the four-line output contract its verifier matches literally (`LOADED:`,
+`NEXT ACTION:`, `KEY FILES:`, `SOURCE-SHAPE:`) existed only inside `verify.ps1`. The scenario is
+run once per topic that `setup.ps1` lists on its `TOPICS=` line.
 
 Five **real** pre-v0.4.0 handoffs, one per structural deviation, resumed for real. Copies the
 files from the local source chain at run time into a gitignored sandbox and **skips loudly**

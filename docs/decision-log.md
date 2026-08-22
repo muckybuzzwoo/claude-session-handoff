@@ -431,3 +431,46 @@ project file stays small. Entries below are in the original order.
   already prove the hop was resolved, so a wording check adds a false-failure mode and no
   coverage. That is the third time in two days the same shape has come up, after the
   shrinking-carry guard and the gated version of it that was rejected.
+- **2026-08-22 (CORRECTION to this morning's entry — the conservation law does not catch all loss):**
+  the entry above says the shrinking-carry check was deleted because "the conservation law above it
+  already catches real loss". That is wrong, and the wrong half matters. Review §4 had already
+  recorded that the law is blindable by new work, and it reproduces: 5 previous, 3 carried, 0
+  closed, 3 written scores `implied_new = 1` and PASSES while 2 items have vanished. Measured
+  against a purpose-built fixture, exit 0, "No invariant violated". Three findings follow.
+  **First**, the check that was deleted WOULD have caught that case, so the deletion removed the
+  only guard for it. **Second**, the deletion was still right: the check fails on correct chains,
+  proven against this repo's own store, and a guard that cries wolf on a good chain gets ignored.
+  **Third**, the gated variant that was rejected the same morning does not fire on the masked case
+  at all, so rejecting it was right for a reason that was not stated at the time. All three
+  variants were evaluated side by side rather than argued about. Under the current format no check
+  closes this gap, because nothing declares how many of the written-out items were already open.
+  The scanner header now says exit 0 means "no DETECTABLE loss", and the fix is a format change,
+  costed in plan §15. Lesson for the file: "a stronger check already covers this" is a claim about
+  behaviour and needs the same evidence as any other, especially when it is the justification for
+  deleting something.
+- **2026-08-22 (four symptoms, one cause, and a design that is not mine to approve):** the
+  carried-twice item, the missing Pick-up-here check, the blindable guard above, and the
+  arithmetic paragraph with no template slot were four entries in the backlog. They are one
+  problem: an open item has no identity, only text, in one file. Plan §15 works the fix out and
+  prices it, including the part that decides it — slugs make this format 3, so reader and scanner
+  carry a third path in code that already carries two. The cheap alternative is written up
+  honestly next to it: declaring how many written-out items were already open fixes the guard and
+  the template slot with no identity scheme at all, and fixes neither of the other two. Written up
+  rather than implemented, because it is a format decision on top of a track that is still
+  settling.
+- **2026-08-22 (`#requires -Version 5` was a false promise in 16 files):** the scripts declare
+  PowerShell 5 and do not run on it. Verified by running the static suite under 5.1: the UTF-8
+  em-dash in a section title decodes as ANSI and the parser dies on "Unerwartetes Token", which is
+  a useless error for whoever hits it. All 16 now declare 7, and 5.1 answers with "requires
+  Windows PowerShell 7.0" before executing a line. This is the second time an encoding assumption
+  in this repo produced a confusing failure rather than a clear one.
+- **2026-08-22 (two steps the README named and no script implemented):** `tests/behavioral/README.md`
+  listed "backdate+snapshot" in the run order, and `verify-artifacts.ps1` read a
+  `pre-s3-hashes.json` that nothing ever wrote — so the read-only assertion could only take its
+  else branch and fail, and the staleness the S3 scenario asserts was never actually created. The
+  leaked scenario prompt had been covering for the second half by announcing the back-dating,
+  which is exactly what de-leaking removed, so the step had to become real.
+  `backdate-and-snapshot.ps1` does both, and the order is load-bearing: back-date first, hash
+  second, or the hash records a state the back-dating then changes and resume gets blamed for this
+  script's edit. Gate G1 had no `scenario.md` at all, so the four-line output contract its verifier
+  matches literally lived only in the verifier — now checked in.

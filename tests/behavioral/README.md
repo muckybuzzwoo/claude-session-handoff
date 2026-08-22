@@ -32,6 +32,19 @@ requires a Claude session. To re-run, ask Claude:
 > "Run the behavioral test suite in tests/behavioral (setup → S1 → S2 → backdate+snapshot →
 > S3 → verify)."
 
+The `backdate+snapshot` step is `backdate-and-snapshot.ps1`, added 2026-08-22. Before that it was
+named here and implemented nowhere, so two things were impossible from a clean checkout: nothing
+made the chain stale for S3 to notice, and `verify-artifacts.ps1` read a `pre-s3-hashes.json` that
+nothing wrote, so the read-only assertion could only fail. Run it between S2 and S3:
+
+```powershell
+pwsh -File .\tests\behavioral\backdate-and-snapshot.ps1
+```
+
+It back-dates the newest handoff by 29 days and then hashes every handoff file. That order
+matters — hashing first would record a state the back-dating changes, and resume would be blamed
+for this script's own edit.
+
 The scenario inputs are committed (`scenarios/s{1,2,3}-*.md`, with `<<SANDBOX_PROJ>>` /
 `<<CMD_*>>` placeholders the orchestrator substitutes), so the run is reproducible. The
 `verify-artifacts.ps1` step IS standalone — `pwsh -File .\verify-artifacts.ps1` re-checks

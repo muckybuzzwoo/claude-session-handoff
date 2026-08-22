@@ -344,6 +344,26 @@ discovering it under pressure. **Consequence for sequencing:** do not start Trac
 A has run in real use long enough that reverting it is no longer plausible. Nothing in this plan
 sets that bar, and it should not be invented here — Marcus calls it at the v0.4.0 release.
 
+**Status 2026-08-22, and a bar to accept or reject.** The bar was still not set, and "long
+enough" has been carrying the decision for a day in which Track A was patched four times. So
+here is a concrete proposal, offered to be rejected rather than to be assumed:
+
+> Track A counts as settled when a real handoff and a real resume have both run, in a project
+> that is not this one, on a chain that crosses the format boundary, with no patch to either
+> command in the seven days that follow.
+
+Why those three parts. **A different project**, because this repo is the one the rules were
+written against and it cannot surprise them. **A chain crossing the boundary**, because that is
+the only case where the carried-count arithmetic is established rather than inherited, and it is
+where every defect of 2026-08-21 actually lived. **Seven quiet days**, because four patches
+landed within hours of the v0.4.0 release, so the observed settling time of this track is
+measured in hours and one day of quiet proves nothing.
+
+The first part is already the oldest open item in the chain ("use v0.4.2 in real work on an
+old-format chain before anything else is built"), so accepting this bar folds two open items
+into one condition. Rejecting it is equally fine — but then the bar needs a number, because
+"long enough" has already been deferred twice.
+
 ### Per track, before the release
 
 Deploy, run the full static suite, pass the compatibility gates in §9, update `CHANGELOG.md`
@@ -769,6 +789,17 @@ not worse than the baseline by more than the threshold set in **V3 (§13)**, and
 handoff run was needed in a session that had an outstanding obligation (Method B). Otherwise
 iterate on the branch.
 
+> **STATUS 2026-08-22 — this gate was never run, and never waived.** v0.4.0 shipped on
+> 2026-08-21, followed by v0.4.1, v0.4.2, v0.4.3 and v0.4.4. The deliverable this criterion
+> depends on, `tests/ab/measure-run.ps1` (§12.2), does not exist, and no record of a run or a
+> waiver appears in `CHANGELOG.md`, `docs/decision-log.md`, `README.md` or `CLAUDE.md`.
+> Recorded here rather than left implicit, because a merge condition that the shipped release
+> silently did not meet is the worst of the three available states. **Open decision, and not
+> one that can be taken by whoever reads this next:** either waive it in the decision log with
+> a reason, or run one pair per §12.4 Method A. Note what running it now would and would not
+> tell you: v0.3.0 is five releases back, so a comparison measures the whole v0.4.x line
+> rather than Track A alone, which was the thing the criterion was written to judge.
+
 ## 13. Open validation points
 
 Four decisions in this plan were made without enough evidence to be confident. Each must be
@@ -1106,3 +1137,111 @@ honest number is 3.
 in 21 of 45 files, down from 93 of 130, and the dev-server line in 10 of 45, down from 90 of
 130. The boilerplate is thinning on its own, which lowers the value of an omit-when-empty rule.
 Left deferred.
+
+## 15. Item identity — the costed design (added 2026-08-22, NOT decided)
+
+Four items in the open backlog looked like four problems. They are one, and this section costs
+out the fix so that what remains is a choice rather than a piece of work.
+
+### 15.1 The four symptoms
+
+1. **An item carried unchanged twice can never be closed.** The writer may read only `{NN-1}`
+   and the reader resolves only one hop, so once an item's text sits two files back, this file
+   cannot write `- Done: {item}` because it does not have the text, and it may not drop the item
+   either. Review §4.
+2. **Nothing can check that the "→ Pick up here" item also exists in Open work.** The rule is in
+   the command and was broken by hand anyway, in `_03`, hours after it shipped. A static check on
+   the command text only asserts prose. The one deterministic runtime check available, "Pick up
+   here is non-empty and Open work has no items at all", would not have caught `_03`, which had
+   19 items and simply none that matched.
+3. **The conservation law is blindable by new work.** Measured 2026-08-22: 5 previous, 3 carried,
+   0 closed, 3 written scores `implied_new = 1` and PASSES while 2 items have vanished. The guard
+   that used to catch this fired on correct chains and was removed the same day, and the gated
+   variant does not fire on the masked case at all. Both were measured.
+4. **The arithmetic paragraph has no slot in the template.** Every format-2 file writes one, the
+   template defines none, and `session-handoff.md` says prose under the list is not an item. So
+   the one place that states how the count was reached is unparseable by design.
+
+**The single cause: an open item has no identity.** It is known only by its text, in one file.
+Every symptom above follows from that.
+
+### 15.2 The design — slugs on the carry line
+
+A slug is minted once, when an item is first written out, and never changed.
+
+```markdown
+## Open work
+- Open: [pool-ceiling] the connection-pool ceiling is still 20 and the migration saturates it.
+- Done: [retry-cap] set to 5 with exponential backoff.
+- Carried unchanged: 3 items — see mig_01.md [dry-run-scale, rollback-untested, index-bloat]
+```
+
+Four rules:
+
+1. Every written-out item carries its slug in brackets at the head of the bullet.
+2. The carry line **enumerates** the slugs it carries, so a file's complete open set is
+   computable from that file alone: written-out slugs plus carried slugs.
+3. Closing cites the slug, never the text. That is symptom 1 fixed, because a slug stays
+   reachable when the text does not.
+4. `→ Pick up here` names the slug it points at. That is symptom 2 fixed, and it becomes a
+   one-line deterministic check: the named slug must be in this file's open set.
+
+The scanner then stops counting and starts comparing sets:
+
+```
+prev_open = written_out(NN-1) union carried(NN-1)
+this_open = written_out(NN)   union carried(NN)
+lost      = prev_open - this_open - closed(NN)      # must be EMPTY
+new       = this_open - prev_open
+```
+
+`lost` must be empty, and when it is not, the scanner can **name** the items instead of
+reporting a shortfall of two. That is symptom 3 fixed, and it cannot be masked by new work,
+because new items are not in `prev_open`. Symptom 4 dissolves: the slug list *is* the countable
+form, so the arithmetic paragraph becomes optional prose rather than the only record.
+
+### 15.3 What it costs
+
+- **Writer** (`session-handoff.md`): mint a slug per new item, carry the list forward, cite
+  slugs when closing, name one in Pick-up-here. One new Hard rule plus template edits. The carry
+  line grows by roughly 15 to 20 characters per carried item, so about 110 tokens at 26 items,
+  once per handoff. That is the cost the pointer exists to avoid paying in full.
+- **Reader** (`session-resume.md`): resolve the hop by slug instead of by section text, and
+  report lost slugs by name. Mostly a simplification of the counted-carry rules v0.4.2 wrote.
+- **Scanner**: set arithmetic instead of count arithmetic. Similar size, strictly more useful
+  output. Needs a new `fixtures/carry-lost` beside `carry-ok` and `carry-bad`.
+- **Tests**: the count-based checks in Sections R and U change shape, as does the boundary
+  verifier.
+- **The real cost is that this is format 3.** Format 1 and format 2 files are never migrated, so
+  reader and scanner keep a third path in code that already carries two. That is the part to
+  weigh, not the token cost.
+
+**Effort, in Claude-Code terms:** one focused session for the format, both commands and the
+scanner. A second for tests and fixtures. **Sequencing:** it is a format change on top of a
+Track A that is still settling, so the revert-order rule in §7 applies. Do not stack it on top
+of Track B.
+
+### 15.4 What it does NOT fix
+
+A slug says *which* item, not *what it said*. An item carried five files back still needs that
+file opened to read its text. What a slug buys is the ability to **close** an item without its
+text, which is the actual defect. Do not expect it to remove the one-hop read limit.
+
+### 15.5 Alternatives, and why they lose
+
+- **(a) Numbers only.** Declare "of the items written out above, M were already open in the
+  predecessor". That makes the law exact and kills the masking hole, with no identity scheme and
+  no new format path, so it is much cheaper. But it fixes symptoms 3 and 4 only: with no way to
+  *name* a single item, carried-twice closing and the Pick-up-here check stay impossible. Two of
+  four.
+- **(b) Full stable IDs in a separate index.** Exact and durable, but it adds a second artifact
+  that has to stay in sync with the prose, which is the thing this design has avoided since
+  Decision 1.
+- **(c) Do nothing.** Defensible, and it is the current state. The price is that the scanner's
+  exit 0 has to keep meaning "no detectable loss", which is now written into its header, and that
+  symptoms 1 and 2 stay open permanently.
+
+### 15.6 The open decision
+
+Not mine to take. **(a) cheap and partial, the slug design full but with a third format path, or
+(c) do nothing and keep the documented limitation.** Everything needed to choose is above.

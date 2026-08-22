@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Asserts on the artifact the format-boundary agent produced. Deterministic — run it as
   often as you like after a run.

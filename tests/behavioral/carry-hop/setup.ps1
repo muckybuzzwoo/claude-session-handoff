@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Builds the sandbox for the carry-hop sub-test: the READ half of v0.4.0's headline feature.
 

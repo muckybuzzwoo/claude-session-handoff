@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Gate G1 (plan section 9): do REAL pre-v0.4.0 handoffs still resume?
 

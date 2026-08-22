@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Deterministic verifier for the behavioral run. Run AFTER the orchestrator has executed
   the three scenario agents and captured their final responses to .sandbox/out/S{1,2,3}.txt.

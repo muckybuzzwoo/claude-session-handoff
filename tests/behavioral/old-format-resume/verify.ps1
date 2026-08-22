@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Gate G1 assertions. Deterministic — re-runnable after a run.
 

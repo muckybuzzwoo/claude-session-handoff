@@ -1,4 +1,4 @@
-#requires -Version 5
+#requires -Version 7
 <#
   Proves the carry-hop VERIFIER has teeth, without an LLM in the loop.
 
