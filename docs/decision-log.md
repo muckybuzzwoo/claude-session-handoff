@@ -339,3 +339,17 @@ project file stays small. Entries below are in the original order.
   against this repo's own store. The conservation law above it already catches real loss, so this
   second check adds a false-failure mode and no coverage. Not fixed yet; recorded here and carried
   as open work.
+- **2026-08-22 (the false positive is gone, and deleting beat gating):** the check was removed
+  together with its `.DESCRIPTION` bullet, six lines in total. Two fixes were on the table. Gate it
+  on `CarryN + Items < prevTotal` so it only fires when items really left, or delete it. Gating was
+  rejected because the gated predicate is then a strict subset of the conservation law that now
+  sits at `compat-old-chain.ps1:310-327`, which already reports the shortfall and names how many
+  items left without a `Done:` line. The second check would have been a weaker duplicate of a guard
+  that already works. Nothing was lost by deleting it: `fixtures/carry-bad` still exits 1 on the
+  conservation law alone and still prints `item(s) left`, which is what static suite section S
+  actually asserts, so the guard-catches-something requirement is untouched. Measured after the
+  change, against the single known failure before it: static 196/196, `format-boundary` 26/26, and
+  this repo's own store 4/4 with `No invariant violated` and exit 0. The general point is the one
+  this repo has now hit three times. A second, weaker check standing next to a correct one is not
+  redundancy insurance, it is a false-failure generator, and the cost lands on whoever next has to
+  read a red suite.

@@ -19,8 +19,6 @@
 
   What it CHECKS (and can fail on), for new-format files only:
     * the V4 count invariant: N_carry(NN) = full_items(NN-1) + N_carry(NN-1) - closed_in(NN)
-    * an item may never leave by omission: a shrinking carry count needs matching 'Done:'
-      lines in the same file
 
   An all-old-format chain has nothing to check, so it reports the baseline and exits 0.
 
@@ -328,10 +326,6 @@ foreach ($p in $pairs) {
 
     if ($impliedNew -lt 0) {
         Write-Host "         $([Math]::Abs($impliedNew)) item(s) left _$($prev.Seq) without a Done: line." -ForegroundColor Red
-    }
-
-    if ($cur.CarryN -lt $prevTotal) {
-        Check "_$($cur.Seq): shrinking carry count has matching Done: lines" ($cur.Done -gt 0)
     }
 }
 
