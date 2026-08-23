@@ -478,6 +478,25 @@ Check 'Customizing names the store path'       ($rCust.Contains('Store path'))
 Check 'Customizing names the 7-day threshold'  ($rCust.Contains('7-day'))
 
 # =============================================================================
+Section 'W. Handoff — volume rule (v0.4.7, plan section 16.2/16.4)'
+# The criterion plus the fixed list live in Hard rules, so every check reads from that
+# slice — an unscoped Contains would pass on the same words anywhere in the file.
+$hRulesAt  = $h.IndexOf('## Hard rules')
+$hRulesEnd = if ($hRulesAt -ge 0) { $h.IndexOf('## Customizing', $hRulesAt) } else { -1 }
+$hRules    = if ($hRulesAt -ge 0 -and $hRulesEnd -gt $hRulesAt) { $h.Substring($hRulesAt, $hRulesEnd - $hRulesAt) } else { '' }
+Check 'Hard rules block delimited'                        ($hRules -ne '')
+Check 'volume rule states the criterion'                  ($hRules.Contains('only what cannot be re-derived'))
+Check 'fixed list names Done: explanations'               ($hRules.Contains('`Done:` explanations'))
+Check 'fixed list names the shipped-versions narrative'   ($hRules.Contains('shipped-versions narrative'))
+Check 'fixed list bans copied test counts'                ($hRules.Contains('test counts are never copied'))
+Check 'explanation may shrink, structure must stay'       ($hRules.Contains('may shrink') -and $hRules.Contains('must stay'))
+Check 'Done: stays one bullet per closed item'            ($hRules.Contains('one bullet per closed item'))
+Check 'each Done: bullet is cut to one line'              ($hRules.Contains('cut to **one line**'))
+Check 'open item = one standalone sentence plus pointer'  ($hRules.Contains('one standalone sentence plus a pointer'))
+Check 'pointer is an addition, never a substitute'        ($hRules.Contains('never a substitute'))
+Check 'an unstatable item is several items'               ($hRules.Contains('is in truth several items'))
+
+# =============================================================================
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))

@@ -348,6 +348,20 @@ Resume: `/session-resume {slug}`  —  or read {absolute path}
     count. What this rule forbids is the old habit of repeating the whole next-action paragraph
     a second time under Open work. **An item that exists ONLY in "→ Pick up here" is invisible
     to the next handoff's count and will be lost** — that is what this rule prevents.
+- **Volume — only what cannot be re-derived belongs here.** Whatever is already recorded
+  in code, git, the changelog, a decision log, the plans, or the Claude memory is
+  derivable: a pointer replaces the retelling. Known-derivable blocks (fixed list):
+  `Done:` explanations, the shipped-versions narrative, git facts beyond the header
+  fields, and test counts — test counts are never copied into a handoff at all. Two
+  levels, and the split is load-bearing: **explanation** is derivable and may shrink to
+  a pointer; **structure** — a count, a position, a chain reference — carries automated
+  checks and must stay. So `Done:` keeps one bullet per closed item (the compat scanner
+  counts bullets, and collapsing them reports phantom loss), but each bullet is
+  cut to **one line**.
+- **An open item is one standalone sentence plus a pointer.** The sentence must be
+  understandable on its own; the pointer is an addition, never a substitute. An item
+  that cannot be stated in one standalone sentence is in truth several items — write
+  them as separate bullets.
 - **`Format:` header field.** `2` is this template. A handoff **without** the field is
   format 1 (everything written before this version) and stays valid forever — nothing is
   migrated and no old file is ever rewritten. Write the literal value from the template. Do

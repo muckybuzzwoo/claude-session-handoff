@@ -158,7 +158,7 @@ foreach ($f in $files) {
     foreach ($ln in $sec) {
         if ($ln -match '^- ') {
             if ($null -ne $u) { $units += $u }
-            $u = [pscustomobject]@{ Text = $ln; Kids = 0 }
+            $u = [pscustomobject]@{ Text = $ln; Kids = 0; PhysLines = 1 }
             $seenKid = $false
         }
         elseif ($ln -match '^\s+(-|\d+\.)\s') {
@@ -168,7 +168,10 @@ foreach ($f in $files) {
         elseif ($ln.Trim() -ne '') {
             # Continuation text. Once children have started it belongs to a child, not to
             # the parent, so it must not add separators to the parent's text.
-            if ($null -ne $u -and -not $seenKid) { $u.Text = $u.Text + ' ' + $ln.Trim() }
+            if ($null -ne $u -and -not $seenKid) {
+                $u.Text = $u.Text + ' ' + $ln.Trim()
+                $u.PhysLines++
+            }
         }
     }
     if ($null -ne $u) { $units += $u }
@@ -208,6 +211,8 @@ foreach ($f in $files) {
     $items = $realBullet.Count + $dots + $headerChildren
 
     $doneCount = $doneBullet.Count
+    $doneMulti = @($doneBullet | Where-Object { $_.PhysLines -gt 1 }).Count
+    $owBytes   = [System.Text.Encoding]::UTF8.GetByteCount(($sec -join "`n"))
 
     # Carry-style bullets: they reference a previous handoff by sequence and assert that its
     # items still apply. Three classes, and only the last one is a problem:
@@ -248,6 +253,8 @@ foreach ($f in $files) {
         ProsePointer = $prosePointer
         Headers      = $headerUnits.Count
         HeaderKids   = $headerChildren
+        DoneMulti    = $doneMulti
+        OwBytes      = $owBytes
     }
 }
 
@@ -301,9 +308,25 @@ if ($prose.Count -eq 0) {
     Write-Host "  $(($prose | ForEach-Object { '_' + $_.Seq }) -join ' ')"
 }
 
+# The v0.4.7 writer rule says a Done: bullet is one physical line — its explanation is
+# derivable, only its count is load-bearing. This MEASURES compliance and never fails:
+# every file written before v0.4.7 predates the rule and stays valid forever.
+$totDone      = ($rows | Measure-Object Done -Sum).Sum
+$totDoneMulti = ($rows | Measure-Object DoneMulti -Sum).Sum
+$totOwBytes   = ($rows | Measure-Object OwBytes -Sum).Sum
+
+Section 'Volume (v0.4.7 writer rule) — measured, never failed'
+Write-Host "  Done: bullets across the store           : $totDone"
+if ($totDoneMulti -gt 0) {
+    Write-Host "  of those wrapping past one line          : $totDoneMulti  (files written before v0.4.7 predate the rule)" -ForegroundColor Yellow
+} else {
+    Write-Host "  of those wrapping past one line          : 0"
+}
+Write-Host "  Open-work section bytes, store total     : $totOwBytes"
+
 if ($Detail) {
     Section 'Per file'
-    $rows | Format-Table Seq, Heading, Items, Bullets, DotBullets, Dots, CarryN, Done, ProsePointer -AutoSize |
+    $rows | Format-Table Seq, Heading, Items, Bullets, DotBullets, Dots, CarryN, Done, DoneMulti, OwBytes, ProsePointer -AutoSize |
         Out-String -Width 200 | Write-Host
 }
 
