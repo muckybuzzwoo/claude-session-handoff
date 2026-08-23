@@ -5,7 +5,7 @@ the work back up in a fresh session — same topic, full context, nothing lost.
 
 - **`/session-handoff [topic] [--done]`** — capture the current session into a structured,
   resumable handoff file, then stop.
-- **`/session-resume [topic] [--all]`** — choose the right handoff and continue.
+- **`/session-resume [topic] [--all] [--de|--en]`** — choose the right handoff and continue.
 
 They are **user-driven**: invoke them with the slash command or by asking in plain text
 ("save a handoff" works just as well as `/session-handoff`). Claude may *suggest* a
@@ -110,7 +110,11 @@ depth out of the files it links (full roadmaps and rejected options come back, n
 handoff's summary) under the loading rules described just below, warns if it looks stale
 (older than 7 days, branch changed, or the
 working tree moved compared to the snapshot recorded in the handoff), and proposes the
-single next action.
+single next action. The briefing prints six blocks, **context first, the action last** —
+what was loaded, the rejected options, the depth held back as pointers, where we stand with
+the open work numbered, warnings, and the next step at the bottom, where a terminal is
+actually read. `--de` / `--en` fixes the briefing language per call (default: your project's
+`CLAUDE.md`, otherwise the handoff file's language).
 Pass a topic to skip the picker: `/session-resume checkout-bug`.
 
 **It loads those linked files frugally** so a resume stays cheap even when a plan has grown
@@ -126,7 +130,8 @@ It also **cross-checks the briefing against your Claude memory index** and flags
 contradiction (a handoff is a point-in-time snapshot; memory may hold a newer truth) —
 naming both, resolving neither silently. And if the handoff recorded that the next step
 continues in **another** chain or repo (a `Continue first in:` pointer), resume surfaces
-that at the top — it prints the pointer, it never opens the other project.
+that in its closing "what now" block, right before its own suggestion — it prints the
+pointer, it never opens the other project.
 
 No topics yet? Instead of a dead end, it reads your Claude memory's linked dossier files
 (not the `MEMORY.md` index — that's already loaded every session) plus recent git
