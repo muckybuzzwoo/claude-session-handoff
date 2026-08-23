@@ -43,10 +43,14 @@ volume — this closes the volume gap it left, and reverses the order with a bet
   the reversal obsoleted, +18 reader checks in section X). Mutation harness 26/26 blocks covered.
 - `compat-old-chain.ps1` against this repo's real store: exit 0, all six conservation-law checks
   unchanged, new volume section reporting.
-- **Not verified: runtime behaviour.** No behavioural scenario has run since the de-leaking; the
-  six-block order and the on-request depth need a subagent run to prove, and
-  `tests/behavioral/depth-recovery/` still asserts what decision 7 preserves (name, a word of
-  rationale, reads as rejected).
+- **Runtime behaviour — the first honest run since the de-leaking (2026-08-24, same day):**
+  main suite 30/30 (S1 fresh handoff, S2 carry-forward, S3 staleness + read-only),
+  depth-recovery 15/15, load-discipline 21/21, carry-hop 20/20, every verifier exit 0, all run
+  against the v0.4.7 command files. Every resume briefing came back in the six-block order with
+  the language-choice note. S3 also flagged fixture inconsistencies the harness never planted on
+  purpose (a claimed file the sandbox does not create, chain dates out of order after the
+  backdate) inside its Warnings block — surfaced as warnings, not silently adopted, which is the
+  behaviour the block exists for.
 
 ## [0.4.6] — 2026-08-22
 
