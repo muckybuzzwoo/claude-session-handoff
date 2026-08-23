@@ -169,7 +169,7 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (223 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (236 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (mutation, no AI):** `pwsh -File .\tests\mutation-check.ps1` deletes one block of a
 command file at a time and re-runs the static suite, then reports which deletions broke no

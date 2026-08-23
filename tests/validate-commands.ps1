@@ -271,12 +271,9 @@ Check 'Reference stays last of the sections'      ($iRef    -gt $iDec)
 Check 'Pick up here appears exactly once' (
     ([regex]::Matches($h, [regex]::Escape('## → Pick up here'))).Count -eq 1)
 
-# --- resume briefing order, without weakening completeness ---
-Check 'resume opens with exactly three things'   ($r.Contains('exactly three things, in this order'))
-Check 'resume puts open work after those three'  ($r -match 'and the next action\.\s+Then\s+the open work\.')
-Check 'resume defers the depth'                  ($r.Contains('Only after that'))
-Check 'resume KEEPS the do-not-compress rule'    ($r.Contains('do not compress those away'))
-Check 'resume says it is order, not content'     ($r.Contains('about *order*'))
+# --- resume briefing order: REVERSED in v0.4.7 (plan section 16.5), asserted in section X.
+# Track A's action-first order applied document logic; the terminal-shaped order replaced it,
+# and the do-not-compress rule moved with it (rejected options still always print).
 
 # =============================================================================
 Section 'S. Carry-invariant guard actually fires (fixture chains)'
@@ -495,6 +492,40 @@ Check 'each Done: bullet is cut to one line'              ($hRules.Contains('cut
 Check 'open item = one standalone sentence plus pointer'  ($hRules.Contains('one standalone sentence plus a pointer'))
 Check 'pointer is an addition, never a substitute'        ($hRules.Contains('never a substitute'))
 Check 'an unstatable item is several items'               ($hRules.Contains('is in truth several items'))
+
+# =============================================================================
+Section 'X. Resume — six-block briefing + language flag (v0.4.7, plan section 16.4-16.6)'
+# The briefing order is position, so index comparisons on a slice — same pattern as section T.
+$rBriefAt  = $r.IndexOf('3. Summarize from the handoff')
+$rBriefEnd = if ($rBriefAt -ge 0) { $r.IndexOf('4. **Reconcile', $rBriefAt) } else { -1 }
+$rBrief    = if ($rBriefAt -ge 0 -and $rBriefEnd -gt $rBriefAt) { $r.Substring($rBriefAt, $rBriefEnd - $rBriefAt) } else { '' }
+Check 'briefing block delimited'                       ($rBrief -ne '')
+Check 'context first, the action last'                 ($rBrief.Contains('context first, the action last'))
+Check 'the rationale is terminal-shaped'               ($rBrief.Contains('terminal-shaped'))
+# Anchored on the numbered list entries, not the bare names — block texts cross-reference
+# each other ("once in `## What now` as the pointer"), and a bare IndexOf finds the mention.
+$iLo = $rBrief.IndexOf('1. `## Loaded`');           $iRj = $rBrief.IndexOf('2. `## Rejected`')
+$iDp = $rBrief.IndexOf('3. `## Depth on request`'); $iWs = $rBrief.IndexOf('4. `## Where we stand`')
+$iWa = $rBrief.IndexOf('5. `## Warnings`');         $iWn = $rBrief.IndexOf('6. `## What now`')
+Check 'all six blocks named'                           (@($iLo,$iRj,$iDp,$iWs,$iWa,$iWn) -notcontains -1)
+Check 'blocks are in the section-16.5 order'           ($iLo -lt $iRj -and $iRj -lt $iDp -and $iDp -lt $iWs -and $iWs -lt $iWa -and $iWa -lt $iWn)
+Check 'Warnings block omitted when empty'              ($rBrief.Contains('Omit the block entirely'))
+Check 'rejected options still print, uncompressed'     ($rBrief.Contains('do not compress those away'))
+Check 'depth prints pointers, not the content'         ($rBrief.Contains('Print pointers, not the'))
+Check 'Done: may collapse in the OUTPUT only'          ($rBrief.Contains('the scanner reads the file, not this briefing'))
+Check 'What-now names its item number from block 4'    ($rBrief.Contains('naming its item number'))
+Check 'first open-work item = the Pick-up-here item'   ($rBrief.Contains('once here as a countable entry'))
+Check 'cross-chain pointer lives in What now'          ($rBrief.Contains('Continue first in:'))
+# --- the language flag (decision 4: per-call, no state stored in the files) ---
+Check 'argument-hint offers --de|--en'                 ($r.Contains('[--de|--en]'))
+$rArgsAt  = $r.IndexOf('## Arguments')
+$rArgsEnd = if ($rArgsAt -ge 0) { $r.IndexOf('## Workflow', $rArgsAt) } else { -1 }
+$rArgs    = if ($rArgsAt -ge 0 -and $rArgsEnd -gt $rArgsAt) { $r.Substring($rArgsAt, $rArgsEnd - $rArgsAt) } else { '' }
+Check 'resume Arguments block delimited'               ($rArgs -ne '')
+Check 'Arguments documents the language flag'          ($rArgs.Contains('`--de` / `--en`'))
+Check 'default stays CLAUDE.md, then handoff language' ($rArgs.Contains('otherwise the language of the handoff'))
+Check 'briefing states its language choice once'       ($rArgs.Contains('which language it chose and why'))
+Check 'Step 2 strips flags before the slug'            ($r.Contains('strip `--all`, `--de`, `--en`'))
 
 # =============================================================================
 Write-Host ''

@@ -1,6 +1,6 @@
 ---
 description: Pick and load the right session-handoff to continue a topic in a fresh session. Run only on the user's explicit request (slash command or plain-text ask), never proactively. Falls back to a memory+git orientation briefing if none exist yet. Reads from .claude/session-handoffs/. Pairs with /session-handoff.
-argument-hint: "[topic-slug] [--all]"
+argument-hint: "[topic-slug] [--all] [--de|--en]"
 allowed-tools:
   - Bash
   - PowerShell
@@ -18,6 +18,11 @@ fresh session. Pairs with `/session-handoff`. Read-only on the handoff store.
 
 - `[topic]` — optional topic slug to load directly (its highest sequence).
 - `--all` — also include archived (`done/`) topics in the picker.
+- `--de` / `--en` — output language of the briefing, fixed per call. Default when no flag
+  is given: what the project `CLAUDE.md` prescribes, otherwise the language of the handoff
+  file. When no flag is given AND the project `CLAUDE.md` is silent, the briefing states
+  in one line which language it chose and why; with a flag or a `CLAUDE.md` rule it stays
+  silent about it.
 
 ## Workflow
 
@@ -59,6 +64,8 @@ session-handoff yet — orient from what already exists instead of a dead end:
 
 ### Step 2 — Select
 
+- **Flags first:** strip `--all`, `--de`, `--en` from the arguments before treating the
+  rest as the topic slug. `--de`/`--en` fix the briefing language (see Arguments).
 - **Topic argument given:** load that slug's highest sequence directly.
 - **Otherwise:** AskUserQuestion listing the grouped topics — label
   `{slug} — seq {NN}, {date}` (append ` (archived)` for `done/` topics), the one-line
@@ -130,29 +137,44 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      session closed and wrote out.
      Old handoffs have no carry line — then there is nothing to resolve and this bullet does not
      apply.
-3. Summarize from the handoff AND what you loaded.
+3. Summarize from the handoff AND what you loaded — as a briefing of six blocks,
+   **context first, the action last**. The rationale is terminal-shaped: a terminal shows
+   the end, so what prints first has scrolled away by the time the user answers, and the
+   briefing is read from the bottom up. Emit the blocks in this order, each heading on
+   its own line as `##` (anything below it `###`), a horizontal rule between blocks, all
+   in the output language (see Arguments):
 
-   **Open the briefing with exactly three things, in this order:** where the topic stands
-   (one sentence), what the last session changed (one sentence), and the next action. Then
-   the open work. **Only after that** the depth: decisions, rejected options, constraints,
-   key files, running state, and what you loaded or deliberately did not load.
+   1. `## Loaded` — what was read, and what was deliberately not read. For anything you
+      did not fully load, point to the exact file + section (and the skeleton you
+      printed) rather than dropping it.
+   2. `## Rejected` — rejected options / deliberate no-decisions, each as its name plus
+      a few words of reason; do not compress those away — they are judgements that
+      mostly exist nowhere else. This block may read cold on its own: it is read last,
+      after the question at the bottom has given it a premise.
+   3. `## Depth on request` — name what is held back and available on request: the full
+      decision history, constraints, key files, running state. Print pointers, not the
+      content. Closed (`Done:`) items may be collapsed to one line here — the count
+      lives in the handoff file, and the scanner reads the file, not this briefing.
+   4. `## Where we stand` — where the topic stands (one sentence), what the last session
+      changed (one sentence), then the open work as a **numbered list** — each item
+      leads with a bold short form, the explanation on the next line — then how to
+      verify. The **first** numbered item is the one "→ Pick up here" names: the same
+      item appears once here as a countable entry and once in `## What now` as the
+      pointer.
+   5. `## Warnings` — the Step 3 staleness notes, a moved tree or branch, memory
+      contradictions (see 4. below). **Omit the block entirely when there are none.**
+   6. `## What now` — the next step, naming its item number from `## Where we stand`,
+      plus any options the user must decide. If the handoff carries a
+      **`Continue first in:` cross-chain pointer**, print it here, before your own
+      next-action suggestion — the real next step lives in another chain/repo.
+      **Print it only; never open or load that other project or chain** (that would be
+      a separate, explicit `/session-resume` the user runs there).
 
    **A section the template does not know is not noise.** Real handoffs grow their own
    headings, and one of them may hold the most important content in the file — a
    "low-confidence decisions, CHECK THESE" block, a rejected-options section under a
    different name. Carry such a section, and if it flags doubt or asks to be re-checked,
    surface it **with the open work**, not buried in the depth.
-
-   Carry the full decisions and roadmap — and **explicitly list rejected options /
-   deliberate no-decisions**; do not compress those away. This is about *order*, not about
-   dropping content: the completeness requirement is unchanged. For anything you did not
-   fully load, point to the exact file + section (and the skeleton you printed) rather than
-   dropping it.
-   - If the handoff carries a **`Continue first in:` cross-chain pointer**, surface it
-     prominently at the **TOP** of the briefing, before your own next-action suggestion —
-     the real next step lives in another chain/repo. **Print it only; never open or load
-     that other project or chain** (that would be a separate, explicit `/session-resume`
-     the user runs there).
 4. **Reconcile against the memory index.** If a Claude memory index (`MEMORY.md`) is
    already in context (it auto-loads each session), compare your briefing against it.
    **Only when that memory belongs to THIS project** — the index is per project, so

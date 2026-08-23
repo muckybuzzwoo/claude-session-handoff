@@ -3,6 +3,51 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.7] — 2026-08-24
+
+The output-volume and briefing-order release: plan section 16, decided 2026-08-22, built in two
+halves (writer first, then reader). Track A had said in its own text that it was about order, not
+volume — this closes the volume gap it left, and reverses the order with a better rationale.
+
+### Added
+
+- **Writer volume rule, two new Hard rules.** Only what cannot be re-derived from code, git, the
+  changelog, a decision log, the plans or the Claude memory belongs in a handoff, with the fixed
+  list of known-derivable blocks: `Done:` explanations, the shipped-versions narrative, git facts
+  beyond the header fields, and test counts (never copied at all). The load-bearing split:
+  **explanation** may shrink to a pointer, **structure** — a count, a position, a chain
+  reference — carries automated checks and must stay. So `Done:` keeps one bullet per closed item
+  but each is cut to one line, and an open item is one standalone sentence plus a pointer.
+  Measured on the real `_06`: −51.5 % file size with the loss guard intact (plan section 16.3).
+- **`--de` / `--en` on `/session-resume`** — the briefing language, fixed per call. Default
+  unchanged: the project `CLAUDE.md`, otherwise the handoff file's language. A `Language:` header
+  field was rejected — state in 18 files for a per-call decision.
+- **Volume measurement in `compat-old-chain.ps1`**: `Done:` bullets wrapping past one line, and
+  Open-work section bytes. Reported, never failed — files written before v0.4.7 predate the rule
+  and stay valid forever. Baseline on this repo's store: 21 `Done:` bullets, 16 multi-line.
+
+### Changed
+
+- **The resume briefing is six blocks, context first, the action last**: Loaded, Rejected, Depth
+  on request, Where we stand (open work numbered), Warnings (omitted when empty), What now. The
+  rationale is terminal-shaped — a terminal shows the end, so the old action-first opening had
+  scrolled away by the time the user answered. The What-now step and the first numbered open-work
+  item are the same item. Depth shrinks to pointers on request; rejected options always print
+  (name plus a few words of reason), and closed items may collapse to one line in the output only.
+  Projected effect on top of the writer rule: the second load of the linked plan disappears,
+  about 11.6k input tokens per resume falling to about 5.7k (plan section 16.7).
+
+### Verified
+
+- Static suite 236/236 (212 before this release: +11 writer checks in section W, −5 order checks
+  the reversal obsoleted, +18 reader checks in section X). Mutation harness 26/26 blocks covered.
+- `compat-old-chain.ps1` against this repo's real store: exit 0, all six conservation-law checks
+  unchanged, new volume section reporting.
+- **Not verified: runtime behaviour.** No behavioural scenario has run since the de-leaking; the
+  six-block order and the on-request depth need a subagent run to prove, and
+  `tests/behavioral/depth-recovery/` still asserts what decision 7 preserves (name, a word of
+  rationale, reads as rejected).
+
 ## [0.4.6] — 2026-08-22
 
 Reverts the command-file change from v0.4.3 and restores the loss guard that v0.4.3 removed.

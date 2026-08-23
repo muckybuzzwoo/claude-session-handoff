@@ -504,3 +504,21 @@ project file stays small. Entries below are in the original order.
   reporting a chain-wide blind spot of 7. The lesson that produced this shape: when a check cannot
   decide a question, the useful move is to publish the uncertainty, not to pick a side or say
   nothing.
+- **2026-08-24 (the briefing order is reversed, and the reason is the terminal, not taste):**
+  Track A's reader opened with the next action — document logic, where a reader starts at the
+  top. But a resume briefing prints into a terminal, and a terminal shows the end: whatever
+  printed first has scrolled away by the time the user answers. v0.4.7 replaces Step 4.3's
+  action-first opening with six fixed blocks — Loaded, Rejected, Depth on request, Where we
+  stand, Warnings (omitted when empty), What now — context first, the action last, read from the
+  bottom up. Two structural rules ride along: the What-now step and the first numbered open-work
+  item are the same item, and the depth shrinks to pointers on request while rejected options
+  always print (name plus a few words of reason), so the protected rule "do not compress those
+  away" survives the reversal intact. Closed items may collapse to one line in the OUTPUT only —
+  the scanner counts bullets in the file, never in the briefing. Design and measurement: plan
+  `readability-preflight-plan.md` sections 16.5–16.7.
+- **2026-08-24 (output language is a per-call flag, not a header field):** a `Language:` field in
+  the handoff header was rejected — it would store state in 18 files for a decision Marcus wants
+  to make per call. `--de`/`--en` on `/session-resume` overrides; the default is unchanged (the
+  project `CLAUDE.md`, otherwise the language of the handoff file), and only when both the flag
+  and `CLAUDE.md` are silent does the briefing say in one line which language it chose and why.
+  Plan section 16.4, decision 4.

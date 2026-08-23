@@ -214,7 +214,7 @@
           </ol>
         </div>
         <div class="panel card resume">
-          <h3>/session-resume [topic] [--all]</h3>
+          <h3>/session-resume [topic] [--all] [--de|--en]</h3>
           <ol>
             <li>Scan the store, group by topic, newest first (skip <code>done/</code> unless <code>--all</code>).</li>
             <li>Pick a topic (or pass one to load it directly).</li>
@@ -225,9 +225,10 @@
                 a link tagged to one heading pulls just that section; a plain link to a big file is
                 <em>not</em> slurped in — you get its table of contents and an offer to open it; a
                 fully-tagged file is read whole. A <code>Carried unchanged:</code> line is followed
-                <em>one</em> hop and no further. Then summarize, in this order: where the topic
-                stands, what the last session changed, the next action, the open work — and only
-                then the depth, with the full decisions and rejected options. (This is what keeps a
+                <em>one</em> hop and no further. Then brief in six blocks, context first and the
+                action <em>last</em> — what was loaded, the rejected options, the depth held back
+                as pointers, where we stand with the open work numbered, warnings, and the next
+                step at the bottom, where a terminal is actually read. (This is what keeps a
                 resume cheap — big linked files no longer cost tokens on every resume.)</li>
             <li>Cross-check the briefing against your Claude memory (flag any contradiction,
                 resolve nothing silently) and surface a cross-project <code>Continue first in:</code>
@@ -451,7 +452,7 @@
     Design synthesizes Nate Herk (schema &amp; rules), Matt Pocock (suggested-skills, reference-don't-duplicate,
     secret convention), REMvisual (sequence chain-linking) and buzzwoo <code>/park</code> (file persistence).
     Full decision log: <code>docs/decision-log.md</code>.
-    <br>Describes v0.4.3. For the current version and what changed since, see <code>CHANGELOG.md</code>.
+    <br>Describes v0.4.7. For the current version and what changed since, see <code>CHANGELOG.md</code>.
   </footer>
 
 </div>
