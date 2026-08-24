@@ -1246,7 +1246,7 @@ text, which is the actual defect. Do not expect it to remove the one-hop read li
 Not mine to take. **(a) cheap and partial, the slug design full but with a third format path, or
 (c) do nothing and keep the documented limitation.** Everything needed to choose is above.
 
-## 16. Output volume and briefing order (added 2026-08-22, DECIDED)
+## 16. Output volume and briefing order (added 2026-08-22, DECIDED — SHIPPED as v0.4.7 on 2026-08-24)
 
 Track A was meant to make the briefing shorter and clearer. It reordered and left the volume
 alone, and it said so in as many words: `commands/session-resume.md:146-150` reads *"This is
