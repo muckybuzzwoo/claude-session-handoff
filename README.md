@@ -27,7 +27,7 @@ always-on memory system. These commands synthesize the best existing patterns:
 | REMvisual (claude-handoff) | Sequence chain-linking — continue the same topic across many sessions |
 | buzzwoo `/park` | File persistence (survives `/clear`) |
 
-## What a handoff looks like (v0.4.0)
+## What a handoff looks like (format 2)
 
 The file opens with what the next session needs in order to **act**, and only then with what it
 needs in order to **understand**:
@@ -57,7 +57,9 @@ Two rules make open items survive a long chain. **One item per line**, so an ite
 pointed at and therefore closed. And **the carry count must add up** — carried plus closed plus
 written-out can never fall short of what the previous file held, and the shortfall is exactly
 the number of items that went missing. Checking that needs one hop, not a walk through the whole
-chain, and `tests/compat-old-chain.ps1` does it for you.
+chain, and `tests/compat-old-chain.ps1` does it for you. Since v0.4.7 the file also stays
+lean: what code, git, the changelog or the plans already record becomes a pointer instead of
+a retelling, and each closed item is one line (its count stays load-bearing, its prose does not).
 
 Older handoffs keep working as they are: a missing `Format:` field means the earlier layout,
 nothing is migrated, and no existing file is ever rewritten.
