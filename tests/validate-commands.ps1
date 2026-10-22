@@ -105,6 +105,14 @@ $gitAt    = $h.IndexOf('### Step 5 — Ensure .gitignore')
 $gitEnd   = if ($gitAt -ge 0) { $h.IndexOf('### Step 6', $gitAt) } else { -1 }
 $gitBlock = if ($gitAt -ge 0 -and $gitEnd -gt $gitAt) { $h.Substring($gitAt, $gitEnd - $gitAt) } else { '' }
 
+$s1At   = $h.IndexOf('### Step 1 — Gather context')
+$s1End  = if ($s1At -ge 0) { $h.IndexOf('### Step 2', $s1At) } else { -1 }
+$step1  = if ($s1At -ge 0 -and $s1End -gt $s1At) { $h.Substring($s1At, $s1End - $s1At) } else { '' }
+
+$rStAt   = $r.IndexOf('### Step 3 — Staleness check')
+$rStEnd  = if ($rStAt -ge 0) { $r.IndexOf('### Step 4', $rStAt) } else { -1 }
+$rStale  = if ($rStAt -ge 0 -and $rStEnd -gt $rStAt) { $r.Substring($rStAt, $rStEnd - $rStAt) } else { '' }
+
 # =============================================================================
 Section 'B. Deploy parity (source == ~/.claude/commands, no drift)'
 Check 'session-handoff: source content == deployed' ($h -ne '' -and $h -eq $hL)
@@ -230,7 +238,7 @@ Check 'resume tolerates old files with no carry line' ($r.Contains('Old handoffs
 # --- five clarifications the G1 gate run surfaced (2026-08-21) ---
 Check 'an explicit tag outranks the outside-project skip' ($r.Contains('outranks this skip'))
 Check 'never substitutes a size the prose claims'         ($r.Contains('Never substitute a size'))
-Check 'a prose Tree field skips the comparison'           ($r.Contains('written as prose'))
+Check 'a prose Tree field skips the comparison'           ($rStale.Contains('written as prose'))
 Check 'an unknown extra section is carried, not dropped'  ($r.Contains('does not know is not noise'))
 Check 'memory reconcile only for the same project'        ($r.Contains('belongs to THIS project'))
 
@@ -359,9 +367,9 @@ Check 'Handoff body states the invocation policy'    ($h.Contains('Invocation po
 Check 'Resume description: never proactively'        ($r.Contains('never proactively'))
 # Tree snapshot: handoff records it, resume compares against it (not "dirty now").
 Check 'Handoff template header has Tree: field'      ($h.Contains('**Tree:**'))
-Check 'Handoff Step 1 keeps porcelain for Tree:'     ($h.Contains('fills') -and $h.Contains('`Tree:` header field'))
-Check 'Resume staleness compares the Tree: snapshot' ($r.Contains('`Tree:` snapshot'))
-Check 'Resume skips tree check on older handoffs'    ($r -match 'No `Tree:` field in the header\s+\(older\s+handoff\)\s*→\s*skip this check')
+Check 'Handoff Step 1 keeps porcelain for Tree:'     ($step1.Contains('`--porcelain` output') -and $step1.Contains('`Tree:` header field'))
+Check 'Resume staleness compares the Tree: snapshot' ($rStale.Contains('`Tree:` snapshot'))
+Check 'Resume skips tree check on older handoffs'    ($rStale -match 'No\s+`Tree:` field in the header\s+\(older\s+handoff\)\s*→\s*skip this check')
 # Compaction-uncertainty cross-check in Step 1.
 Check 'Handoff Step 1 has compaction cross-check'    ($h.Contains('compacted'))
 # Archived-chain fork guard (handoff Step 2 + resume picker marking).
@@ -528,6 +536,56 @@ Check 'briefing states its language choice once'       ($rArgs.Contains('which l
 Check 'Step 2 strips flags before the slug'            ($r.Contains('strip `--all`, `--de`, `--en`'))
 
 # =============================================================================
+# =============================================================================
+Section 'Y. Tree: grammar + ask-git ignore check (v0.4.8)'
+# Two defects seen in a repo with ~22 permanently untracked entries and `/.claude/` in its
+# .gitignore: Tree: was always written as prose (so resume never compared it), and Step 5
+# read the file text, found no literal store line and appended one for nothing. Every check
+# reads from the block it is about: Step 1, the template slice, Step 5, resume Step 3.
+
+# --- writer: Step 1 builds the value, the template shows it ---
+Check 'Step 1 block delimited'                              ($step1 -ne '')
+Check 'Step 1 computes the untracked hash with git'         ($step1.Contains('git ls-files --others --exclude-standard --directory') -and $step1.Contains('git hash-object'))
+Check 'Step 1 gives the hash in both platform branches'     ([regex]::Matches($step1, [regex]::Escape('git ls-files --others --exclude-standard --directory --no-empty-directory')).Count -eq 2)
+Check 'Step 1 explains why empty directories are excluded'  ($step1.Contains('`--no-empty-directory` matters'))
+Check 'untracked count comes from porcelain, not ls-files'  ($step1.Contains('never the line count of'))
+Check 'Step 1 warns the hash pipe needs PowerShell 7.4+'    ($step1.Contains('PowerShell 7.4+'))
+Check 'Step 1 states the fixed Tree: form'                  ($step1.Contains('tracked: {clean | N ({status} {path}, …)} · untracked: {N} · set: {7 hex}'))
+Check 'tracked = the porcelain lines that are not ??'       ($step1.Contains('do not start with `??`'))
+Check 'a clean tracked part is written as clean'            ($step1.Contains('None → `clean`'))
+Check 'tracked list is capped at 10, then +k more'          ($step1 -match 'list\s+the\s+first\s+10,\s+then\s+`\+\{k\}\s+more`')
+Check 'untracked = number of ?? lines'                      ($step1.Contains('number of `??` lines'))
+Check 'set is left out when nothing is untracked'           ($step1.Contains('leave ` · set:` out'))
+Check 'not a git repository is written as a dash'           ($step1.Contains('Not a git repository → `—`'))
+Check 'names the git limit (folder shows as one line)'      ($step1.Contains('?? folder/') -and $step1.Contains('limit of git'))
+Check 'template Tree: line shows the fixed form'            ($tpl.Contains('**Tree:** {the Step 1 form at handoff time') -and $tpl.Contains('tracked: clean · untracked: 22 · set:'))
+Check 'template no longer asks for a porcelain summary'     (-not $tpl.Contains('`git status --porcelain` summary at handoff time'))
+
+# --- writer: Step 5 asks git, never the file text ---
+Check 'Step 5 asks git, not the file text'                  ($gitBlock.Contains('Ask git, not the file text'))
+Check 'Step 5 runs git check-ignore -v on the store file'   ($gitBlock.Contains('git check-ignore -v .claude/session-handoffs/{slug}_{NN}.md'))
+Check 'exit 0 = already ignored, change nothing'            ($gitBlock.Contains('**Exit 0**') -and $gitBlock.Contains('change nothing'))
+Check 'exit 0 reports the rule that ignores the store'      ($gitBlock.Contains('which rule did it'))
+Check 'exit 1 = not ignored, go on'                         ($gitBlock.Contains('**Exit 1**'))
+Check 'names the other places a rule can live'              ($gitBlock.Contains('.git/info/exclude') -and $gitBlock.Contains('global') -and $gitBlock.Contains('`/.claude/` or `.claude/*`'))
+Check 'not ignored + .gitignore exists -> append the line'  ($gitBlock -match '(?s)Not ignored and the project-root `\.gitignore` exists.{0,40}append')
+Check 'not ignored + no .gitignore -> create it'            ($gitBlock -match '(?s)Not ignored and no `\.gitignore`.{0,40}create')
+Check 'not a repository still skips silently'               ($gitBlock.Contains('Not a git repository → skip silently'))
+Check 'never all of .claude/ applies to what we write only' ($gitBlock.Contains('never all of') -and $gitBlock.Contains('left as it is'))
+Check 'Step 5 no longer reads the file for a text match'    (-not $gitBlock.Contains('Read the project-root'))
+
+# --- reader: resume Step 3 compares the form, skips the rest ---
+Check 'resume Step 3 block delimited'                       ($rStale -ne '')
+Check 'resume knows the new Tree: form'                     ($rStale.Contains('tracked: … · untracked: N · set: …'))
+Check 'resume recomputes it with the Step 1 commands'       ($rStale.Contains('git ls-files --others --exclude-standard --directory') -and $rStale.Contains('git hash-object'))
+Check 'resume uses the same flags, count from porcelain'    ($rStale.Contains('--no-empty-directory') -and $rStale.Contains('the `??` lines') -and $rStale.Contains('all flags'))
+Check 'tracked part differs -> Tree moved'                  ($rStale -match '(?s)`tracked`\s+part differs.{0,80}`Tree moved`')
+Check 'untracked count or set differs -> weak hint only'    ($rStale.Contains('**weak** hint only') -and $rStale.Contains('untracked files differ'))
+Check 'everything equal -> say nothing'                     ($rStale.Contains('Everything equal → say nothing'))
+Check 'compares only the fields the snapshot has'           ($rStale.Contains('Compare only'))
+Check 'older porcelain summaries are still compared'        ($rStale.Contains('Older porcelain summaries'))
+Check 'prose is still skipped without manufacturing a diff' ($rStale.Contains('do not') -and $rStale.Contains('manufacture a difference'))
+
 Write-Host ''
 Write-Host "================ RESULT ================" -ForegroundColor Cyan
 Write-Host ("Passed: {0}   Failed: {1}   Total: {2}" -f $script:pass, $script:fail, ($script:pass + $script:fail))

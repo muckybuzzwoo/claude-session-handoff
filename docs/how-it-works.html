@@ -195,11 +195,15 @@
         <div class="panel card save">
           <h3>/session-handoff [topic] [--done]</h3>
           <ol>
-            <li>Gather <em>this</em> session: date, branch, git status, background process IDs, open TODOs, files you touched.</li>
+            <li>Gather <em>this</em> session: date, branch, git status (kept as a fixed
+                <code>Tree:</code> line: tracked changes, untracked count, a short fingerprint),
+                background process IDs, open TODOs, files you touched.</li>
             <li>Pick topic + sequence — propose existing topics + a branch suggestion, confirm (no accidental chain-fork).</li>
             <li>Carry-forward from the previous handoff so the newest file is the complete current state.</li>
             <li>Warn on any secret pattern (reference creds by path, never values).</li>
-            <li>Ensure <code>.claude/session-handoffs/</code> is in <code>.gitignore</code> (once).</li>
+            <li>Ask git whether <code>.claude/session-handoffs/</code> is already ignored, by any rule
+                (<code>git check-ignore</code>). If yes, leave <code>.gitignore</code> alone and name the
+                rule. Only if not, add the line (once).</li>
             <li>Write <code>{topic}_{NN}.md</code> — for a <em>big</em> linked file, write its short
                 essence into the handoff and link the file lazily (so the next resume stays cheap),
                 or tag just the one section that matters. The file opens with what the next session
@@ -222,8 +226,10 @@
             <li>Scan the store, group by topic, newest first (skip <code>done/</code> unless <code>--all</code>).</li>
             <li>Pick a topic (or pass one to load it directly).</li>
             <li>Staleness heads-up — &gt; 7 days old, git branch changed, or the working tree
-                moved since the save (current <code>git status</code> compared against the
-                snapshot stored in the handoff).</li>
+                moved since the save (the current tree compared against the <code>Tree:</code>
+                snapshot stored in the handoff: a change in tracked files is reported as
+                <em>Tree moved</em>, a change only in untracked files is a weak hint, and an old
+                prose-style <code>Tree:</code> is skipped).</li>
             <li>Load the latest file and <strong>follow its links, but only load what's needed</strong>:
                 a link tagged to one heading pulls just that section; a plain link to a big file is
                 <em>not</em> slurped in — you get its table of contents and an offer to open it; a
@@ -359,7 +365,7 @@
           <tr>
             <td><span class="src">buzzwoo /park</span></td>
             <td>File persistence — context survives <code>/clear</code> and the session ending.</td>
-            <td><span class="adopted">✓</span>Handoffs written to <code>.claude/session-handoffs/</code> per project, gitignored automatically on first run.</td>
+            <td><span class="adopted">✓</span>Handoffs written to <code>.claude/session-handoffs/</code> per project, gitignored on first run (unless git already ignores that folder).</td>
           </tr>
         </tbody>
       </table>
@@ -423,11 +429,14 @@
          about the commands assumes macOS or Linux.</p>
 
       <h2>Git: read and compare, never commit</h2>
-      <p>Saving records the current git branch and a <code>git status</code> snapshot in the handoff
-         header; resuming runs the same read-only checks again and compares — that's where the
-         staleness note comes from. Neither command ever commits or pushes (that stays with
-         <code>/end-cycle</code>); the only git writes are the one-time <code>.gitignore</code> entry
-         and the <code>git mv</code> that archives a finished topic.</p>
+      <p>Saving records the current git branch and a <code>Tree:</code> snapshot in the handoff
+         header (tracked changes, how many files are untracked, and a short fingerprint of their
+         names); resuming runs the same read-only checks again and compares — that's where the
+         staleness note comes from. A new file inside an untracked folder is invisible to it,
+         because git shows the folder as one line. Neither command ever commits or pushes (that
+         stays with <code>/end-cycle</code>); the only git writes are the one-time
+         <code>.gitignore</code> entry (skipped when git already ignores the folder) and the
+         <code>git mv</code> that archives a finished topic.</p>
 
       <h2>Tested, not just written</h2>
       <p>Both commands ship with three layers of tests so changes don't quietly break them:</p>
@@ -455,7 +464,7 @@
     Design synthesizes Nate Herk (schema &amp; rules), Matt Pocock (suggested-skills, reference-don't-duplicate,
     secret convention), REMvisual (sequence chain-linking) and buzzwoo <code>/park</code> (file persistence).
     Full decision log: <code>docs/decision-log.md</code>.
-    <br>Describes v0.4.7. For the current version and what changed since, see <code>CHANGELOG.md</code>.
+    <br>Describes v0.4.8. For the current version and what changed since, see <code>CHANGELOG.md</code>.
   </footer>
 
 </div>

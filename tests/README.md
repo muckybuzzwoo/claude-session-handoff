@@ -46,7 +46,7 @@ validate, so they do not move when a byte changes elsewhere. Do not read this ha
 byte-sensitive throughout.
 
 The lever is the shared scoped slices near the top of the script (`$hFm`, `$rFm`, `$tpl`,
-`$gitBlock`). A check reading from a slice fails when its block is gone. A check reading from
+`$gitBlock`, `$step1`, `$rStale`). A check reading from a slice fails when its block is gone. A check reading from
 the whole file does not. Put a new check on the slice for the block that must hold it.
 
 ## What it does NOT prove (behavioural — verify manually)
@@ -144,3 +144,19 @@ read-only promise is the one that must never break.
 
 Coverage limit worth knowing: the linked targets in those real files lie outside the sandbox,
 so G1 proves the *reading* of awkward files, not tagged-link loading. That is `depth-recovery/`.
+
+## Focused sub-test: Tree field and store ignore (`behavioral/tree-and-ignore/`)
+
+Added in v0.4.8 for two defects seen in a repo with 22 permanently untracked entries and `/.claude/`
+in its `.gitignore`: the `Tree:` header was always prose there, so resume never compared it, and
+Step 5 read the file text, found no literal store line and appended one to a versioned file for
+nothing. The sandbox has both traits (`setup.ps1`). One handoff run must leave `.gitignore`
+byte-identical, name the rule that already ignores the store, and write `Tree:` in the fixed form.
+Three resume runs follow, one per case: same tree (silent), prose `Tree:` after a tracked change
+(skipped, no false alarm) and a tracked change since the snapshot (`Tree moved`). The order is in
+`setup.ps1`, `tamper.ps1` makes the tracked change between runs.
+
+`verify.ps1` asserts 35 properties and computes the expected `Tree:` value from git itself
+(`lib.ps1`), independent of the agent. `selftest.ps1` feeds it a known-good set and eleven
+broken ones and asserts it accepts the first and rejects every other, with no LLM. It also
+rejects a verifier that crashed instead of judging, because a crash exits 1 too.

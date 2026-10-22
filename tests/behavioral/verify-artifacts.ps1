@@ -52,6 +52,9 @@ Check '_01 references the plan by path'       ($h01n.Contains('docs/superpowers/
 Check '_01 references the spec by path'       ($h01n.Contains('docs/superpowers/specs/2026-06-30-widget-redesign-design'))
 Check '_01 LINKS spec, does NOT copy its body' (-not $h01.Contains('SENTINEL_SPEC_BODY_DO_NOT_COPY'))
 Check 'gitignore got the store entry (append branch)' ((Load (Join-Path $Proj '.gitignore')).Contains('.claude/session-handoffs/'))
+# v0.4.8: the Tree: header is the fixed machine-readable form, never a free porcelain summary.
+# (The S3 resume check for a false untracked-files hint sits with the S3 checks below.)
+Check '_01 writes Tree: in the fixed form' ($h01 -match '(?m)^\*\*Tree:\*\*\s+tracked: (clean|\d+ \(.+\)) · untracked: \d+( · set: [0-9a-f]{7})?\s*$')
 
 # -----------------------------------------------------------------------------
 Section 'S1 — Step 7 behaviour (detect + draft + propose-only)'
@@ -72,6 +75,9 @@ Check '_02 adds this session''s test decision' ($h02 -match '(?i)test')
 Section 'S3 — resume (staleness + read-only)'
 Check 'resume surfaced a staleness note'       ($s3 -match '(?i)stale|\bdays?\b')
 Check 'resume gave a next-action suggestion'   ($s3 -match '(?i)pick up|next action|suggest')
+# v0.4.8: this sandbox holds a `.claude/` with only ignored files. An untracked-files hint here
+# is the false alarm the first v0.4.8 run produced (empty directories counted as untracked).
+Check 'resume raised no false untracked-files hint' (-not ($s3 -match '(?i)untracked files differ|tree moved'))
 $manifest = Join-Path $Out 'pre-s3-hashes.json'
 if (Test-Path $manifest) {
     $pre = Get-Content $manifest -Raw | ConvertFrom-Json

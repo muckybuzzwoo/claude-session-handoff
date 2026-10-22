@@ -34,7 +34,7 @@ needs in order to **understand**:
 
 ```markdown
 **Date:** …  **Branch:** …  **Previous:** …_01.md
-**Tree:** clean
+**Tree:** tracked: clean · untracked: 22 · set: f4fe661
 **Format:** 2
 
 ## Status
@@ -61,8 +61,15 @@ chain, and `tests/compat-old-chain.ps1` does it for you. Since v0.4.7 the file a
 lean: what code, git, the changelog or the plans already record becomes a pointer instead of
 a retelling, and each closed item is one line (its count stays load-bearing, its prose does not).
 
+The `Tree:` line has one fixed form since v0.4.8: the tracked changes (or `clean`), how many files
+are untracked, and a short fingerprint of their names. That lets `/session-resume` compare it even
+in a repo with dozens of permanently untracked files. A change in tracked files is reported as
+`Tree moved`; a change only in the untracked files is a weak hint. A new file inside an untracked
+folder is invisible to this, because git shows the folder as one line.
+
 Older handoffs keep working as they are: a missing `Format:` field means the earlier layout,
-nothing is migrated, and no existing file is ever rewritten.
+nothing is migrated, and no existing file is ever rewritten. A `Tree:` written as prose is read
+and skipped, never compared.
 
 ## Install / deploy
 
@@ -159,8 +166,11 @@ chain or start fresh — it never silently forks a second chain next to the arch
 └── done/                   # archived via --done
 ```
 
-All gitignored — the command adds `.claude/session-handoffs/` to `.gitignore` on first
-run. Only that path is ignored; your committed `.claude/plans/` are untouched.
+All gitignored. The command asks git (`git check-ignore`) whether the store is already
+ignored, whatever rule does it (`/.claude/`, `.git/info/exclude`, a global excludes file), and
+leaves your `.gitignore` alone if so. Only when it is not ignored does it add
+`.claude/session-handoffs/`. It never ignores all of `.claude/` itself, so your committed
+`.claude/plans/` are untouched.
 
 ## Where they sit in the workflow
 
@@ -176,7 +186,7 @@ They live in the **pause/resume** middle of a task — they do not replace plann
 
 **Automated (static):** `pwsh -File .\tests\validate-commands.ps1` validates the command
 files' structure, frontmatter, step numbering, cross-references, and source==deployed
-parity (236 checks, exit 0/1, no dependencies). See `tests/README.md`.
+parity (273 checks, exit 0/1, no dependencies). See `tests/README.md`.
 
 **Automated (mutation, no AI):** `pwsh -File .\tests\mutation-check.ps1` deletes one block of a
 command file at a time and re-runs the static suite, then reports which deletions broke no
@@ -186,7 +196,7 @@ from how its checks are written.
 
 **Automated (behavioural, subagent-driven):** `tests/behavioral/` has Claude dispatch
 subagents that execute the commands in an isolated sandbox (fresh handoff → carry-forward →
-resume), then `verify-artifacts.ps1` asserts on the produced artifacts (30 checks). It
+resume), then `verify-artifacts.ps1` asserts on the produced artifacts (32 checks). It
 proves the runtime properties — Step 7 propose-only, carry-forward, staleness, read-only —
 that a static test can't. Two focused sub-tests add runtime proof of the deep-link
 behaviour: `tests/behavioral/depth-recovery/` (15 checks) proves resume actually opens the
@@ -203,6 +213,10 @@ half of the carry rule: three items reachable only through the `Carried unchange
 must show up in the briefing, and an item closed with a `- Done:` bullet must not come back as
 open work. Its verifier is self-tested without an LLM via `carry-hop/selftest.ps1`, which feeds
 it a known-good and a known-bad response and asserts it accepts one and rejects the other.
+And `tests/behavioral/tree-and-ignore/` (35 checks) covers v0.4.8: in a repo with many permanently
+untracked files and `/.claude/` already ignored, a handoff must leave `.gitignore` untouched and
+write `Tree:` in the fixed form, and resume must report a tracked change as `Tree moved`, stay
+silent on an unchanged tree, and skip an old prose `Tree:`. Its verifier has a self-test too.
 See `tests/behavioral/README.md` to re-run.
 
 The scenario prompts were rewritten on 2026-08-22 to stop restating the rule under test. Three

@@ -522,3 +522,37 @@ project file stays small. Entries below are in the original order.
   project `CLAUDE.md`, otherwise the language of the handoff file), and only when both the flag
   and `CLAUDE.md` are silent does the briefing say in one line which language it chose and why.
   Plan section 16.4, decision 4.
+- **2026-10-22 (v0.4.8: `Tree:` gets a fixed form, and no `Format:` jump):** in a repo with 22
+  permanently untracked entries all 9 handoffs wrote `Tree:` as prose, so resume skipped the
+  comparison every time and the staleness check never ran. The form is now
+  `tracked: … · untracked: N · set: <7 hex>`. **Why no `Format: 3`:** the field marks the released
+  template, not an edit, and resume reads every older `Tree:` shape anyway (prose skipped, old
+  porcelain summaries compared as before). A format jump would only have forced a migration
+  decision on every existing chain for nothing. **Rejected:** counts only (`tracked: clean ·
+  untracked: 22`) — misses "one file gone, one new", which the doc that started this named
+  itself; top-level names listed in the header — readable, but 22 entries is a header line of
+  300 characters on every handoff. A fingerprint costs one field. **The fingerprint had to be
+  shell-independent:** a first recipe, `$u | git hash-object --stdin` in PowerShell, appends
+  CRLF and gave a different hash than Git Bash for the same untracked files. Piping one git
+  command straight into the other keeps the bytes in PowerShell 7.4+ and was measured equal in
+  both shells, so that is the recipe, with the 7.4 floor written into Step 1. A wrong filter
+  (`-like '??*'`, where `?` is a wildcard) matched every line and was caught the same way.
+  **Not solved on purpose:** a new file inside an untracked folder is still invisible, because
+  git shows the folder as one line.
+- **2026-10-22 (v0.4.8: `--no-empty-directory`, found by the first re-run):** with the plain
+  `ls-files --directory` call, a `.claude/` that holds only ignored files is listed as an
+  untracked directory. The hash then changes the moment the store folder appears, so the first
+  handoff in a project would raise a false weak hint on its first resume, and one resume reader
+  counted that line as an untracked file. The flag removes it, and the untracked count is now
+  defined as the `??` lines, never the `ls-files` line count. Caught only because the main
+  suite's S3 sandbox has exactly that shape; the dedicated scenario's sandbox (`/.claude/`
+  ignored whole) does not, which is why the S3 verifier now checks for the false hint too.
+- **2026-10-22 (v0.4.8: Step 5 asks git, not the file text):** the old wording read `.gitignore`
+  and looked for a line matching `.claude/session-handoffs/`. A project that already ignores the
+  store through `/.claude/` got a pointless line appended to a versioned file, and the same
+  happens with `.claude/*`, `.git/info/exclude`, the global excludes file and a `.gitignore`
+  inside `.claude/`. Now `git check-ignore -v` on the file Step 6 will write: exit 0 changes
+  nothing and names the rule, exit 1 appends as before. All five sources were measured,
+  including a negated pattern. **Rejected:** widening the text match to `/.claude/` and
+  `.claude/*` — it still misses three of the five sources and needs a list that keeps growing.
+  The "never all of `.claude/`" limit stays, scoped to what this command writes.

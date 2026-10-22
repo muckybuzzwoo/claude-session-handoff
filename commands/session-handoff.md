@@ -46,12 +46,29 @@ no broad filesystem sweep. The read-only status/branch calls below are fine:
 
 - Date, branch, working tree: on `win32`, one batched PowerShell call if that tool is
   available (`Get-Date -Format yyyy-MM-dd`, `git rev-parse --abbrev-ref HEAD`, `git status
-  --porcelain`, chained with `;`), or three separate Bash calls — some Windows setups
-  block chained Bash calls (`&&`, `||`, `;`) even when every sub-command is approved.
+  --porcelain`, `git ls-files --others --exclude-standard --directory --no-empty-directory
+  | git hash-object --stdin`, chained with `;`), or four separate Bash calls — some Windows setups
+  block chained Bash calls (`&&`, `||`, `;`) even when every sub-command is approved. The
+  hash pipe is byte-exact only in PowerShell 7.4+; on an older PowerShell run that one call
+  in Bash, or its hash will not match the one `/session-resume` computes.
   Other platforms (macOS/Linux): no such restriction observed — a single chained Bash
   call is fine: `date +%Y-%m-%d && git rev-parse --abbrev-ref HEAD && git status
-  --porcelain`. Ignore git errors if not a repo. Keep the `--porcelain` output: it fills
-  the template's `Tree:` header field, which `/session-resume` compares for staleness.
+  --porcelain && git ls-files --others --exclude-standard --directory --no-empty-directory
+  | git hash-object --stdin`. Ignore git errors if not a repo. Keep the `--porcelain` output and the hash: they
+  fill the template's `Tree:` header field, which `/session-resume` compares for staleness.
+- The `Tree:` value is one fixed form, so the reader can compare it:
+  `tracked: {clean | N ({status} {path}, …)} · untracked: {N} · set: {7 hex}`.
+  - **tracked** = the porcelain lines that do not start with `??`. None → `clean`. Otherwise
+    the count, then each entry as its status letters (spaces dropped) and path; list the first
+    10, then `+{k} more`.
+  - **untracked** = the number of `??` lines in the porcelain output, never the line count of
+    the `ls-files` call. **set** = the first 7 hex characters of the hash; with
+    `untracked: 0` leave ` · set:` out. `--no-empty-directory` matters: without it a
+    `.claude/` that holds only ignored files is listed too, and the hash then changes the
+    moment the store folder appears.
+  - Not a git repository → `—`.
+  - A new file inside an untracked folder still shows as the one line `?? folder/`. That is a
+    limit of git, not of this form — do not try to work around it.
 - Background processes started via `run_in_background` — record what outlives this
   session: the command, PID/port, and how to kill or restart it (shell IDs alone die with
   the session).
@@ -141,14 +158,21 @@ rephrase before writing. Do not silently redact.
 
 ### Step 5 — Ensure .gitignore (automatic, once)
 
-The store must stay out of git. Read the project-root `.gitignore`:
+The store must stay out of git. Ask git, not the file text: a rule can live in the
+project `.gitignore` (as `/.claude/` or `.claude/*`), in `.git/info/exclude`, in the global
+excludes file, or in a `.gitignore` inside `.claude/`, and only git sees them all.
 
-- Exists but lacks a line matching `.claude/session-handoffs/` → append that line (Edit) and report it.
-- Does not exist → create it (Write) containing that line, and report it.
 - Not a git repository → skip silently.
+- Run `git check-ignore -v .claude/session-handoffs/{slug}_{NN}.md` (the file Step 6 will
+  write; it need not exist yet). **Exit 0** → already ignored: change nothing, and report
+  which rule did it (the source and pattern git printed). **Exit 1** → not ignored, go on.
+- Not ignored and the project-root `.gitignore` exists → append the line
+  `.claude/session-handoffs/` (Edit) and report it.
+- Not ignored and no `.gitignore` → create it (Write) containing that line, and report it.
 
 Ignore **only** `.claude/session-handoffs/` — never all of `.claude/` (it holds
-committed `plans/`).
+committed `plans/`). That limit is for what this command writes; a broader rule the project
+already has is left as it is.
 
 ### Step 6 — Write the handoff
 
@@ -282,7 +306,7 @@ Then **STOP**.
 # Session Handoff: {Topic} (seq {NN})
 
 **Date:** {YYYY-MM-DD}  **Branch:** {branch or "—"}  **Previous:** {slug}_{NN-1}.md | "—"
-**Tree:** {`git status --porcelain` summary at handoff time, e.g. "3 dirty: src/a.ts, src/b.css, README.md" | "clean" | "—" if not a repo}
+**Tree:** {the Step 1 form at handoff time, e.g. "tracked: clean · untracked: 22 · set: f4fe661" or "tracked: 2 (M src/a.ts, A src/b.ts) · untracked: 0" | "—" if not a repo}
 **Format:** 2
 
 ## Status

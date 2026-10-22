@@ -79,13 +79,24 @@ Surface a short note if ANY of these hold (never block):
 - The handoff `Date` is more than 7 days before today — run `date +%Y-%m-%d` (Bash) to
   get today and compare to the handoff header's `Date:` field.
 - Current branch (`git rev-parse --abbrev-ref HEAD`) ≠ the handoff's `Branch`.
-- The working tree has **moved since the handoff**: compare current `git status
-  --porcelain` against the handoff header's `Tree:` snapshot. A handoff typically
-  captures mid-work state, so a dirty tree alone means nothing — flag only a
-  *difference* from the recorded snapshot. No `Tree:` field in the header (older
-  handoff) → skip this check. **A `Tree:` field written as prose** rather than a porcelain
-  summary (real old files do this — some use it to correct the previous handoff) → treat it
-  as informational, skip the comparison, and do not manufacture a difference from it.
+- The working tree has **moved since the handoff**: compare the current tree against the
+  handoff header's `Tree:` snapshot. A handoff typically captures mid-work state, so a
+  dirty tree alone means nothing — flag only a *difference* from the recorded snapshot.
+  No `Tree:` field in the header (older handoff) → skip this check. **A `Tree:` field
+  written as prose** rather than a summary (real old files do this — some use it to correct
+  the previous handoff) → treat it as informational, skip the comparison, and do not
+  manufacture a difference from it.
+  - **Form `tracked: … · untracked: N · set: …`** (what `/session-handoff` writes now):
+    compute the same three values the way `/session-handoff` Step 1 defines them:
+    `tracked` and the `untracked` count from `git status --porcelain` (the `??` lines), and
+    the first 7 hex of `set` from `git ls-files --others --exclude-standard --directory
+    --no-empty-directory | git hash-object --stdin` — all flags, or the hash will not match.
+    Then compare. The `tracked`
+    part differs (count or listed entries) → `Tree moved`: say what changed. `tracked`
+    equal but `untracked` count or `set` differs → a **weak** hint only, say so ("the
+    untracked files differ: was N, now M"). Everything equal → say nothing. Compare only
+    the fields the snapshot has: a snapshot without `set:` has no set to compare.
+  - **Older porcelain summaries** (`clean`, `3 dirty: …`) → compare as before.
 
 Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now 'y') — treat state as possibly stale.`
 

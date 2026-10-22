@@ -3,6 +3,74 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.8] — 2026-10-22
+
+Two defects found in real use in a repo with 22 permanently untracked entries and `/.claude/` in
+its `.gitignore`: the `Tree:` header was written as prose in 9 of 9 handoffs, so the staleness
+check "tree moved" never ran there, and Step 5 would have appended a pointless line to the
+customer's versioned `.gitignore` on every handoff. No `Format:` jump: resume still reads every
+old `Tree:` form, so `Format: 2` stays.
+
+### Changed
+
+- **`Tree:` has one fixed form**:
+  `tracked: clean · untracked: 22 · set: 3956822`, or
+  `tracked: 2 (M src/a.ts, A src/b.ts) · untracked: 22 · set: 3956822`. The tracked part is the
+  non-`??` porcelain lines (first 10, then `+k more`), the count is the `??` lines, and `set` is
+  a 7-hex fingerprint of the untracked top-level names (`git ls-files --others --exclude-standard
+  --directory --no-empty-directory | git hash-object --stdin`). The hash is shell-independent:
+  the same bytes in PowerShell 7.4+ and Bash, measured. `--no-empty-directory` is not optional,
+  see Fixed.
+- **`/session-resume` compares that form.** A changed tracked part is `Tree moved`; a changed
+  untracked count or `set` is a weak hint only; everything equal says nothing. Prose and the old
+  porcelain summaries are handled as before (prose skipped, old summaries compared).
+- **Step 5 asks git, not the file text**: `git check-ignore -v` on the file Step 6 will write.
+  Exit 0 means already ignored by any rule (`/.claude/`, `.claude/*`, `.git/info/exclude`, the
+  global excludes file, a `.gitignore` inside `.claude/`): change nothing and name the rule.
+  Exit 1 appends or creates the line as before. The "never all of `.claude/`" limit stays and now
+  says it governs what this command writes, not rules the project already has.
+
+### Fixed
+
+- **A false "untracked files differ" hint on a project whose `.claude/` holds only ignored
+  files.** Found by the first re-run of the main suite: without `--no-empty-directory`,
+  `ls-files --directory` lists such a `.claude/` as an untracked directory, so the hash changes
+  the moment the store folder appears, and one resume reader counted that line as an untracked
+  file. The flag is now in both commands, and the count is defined as the `??` lines, never the
+  `ls-files` line count.
+
+### Added
+
+- **Scenario `tests/behavioral/tree-and-ignore/`** (35 checks) with its own verifier self-test:
+  one handoff run that must leave `.gitignore` byte-identical, name the ruling rule and write the
+  fixed `Tree:`; three resume runs (same tree stays silent, a prose `Tree:` is skipped even after
+  a tracked change, a tracked change is reported as `Tree moved`).
+- Static suite section Y (+37 checks, 273 in total) on the slices `$step1`, `$gitBlock`, `$rStale`.
+- One check in `verify-artifacts.ps1` for the fixed `Tree:` form and one for no false
+  untracked-files hint on S3 (32 in total).
+
+### Known limits
+
+- A new file inside an untracked folder is invisible: git prints `?? folder/` as one line. This
+  is a limit of git, not of the form, and the commands do not try to work around it.
+- `Step 5` can add the store line to a tracked `.gitignore` after Step 1 took the snapshot, so a
+  first handoff in a project without a matching rule shows `M .gitignore` at the next resume.
+  It reads as a normal `Tree moved`, once.
+- The hash pipe needs PowerShell 7.4+. Older PowerShell adds a line ending of its own; Step 1 says
+  to run that one call in Bash then.
+
+### Verified
+
+- Static suite 273/273, mutation harness 26/26 blocks covered, `tree-and-ignore/selftest.ps1`
+  12/12 (the verifier accepts the good set and rejects eleven different defects).
+- Runtime, against the final command text: main suite S1-S3 (verify-artifacts), format-boundary
+  26/26 and `tree-and-ignore` 35/35.
+- Runtime, against the text one revision earlier (the only difference is the `--no-empty-directory`
+  flag and one clarifying sentence): depth-recovery 15/15, load-discipline 21/21, carry-hop 20/20,
+  gate G1 43/43 on five real pre-v0.4.0 handoffs from the apex-roadtrip chain.
+- `compat-old-chain.ps1`: this repo's store and the app-manageforwork chain, exit 0, no
+  detectable loss, same as before.
+
 ## [0.4.7] — 2026-08-24
 
 The output-volume and briefing-order release: plan section 16, decided 2026-08-22, built in two

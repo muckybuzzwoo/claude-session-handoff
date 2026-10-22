@@ -106,6 +106,25 @@ good one passes and the bad one fails on all five named defect checks. That is t
 `fixtures/carry-ok` and `fixtures/carry-bad` for the compat scanner: a verifier that has never
 rejected anything is not a verifier. The scenario itself still needs a real subagent run.
 
+## Focused sub-test: Tree field and store ignore (`tree-and-ignore/`)
+
+v0.4.8. The sandbox repo has 22 permanently untracked entries and `/.claude/` in `.gitignore`
+(no literal store line), the shape that broke both `Tree:` and Step 5 in a real project. Four
+agent runs, in this order, responses captured to `.sandbox/out/`:
+
+```powershell
+pwsh -File .\tests\behavioral\tree-and-ignore\setup.ps1
+# 1. handoff, topic tae            scenario-handoff.md  -> T1-handoff.txt
+# 2. resume,  topic same           scenario-resume.md   -> T2-same.txt
+pwsh -File .\tests\behavioral\tree-and-ignore\tamper.ps1
+# 3. resume,  topic prose                               -> T3-prose.txt
+# 4. resume,  topic moved                               -> T4-moved.txt
+pwsh -File .\tests\behavioral\tree-and-ignore\verify.ps1     # 35 checks
+```
+
+Self-test of the verifier without an LLM: `tree-and-ignore\selftest.ps1`. Needs PowerShell 7.4+,
+because the hash recipe pipes one git command into another.
+
 ## Focused sub-test: deep-link depth recovery (`depth-recovery/`)
 
 Self-contained, separate from the S1/S2/S3 sandbox above — proves the `[READ-AT-RESUME]`
