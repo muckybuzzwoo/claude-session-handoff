@@ -72,7 +72,7 @@ no broad filesystem sweep. The read-only status/branch calls below are fine:
 - Background processes started via `run_in_background` — record what outlives this
   session: the command, PID/port, and how to kill or restart it (shell IDs alone die with
   the session).
-- Open TodoWrite items (in-progress / pending) — these land in the template's **Open work**
+- Open task-list items (in-progress / pending) — these land in the template's **Open work**
   section, each as its own bullet with the `Open:` label.
 - Files you created or modified this session (you know them — don't grep to rediscover);
   record them as **absolute paths**. Exception: if this session was compacted and you are

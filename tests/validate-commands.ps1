@@ -219,9 +219,9 @@ Check 'boundary count is established, not inherited' ($h.Contains('established, 
 Check 'numberless prose pointer stays one item'   ($h.Contains('carrying no number'))
 Check 'never invent a count'                      ($h.Contains('Never invent a count'))
 
-# --- Step 1 says where the TodoWrite items go ---
-Check 'Step 1 routes TodoWrite items to Open work' (
-    $h -match "(?s)Open TodoWrite items.{0,160}Open work")
+# --- Step 1 says where the open task-list items go ---
+Check 'Step 1 routes task-list items to Open work' (
+    $h -match "(?s)Open task-list items.{0,160}Open work")
 
 # --- 1E: the Format header field ---
 Check 'template header has a Format field'   ($h.Contains('**Format:** 2'))
