@@ -3,12 +3,18 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
-## [Unreleased]
+## [0.4.9] — 2026-11-13
+
+One wording fix. No behaviour change, no `Format:` jump.
 
 ### Changed
 
 - `/session-handoff` Step 1 says "Open task-list items" instead of "Open TodoWrite items". The
   task tool is no longer called TodoWrite, and the neutral word fits any tool name.
+
+### Verified
+
+- Static suite 273/273, including deploy parity. No runtime re-run: only one word changed.
 
 ## [0.4.8] — 2026-10-22
 
