@@ -556,3 +556,11 @@ project file stays small. Entries below are in the original order.
   including a negated pattern. **Rejected:** widening the text match to `/.claude/` and
   `.claude/*` — it still misses three of the five sources and needs a list that keeps growing.
   The "never all of `.claude/`" limit stays, scoped to what this command writes.
+- **2026-11-23 (text-only releases do not restart the Track B quiet days):** the start bar
+  proposed in plan section 7 asks for seven days with "no patch to either command". v0.4.9 (one
+  word) and v0.4.10 (three history notes removed) changed text and no behaviour, so they do not
+  count as a patch, decided by Marcus. A change that cannot alter what the commands do cannot
+  reveal that Track A is unsettled, which is the only thing the seven days are there to show.
+  The clock therefore stands at 2026-10-22, the v0.4.8 release. **Rejected:** treating every
+  release as a reset, which would let a typo fix delay Track B by a week. **Still open:** the
+  bar itself is a proposal and has not been accepted.
