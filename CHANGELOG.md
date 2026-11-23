@@ -3,6 +3,26 @@
 All notable changes to the `/session-handoff` + `/session-resume` commands.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/); versions follow semver.
 
+## [0.4.10] — 2026-11-23
+
+Three history notes removed from `/session-resume`. No behaviour change, no `Format:` jump.
+
+### Removed
+
+- Step 1: the reason a format-1 file may carry a section anchor ("anchors shipped three weeks
+  before the field did"). The history stays in the 0.4.2 entry and `docs/decision-log.md`.
+- Step 4, bare tags: the note that until v0.2.0 only the built-in ~25k Read cap kept large
+  tagged files from loading in full, by accident and not by design. This entry now keeps it.
+- Step 4, untagged links: "a deliberate change from the older full-load behaviour" is now one
+  plain reason. The history stays in the 0.2.0 entry and `docs/decision-log.md`.
+
+A prompt audit for the target model flagged all three: they describe an older version of the
+command, and each rule works without them.
+
+### Verified
+
+- Static suite 273/273, including deploy parity. No runtime re-run: only prose was removed.
+
 ## [0.4.9] — 2026-11-13
 
 One wording fix. No behaviour change, no `Format:` jump.

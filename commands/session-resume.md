@@ -39,7 +39,7 @@ topics by file mtime, most recent first.
 counted-carry format; **no `Format:` field at all** means format 1. Both are fully supported and
 nothing is ever migrated. Do not read the format off a `[READ-AT-RESUME]` tag's shape: a format-2
 file may carry a bare tag (write-time ladder case (d)), and a format-1 file may carry a section
-anchor, because anchors shipped three weeks before the field did.
+anchor.
 
 If none are found, run the **Fallback — no-handoff orientation** below instead of
 stopping cold.
@@ -114,15 +114,12 @@ Example: `Note: this handoff is 12 days old and the branch differs (was 'x', now
      handoff's format, see Step 1) → load it, but if it is large (`bytes/4` above
      roughly 15k) do **not** swallow the whole file: read its heading skeleton plus the
      sections that bear on the open work, and flag the omission ("loaded headings + §X of
-     Y — pull more if needed"). Small tagged files load fully. (Until now only the built-in
-     ~25k Read cap kept this from exploding — by accident, not design; this makes it
-     deliberate.)
+     Y — pull more if needed"). Small tagged files load fully.
    - **Untagged** links that are clearly a plan, spec, roadmap, or decision record →
      **do not full-load them** (this is exactly where resume cost silently leaks back in).
      Print their **heading skeleton** (table of contents) and **offer**: "linked plan X is
-     untagged, ~Yk — load it fully, or just a section?". This is a deliberate change from
-     the older full-load-if-it-looks-like-a-plan behaviour: the depth is now carried by the
-     essence the handoff inlined, so a blind load is no longer needed.
+     untagged, ~Yk — load it fully, or just a section?". The handoff already inlines the
+     essence, so a blind load is not needed.
    - Skip **shallow** pointers: MR/issue URLs, and paths in another repo that merely need
      opening later. **An explicit `[READ-AT-RESUME]` tag outranks this skip** — if the tagged
      path exists and is readable, load it per the rules above even when it sits outside the
